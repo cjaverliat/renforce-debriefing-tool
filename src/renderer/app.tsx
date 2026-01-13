@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { VideoPlayer } from '@/renderer/components/video-player';
 import { Timeline } from '@/renderer/components/timeline';
@@ -6,6 +6,7 @@ import { AnnotationDialog } from '@/renderer/components/annotation-dialog';
 import { AnnotationsPanel, type Annotation } from '@/renderer/components/annotations-panel';
 import { ExportControls } from '@/renderer/components/export-controls';
 import { Button } from '@/renderer/components/ui/button';
+import { ResizeHandle } from '@/renderer/components/resize-handle';
 
 export function App() {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -13,6 +14,11 @@ export function App() {
     const [duration, setDuration] = useState(596.48); // Default duration for sample video
     const [annotations, setAnnotations] = useState<Annotation[]>([]);
     const [isAnnotationDialogOpen, setIsAnnotationDialogOpen] = useState(false);
+
+    // Panel sizes (in pixels)
+    const [videoHeight, setVideoHeight] = useState<number>(0);
+    const [sidebarWidth, setSidebarWidth] = useState(320);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const sessionData = {
         duration,
@@ -63,6 +69,40 @@ export function App() {
 
     const handleSeekToAnnotation = (time: number) => {
         setCurrentTime(time);
+    };
+
+    // Initialize video height on mount
+    useEffect(() => {
+        if (containerRef.current && videoHeight === 0) {
+            const containerHeight = containerRef.current.clientHeight;
+            setVideoHeight(Math.floor(containerHeight * 0.6)); // Start at 60%
+        }
+    }, [videoHeight]);
+
+    // Handle vertical resize (video/timeline split)
+    const handleVerticalResize = (delta: number) => {
+        if (!containerRef.current) return;
+
+        const containerHeight = containerRef.current.clientHeight;
+        const minVideoHeight = 200;
+        const minTimelineHeight = 150;
+        const maxVideoHeight = containerHeight - minTimelineHeight;
+
+        setVideoHeight((prev) => {
+            const newHeight = prev + delta;
+            return Math.max(minVideoHeight, Math.min(maxVideoHeight, newHeight));
+        });
+    };
+
+    // Handle horizontal resize (main/sidebar split)
+    const handleHorizontalResize = (delta: number) => {
+        const minSidebarWidth = 200;
+        const maxSidebarWidth = 600;
+
+        setSidebarWidth((prev) => {
+            const newWidth = prev - delta; // Subtract because dragging right should shrink sidebar
+            return Math.max(minSidebarWidth, Math.min(maxSidebarWidth, newWidth));
+        });
     };
 
     // Auto-advance time when playing
@@ -120,10 +160,13 @@ export function App() {
                 </div>
             </div>
 
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden" ref={containerRef}>
                 <div className="flex-1 flex flex-col">
                     {/* Video Panel */}
-                    <div className="h-[60%] p-4 border-b border-zinc-800">
+                    <div
+                        className="p-4"
+                        style={{ height: videoHeight > 0 ? `${videoHeight}px` : '60%' }}
+                    >
                         <VideoPlayer
                             isPlaying={isPlaying}
                             currentTime={currentTime}
@@ -134,8 +177,11 @@ export function App() {
                         />
                     </div>
 
+                    {/* Resize Handle between Video and Timeline */}
+                    <ResizeHandle direction="vertical" onResize={handleVerticalResize} />
+
                     {/* Timeline Panel */}
-                    <div className="h-[40%]">
+                    <div className="flex-1">
                         <Timeline
                             isPlaying={isPlaying}
                             currentTime={currentTime}
@@ -147,8 +193,11 @@ export function App() {
                     </div>
                 </div>
 
+                {/* Resize Handle between Main and Sidebar */}
+                <ResizeHandle direction="horizontal" onResize={handleHorizontalResize} />
+
                 {/* Annotations Sidebar */}
-                <div className="w-80 flex-shrink-0">
+                <div className="shrink-0" style={{ width: `${sidebarWidth}px` }}>
                     <AnnotationsPanel
                         annotations={annotations}
                         onDeleteAnnotation={handleDeleteAnnotation}
