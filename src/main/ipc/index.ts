@@ -1,5 +1,5 @@
 // Register all IPC handlers
-import { registerFileHandlers } from './fileHandlers';
+import { registerFileHandlers } from './file-handlers';
 
 export function registerIPCHandlers() {
   registerFileHandlers();
