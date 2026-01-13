@@ -46,8 +46,8 @@ export function ResizeHandle({ direction, onResize, className = '' }: ResizeHand
 
     const baseClasses =
         direction === 'vertical'
-            ? 'h-1 cursor-ns-resize hover:bg-blue-500/50 active:bg-blue-500 transition-colors'
-            : 'w-1 cursor-ew-resize hover:bg-blue-500/50 active:bg-blue-500 transition-colors';
+            ? 'shrink-0 grow-0 h-1 cursor-ns-resize hover:bg-blue-500/50 active:bg-blue-500 transition-colors'
+            : 'shrink-0 grow-0 w-1 cursor-ew-resize hover:bg-blue-500/50 active:bg-blue-500 transition-colors';
 
     const activeClass = isDragging ? 'bg-blue-500' : 'bg-zinc-800';
 

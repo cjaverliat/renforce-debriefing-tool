@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 interface TimelineTrackProps {
   label: string;
@@ -25,6 +25,23 @@ export function TimelineTrack({
 }: TimelineTrackProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  // Track container size changes
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setContainerSize({ width, height });
+      }
+    });
+
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -109,12 +126,11 @@ export function TimelineTrack({
       ctx.lineTo(playheadX, rect.height);
       ctx.stroke();
     }
-
-  }, [data, markers, duration, currentTime, zoom, scrollOffset, color, type]);
+  }, [data, markers, duration, currentTime, zoom, scrollOffset, color, type, containerSize]);
 
   return (
     <div className="flex border-b border-zinc-800">
-      <div className="w-32 flex-shrink-0 bg-zinc-900 border-r border-zinc-800 px-3 py-2 flex items-center">
+      <div className="w-32 shrink-0 bg-zinc-900 border-r border-zinc-800 px-3 py-2 flex items-center sticky left-0 z-10">
         <span className="text-xs text-zinc-400">{label}</span>
       </div>
       <div ref={containerRef} className="flex-1 relative">

@@ -23,7 +23,9 @@ export function Timeline({
 }: TimelineProps) {
   const [zoom, setZoom] = useState(1);
   const [scrollOffset, setScrollOffset] = useState(0);
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const rulerScrollRef = useRef<HTMLDivElement>(null);
 
   // Generate mock physiological data
   const generateSignalData = (frequency: number, amplitude: number) => {
@@ -71,16 +73,52 @@ export function Timeline({
     onSeek(Math.min(duration, currentTime + 5));
   };
 
+  // Measure scrollbar width
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
+    const updateScrollbarWidth = () => {
+      // Calculate scrollbar width (offsetWidth - clientWidth)
+      const width = container.offsetWidth - container.clientWidth;
+      setScrollbarWidth(width);
+    };
+
+    // Initial measurement
+    updateScrollbarWidth();
+
+    // Update on resize
+    const resizeObserver = new ResizeObserver(updateScrollbarWidth);
+    resizeObserver.observe(container);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    const rulerContainer = rulerScrollRef.current;
+    if (!container || !rulerContainer) return;
+
     const handleScroll = () => {
-      setScrollOffset(container.scrollLeft);
+      const scrollLeft = container.scrollLeft;
+      setScrollOffset(scrollLeft);
+      // Sync ruler scroll with tracks scroll
+      rulerContainer.scrollLeft = scrollLeft;
+    };
+
+    const handleRulerScroll = () => {
+      const scrollLeft = rulerContainer.scrollLeft;
+      setScrollOffset(scrollLeft);
+      // Sync tracks scroll with ruler scroll
+      container.scrollLeft = scrollLeft;
     };
 
     container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
+    rulerContainer.addEventListener('scroll', handleRulerScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      rulerContainer.removeEventListener('scroll', handleRulerScroll);
+    };
   }, []);
 
   // Auto-scroll to follow playhead
@@ -101,7 +139,7 @@ export function Timeline({
   }, [currentTime, isPlaying, zoom, duration, scrollOffset]);
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950">
+    <div className="flex flex-col h-full bg-zinc-900">
       <TimelineControls
         isPlaying={isPlaying}
         currentTime={currentTime}
@@ -113,10 +151,12 @@ export function Timeline({
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
       />
-      
+
+      {/* Sticky Ruler - scrolls horizontally only */}
       <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar"
+        ref={rulerScrollRef}
+        className="overflow-x-auto overflow-y-hidden scrollbar-hidden bg-zinc-800"
+        style={{ paddingRight: `${scrollbarWidth}px` }}
       >
         <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
           <TimelineRuler
@@ -126,7 +166,15 @@ export function Timeline({
             scrollOffset={scrollOffset}
             onSeek={onSeek}
           />
-          
+        </div>
+      </div>
+
+      {/* Tracks - scrolls both horizontally and vertically */}
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar"
+      >
+        <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
           <TimelineTrack
             label="Heart Rate"
             type="signal"
@@ -137,7 +185,7 @@ export function Timeline({
             scrollOffset={scrollOffset}
             color="#ef4444"
           />
-          
+
           <TimelineTrack
             label="Respiration"
             type="signal"
@@ -148,7 +196,7 @@ export function Timeline({
             scrollOffset={scrollOffset}
             color="#3b82f6"
           />
-          
+
           <TimelineTrack
             label="Skin Conductance"
             type="signal"
@@ -159,7 +207,7 @@ export function Timeline({
             scrollOffset={scrollOffset}
             color="#22c55e"
           />
-          
+
           <TimelineTrack
             label="Markers"
             type="markers"
