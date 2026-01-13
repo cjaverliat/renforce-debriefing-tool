@@ -29,6 +29,7 @@
     "@electron-forge/plugin-vite": "^7.11.1",
     "@electron/fuses": "^1.8.0",
     "@types/electron-squirrel-startup": "^1.0.2",
+    "@types/protobufjs": "^6.0.0",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
@@ -43,6 +44,7 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
+    "protobufjs": "^8.0.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   }
