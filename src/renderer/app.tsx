@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus } from 'lucide-react';
 import { VideoPlayer } from '@/renderer/components/video-player';
 import { Timeline } from '@/renderer/components/timeline';
@@ -7,22 +7,49 @@ import { AnnotationsPanel, type Annotation } from '@/renderer/components/annotat
 import { ExportControls } from '@/renderer/components/export-controls';
 import { Button } from '@/renderer/components/ui/button';
 import { ResizeHandle } from '@/renderer/components/resize-handle';
+import { LoadingPanel } from '@/renderer/components/loading-panel';
+import { useAutoSave } from '@/renderer/hooks/use-auto-save';
+import type { LoadedSession, PLMDData } from '@/shared/types/session';
+
+type AppMode = 'loading' | 'session';
 
 export function App() {
+    // App mode and session state
+    const [appMode, setAppMode] = useState<AppMode>('loading');
+    const [sessionState, setSessionState] = useState<LoadedSession | null>(null);
+    const [isDirty, setIsDirty] = useState(false);
+
+    // Playback state
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
-    const [duration, setDuration] = useState(596.48); // Default duration for sample video
+    const [duration, setDuration] = useState(596.48);
     const [annotations, setAnnotations] = useState<Annotation[]>([]);
     const [isAnnotationDialogOpen, setIsAnnotationDialogOpen] = useState(false);
 
     // Panel sizes (in pixels)
-    const [timelineHeight, setTimelineHeight] = useState(300); // Timeline height instead of video height
+    const [timelineHeight, setTimelineHeight] = useState(300);
     const [sidebarWidth, setSidebarWidth] = useState(320);
 
+    // Session data for export
     const sessionData = {
         duration,
-        videoName: 'Training Session - Big Buck Bunny',
-        sessionDate: new Date(),
+        videoName: sessionState?.plmdData.sessionData.videoName || 'Training Session',
+        sessionDate: sessionState?.plmdData.sessionData.sessionDate
+            ? new Date(sessionState.plmdData.sessionData.sessionDate)
+            : new Date(),
+    };
+
+    // Video source - use media protocol for local files
+    const videoSrc = sessionState
+        ? `media://${sessionState.videoPath}`
+        : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+
+    const handleSessionLoaded = (session: LoadedSession) => {
+        setSessionState(session);
+        setAnnotations(session.plmdData.annotations);
+        setDuration(session.plmdData.sessionData.duration);
+        setAppMode('session');
+        setIsDirty(false);
     };
 
     const handlePlayPause = () => {
@@ -60,15 +87,57 @@ export function App() {
             timestamp: new Date(),
         };
         setAnnotations([...annotations, newAnnotation]);
+        setIsDirty(true);
     };
 
     const handleDeleteAnnotation = (id: string) => {
         setAnnotations(annotations.filter(a => a.id !== id));
+        setIsDirty(true);
     };
 
     const handleSeekToAnnotation = (time: number) => {
         setCurrentTime(time);
     };
+
+    // Auto-save handler
+    const handleSave = useCallback(async () => {
+        if (!sessionState) return;
+
+        // Build PLMD data with current state
+        const plmdData: PLMDData = {
+            version: '1.0',
+            metadata: {
+                ...sessionState.plmdData.metadata,
+                lastModified: new Date().toISOString(),
+            },
+            files: {
+                plm: await window.electronAPI.makeRelativePath(
+                    sessionState.plmdPath,
+                    sessionState.plmPath
+                ),
+                video: await window.electronAPI.makeRelativePath(
+                    sessionState.plmdPath,
+                    sessionState.videoPath
+                ),
+            },
+            annotations,
+            sessionData: {
+                duration,
+                videoName: sessionState.plmdData.sessionData.videoName,
+                sessionDate: sessionState.plmdData.sessionData.sessionDate,
+            },
+        };
+
+        await window.electronAPI.savePlmd(sessionState.plmdPath, plmdData);
+        setIsDirty(false);
+    }, [sessionState, annotations, duration]);
+
+    // Use auto-save hook with 1 second debounce
+    useAutoSave({
+        delay: 1000,
+        onSave: handleSave,
+        isDirty,
+    });
 
     // Handle vertical resize (timeline height)
     const handleVerticalResize = (delta: number) => {
@@ -76,7 +145,7 @@ export function App() {
         const maxTimelineHeight = 400;
 
         setTimelineHeight((prev) => {
-            const newHeight = prev - delta; // Subtract because dragging up should increase timeline height
+            const newHeight = prev - delta;
             return Math.max(minTimelineHeight, Math.min(maxTimelineHeight, newHeight));
         });
     };
@@ -87,31 +156,24 @@ export function App() {
         const maxSidebarWidth = 600;
 
         setSidebarWidth((prev) => {
-            const newWidth = prev - delta; // Subtract because dragging left should increase sidebar width
+            const newWidth = prev - delta;
             return Math.max(minSidebarWidth, Math.min(maxSidebarWidth, newWidth));
         });
     };
 
-    // Auto-advance time when playing
+    // Auto-pause when video reaches end
     useEffect(() => {
-        if (!isPlaying) return;
-
-        const interval = setInterval(() => {
-            setCurrentTime((prev) => {
-                if (prev >= duration) {
-                    setIsPlaying(false);
-                    return duration;
-                }
-                return prev + 0.1;
-            });
-        }, 100);
-
-        return () => clearInterval(interval);
-    }, [isPlaying, duration]);
+        if (currentTime >= duration && isPlaying) {
+            setIsPlaying(false);
+        }
+    }, [currentTime, duration, isPlaying]);
 
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
+            // Only active in session mode
+            if (appMode !== 'session') return;
+
             // Space bar for play/pause
             if (e.code === 'Space' && e.target === document.body) {
                 e.preventDefault();
@@ -126,13 +188,21 @@ export function App() {
 
         document.addEventListener('keydown', handleKeyPress);
         return () => document.removeEventListener('keydown', handleKeyPress);
-    }, [isAnnotationDialogOpen]);
+    }, [appMode, isAnnotationDialogOpen]);
 
+    // Show loading panel if in loading mode
+    if (appMode === 'loading') {
+        return <LoadingPanel onSessionLoaded={handleSessionLoaded} />;
+    }
+
+    // Show main debriefing UI
     return (
         <div className="size-full flex flex-col bg-zinc-950">
             {/* Header with controls */}
             <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-b border-zinc-800">
-                <h1 className="text-lg text-zinc-100">Debriefing Session</h1>
+                <h1 className="text-lg text-zinc-100">
+                    {sessionState?.plmdData.metadata.sessionName || 'Debriefing Session'}
+                </h1>
                 <div className="flex items-center gap-2">
                     <ExportControls annotations={annotations} sessionData={sessionData} />
                     <div className="w-px h-6 bg-zinc-700" />
@@ -152,6 +222,7 @@ export function App() {
                     {/* Video Panel - takes remaining space */}
                     <div className="flex-1 p-4 overflow-hidden">
                         <VideoPlayer
+                            videoSrc={videoSrc}
                             isPlaying={isPlaying}
                             currentTime={currentTime}
                             duration={duration}

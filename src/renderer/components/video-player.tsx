@@ -6,6 +6,7 @@ interface VideoPlayerProps {
   isPlaying: boolean;
   currentTime: number;
   duration: number;
+  videoSrc?: string;
   onPlayPause: () => void;
   onTimeUpdate: (time: number) => void;
   onDurationChange: (duration: number) => void;
@@ -14,6 +15,7 @@ interface VideoPlayerProps {
 export function VideoPlayer({
   isPlaying,
   currentTime,
+  videoSrc,
   onPlayPause,
   onTimeUpdate,
   onDurationChange,
@@ -23,6 +25,9 @@ export function VideoPlayer({
   useEffect(() => {
     if (videoRef.current) {
       if (isPlaying) {
+        videoRef.current.play().catch((err) => {
+          console.error('Play failed:', err);
+        });
         videoRef.current.play();
       } else {
         videoRef.current.pause();
@@ -64,6 +69,18 @@ export function VideoPlayer({
     }
   };
 
+  const handleError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    const video = e.currentTarget;
+    console.error('Video error:', {
+      error: video.error,
+      errorCode: video.error?.code,
+      errorMessage: video.error?.message,
+      src: videoSrc,
+      readyState: video.readyState,
+      networkState: video.networkState,
+    });
+  };
+
   return (
     <div className="relative w-full h-full bg-black rounded-lg overflow-hidden group">
       <video
@@ -71,11 +88,12 @@ export function VideoPlayer({
         className="w-full h-full object-contain"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
-        src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+        onError={handleError}
+        src={videoSrc}
       />
       
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="flex items-center gap-2">
+      <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
