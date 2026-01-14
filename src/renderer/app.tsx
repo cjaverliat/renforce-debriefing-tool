@@ -1,15 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Plus } from 'lucide-react';
-import { VideoPlayer } from '@/renderer/components/video-player';
-import { Timeline } from '@/renderer/components/timeline';
-import { AnnotationDialog } from '@/renderer/components/annotation-dialog';
-import { AnnotationsPanel, type Annotation } from '@/renderer/components/annotations-panel';
-import { ExportControls } from '@/renderer/components/export-controls';
-import { Button } from '@/renderer/components/ui/button';
-import { ResizeHandle } from '@/renderer/components/resize-handle';
-import { LoadingPanel } from '@/renderer/components/loading-panel';
-import { useAutoSave } from '@/renderer/hooks/use-auto-save';
-import type { LoadedSession, PLMDData } from '@/shared/types/session';
+import {useState, useEffect, useCallback} from 'react';
+import {Plus} from 'lucide-react';
+import {Timeline} from '@/renderer/components/timeline';
+import {AnnotationDialog} from '@/renderer/components/annotation-dialog';
+import {AnnotationsPanel, type Annotation} from '@/renderer/components/annotations-panel';
+import {ExportControls} from '@/renderer/components/export-controls';
+import {Button} from '@/renderer/components/ui/button';
+import {ResizeHandle} from '@/renderer/components/resize-handle';
+import {LoadingPanel} from '@/renderer/components/loading-panel';
+import {useAutoSave} from '@/renderer/hooks/use-auto-save';
+import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
+import type {LoadedSession, PLMDData} from '@/shared/types/session';
+import {type PlaybackState, createInitialPlaybackState} from '@/shared/types/playback';
+import {VideoPlayer} from "@/renderer/components/video-player.tsx";
 
 type AppMode = 'loading' | 'session';
 
@@ -20,8 +22,7 @@ export function App() {
     const [isDirty, setIsDirty] = useState(false);
 
     // Playback state
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [currentTime, setCurrentTime] = useState(0);
+    const [playbackState, setPlaybackState] = useState<PlaybackState>(createInitialPlaybackState);
     const [duration, setDuration] = useState(596.48);
     const [annotations, setAnnotations] = useState<Annotation[]>([]);
     const [isAnnotationDialogOpen, setIsAnnotationDialogOpen] = useState(false);
@@ -29,6 +30,8 @@ export function App() {
     // Panel sizes (in pixels)
     const [timelineHeight, setTimelineHeight] = useState(300);
     const [sidebarWidth, setSidebarWidth] = useState(320);
+
+    const playbackTime = usePlaybackTime(playbackState, {maxTime: duration});
 
     // Session data for export
     const sessionData = {
@@ -39,10 +42,11 @@ export function App() {
             : new Date(),
     };
 
-    // Video source - use media protocol for local files
-    const videoSrc = sessionState
-        ? `media://${sessionState.videoPath}`
-        : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+    // const videoSrc = sessionState
+    //     ? `media://${sessionState.videoPath}`
+    //     : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+
+    const videoSrc = "media:///home/charles/Downloads/BigBuckBunny.mp4"
 
     const handleSessionLoaded = (session: LoadedSession) => {
         setSessionState(session);
@@ -53,24 +57,26 @@ export function App() {
     };
 
     const handlePlayPause = () => {
-        setIsPlaying(!isPlaying);
+        setPlaybackState(prev => ({
+            ...prev,
+            isPlaying: !prev.isPlaying,
+        }));
     };
 
     const handleSeek = (time: number) => {
-        setCurrentTime(time);
-    };
-
-    const handleTimeUpdate = (time: number) => {
-        setCurrentTime(time);
-    };
-
-    const handleDurationChange = (newDuration: number) => {
-        setDuration(newDuration);
+        setPlaybackState(prev => ({
+            ...prev,
+            anchorTime: time,
+            anchorTimestamp: performance.now(),
+        }));
     };
 
     const handleAddAnnotation = () => {
         // Pause video when adding annotation
-        setIsPlaying(false);
+        setPlaybackState(prev => ({
+            ...prev,
+            isPlaying: false,
+        }));
         setIsAnnotationDialogOpen(true);
     };
 
@@ -96,7 +102,11 @@ export function App() {
     };
 
     const handleSeekToAnnotation = (time: number) => {
-        setCurrentTime(time);
+        setPlaybackState(prev => ({
+            ...prev,
+            anchorTime: time,
+            anchorTimestamp: performance.now(),
+        }));
     };
 
     // Auto-save handler
@@ -161,13 +171,6 @@ export function App() {
         });
     };
 
-    // Auto-pause when video reaches end
-    useEffect(() => {
-        if (currentTime >= duration && isPlaying) {
-            setIsPlaying(false);
-        }
-    }, [currentTime, duration, isPlaying]);
-
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
@@ -177,7 +180,7 @@ export function App() {
             // Space bar for play/pause
             if (e.code === 'Space' && e.target === document.body) {
                 e.preventDefault();
-                setIsPlaying(prev => !prev);
+                handlePlayPause();
             }
             // 'M' key to add annotation
             if (e.code === 'KeyM' && !isAnnotationDialogOpen) {
@@ -192,7 +195,7 @@ export function App() {
 
     // Show loading panel if in loading mode
     if (appMode === 'loading') {
-        return <LoadingPanel onSessionLoaded={handleSessionLoaded} />;
+        return <LoadingPanel onSessionLoaded={handleSessionLoaded}/>;
     }
 
     // Show main debriefing UI
@@ -204,14 +207,14 @@ export function App() {
                     {sessionState?.plmdData.metadata.sessionName || 'Debriefing Session'}
                 </h1>
                 <div className="flex items-center gap-2">
-                    <ExportControls annotations={annotations} sessionData={sessionData} />
-                    <div className="w-px h-6 bg-zinc-700" />
+                    <ExportControls annotations={annotations} sessionData={sessionData}/>
+                    <div className="w-px h-6 bg-zinc-700"/>
                     <Button
                         onClick={handleAddAnnotation}
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                         size="sm"
                     >
-                        <Plus className="size-4 mr-2" />
+                        <Plus className="size-4 mr-2"/>
                         Add Annotation (M)
                     </Button>
                 </div>
@@ -220,26 +223,21 @@ export function App() {
             <div className="flex-1 flex overflow-hidden">
                 <div className="flex-1 flex flex-col">
                     {/* Video Panel - takes remaining space */}
-                    <div className="flex-1 p-4 overflow-hidden">
+                    <div className="flex-1 flex-col content-center p-4 overflow-hidden">
                         <VideoPlayer
                             videoSrc={videoSrc}
-                            isPlaying={isPlaying}
-                            currentTime={currentTime}
+                            playbackState={playbackState}
                             duration={duration}
-                            onPlayPause={handlePlayPause}
-                            onTimeUpdate={handleTimeUpdate}
-                            onDurationChange={handleDurationChange}
                         />
                     </div>
 
                     {/* Resize Handle between Video and Timeline */}
-                    <ResizeHandle direction="vertical" onResize={handleVerticalResize} />
+                    <ResizeHandle direction="vertical" onResize={handleVerticalResize}/>
 
                     {/* Timeline Panel - fixed height at bottom */}
-                    <div className="shrink-0" style={{ height: `${timelineHeight}px` }}>
+                    <div className="shrink-0" style={{height: `${timelineHeight}px`}}>
                         <Timeline
-                            isPlaying={isPlaying}
-                            currentTime={currentTime}
+                            playbackState={playbackState}
                             duration={duration}
                             annotations={annotations}
                             onPlayPause={handlePlayPause}
@@ -249,10 +247,10 @@ export function App() {
                 </div>
 
                 {/* Resize Handle between Main and Sidebar */}
-                <ResizeHandle direction="horizontal" onResize={handleHorizontalResize} />
+                <ResizeHandle direction="horizontal" onResize={handleHorizontalResize}/>
 
                 {/* Annotations Sidebar - fixed width on right */}
-                <div className="shrink-0" style={{ width: `${sidebarWidth}px` }}>
+                <div className="shrink-0" style={{width: `${sidebarWidth}px`}}>
                     <AnnotationsPanel
                         annotations={annotations}
                         onDeleteAnnotation={handleDeleteAnnotation}
@@ -264,7 +262,7 @@ export function App() {
             {/* Annotation Dialog */}
             <AnnotationDialog
                 isOpen={isAnnotationDialogOpen}
-                currentTime={currentTime}
+                currentTime={playbackTime}
                 onClose={() => setIsAnnotationDialogOpen(false)}
                 onSave={handleSaveAnnotation}
             />

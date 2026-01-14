@@ -2,7 +2,7 @@
 import { dialog, ipcMain } from 'electron';
 import { readFile } from 'fs/promises';
 import { parsePLMFile } from '../parsers/plm-parser';
-import type { PLMData } from '../../shared/types/ipc';
+import type { PLMData } from '@/shared/types/ipc.ts';
 
 export function registerFileHandlers() {
   // Open file dialog

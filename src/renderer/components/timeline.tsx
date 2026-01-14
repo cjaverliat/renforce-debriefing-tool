@@ -1,12 +1,32 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { TimelineControls } from '@/renderer/components/timeline-controls';
 import { TimelineRuler } from '@/renderer/components/timeline-ruler';
 import { TimelineTrack } from '@/renderer/components/timeline-track';
 import type { Annotation } from '@/renderer/components/annotations-panel';
+import type { PlaybackState } from '@/shared/types/playback';
+import { usePlaybackTime } from '@/renderer/hooks/use-playback-time';
+
+// Generate mock physiological data once at module load
+function generateSignalData(frequency: number, amplitude: number, samples = 1000) {
+  return Array.from({ length: samples }, (_, i) => {
+    const t = i / samples;
+    return Math.sin(t * frequency * 100) * amplitude + Math.random() * 0.1;
+  });
+}
+
+const MOCK_HEART_RATE_DATA = generateSignalData(2, 0.8);
+const MOCK_RESPIRATION_DATA = generateSignalData(0.5, 0.6);
+const MOCK_SKIN_CONDUCTANCE_DATA = generateSignalData(0.3, 0.4);
+
+const SYSTEM_MARKERS = [
+  { time: 15, label: 'Start', color: '#22c55e' },
+  { time: 45, label: 'Phase 2', color: '#eab308' },
+  { time: 90, label: 'Phase 3', color: '#f59e0b' },
+  { time: 120, label: 'End', color: '#a855f7' },
+];
 
 interface TimelineProps {
-  isPlaying: boolean;
-  currentTime: number;
+  playbackState: PlaybackState;
   duration: number;
   annotations: Annotation[];
   onPlayPause: () => void;
@@ -14,48 +34,30 @@ interface TimelineProps {
 }
 
 export function Timeline({
-  isPlaying,
-  currentTime,
+  playbackState,
   duration,
   annotations,
   onPlayPause,
   onSeek,
 }: TimelineProps) {
+  const { isPlaying } = playbackState;
   const [zoom, setZoom] = useState(1);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const rulerScrollRef = useRef<HTMLDivElement>(null);
 
-  // Generate mock physiological data
-  const generateSignalData = (frequency: number, amplitude: number) => {
-    const samples = 1000;
-    return Array.from({ length: samples }, (_, i) => {
-      const t = (i / samples) * duration;
-      return Math.sin(t * frequency) * amplitude + Math.random() * 0.1;
-    });
-  };
-
-  const heartRateData = generateSignalData(2, 0.8);
-  const respirationData = generateSignalData(0.5, 0.6);
-  const skinConductanceData = generateSignalData(0.3, 0.4);
-
-  const markers = [
-    { time: 15, label: 'Start', color: '#22c55e' },
-    { time: 45, label: 'Phase 2', color: '#eab308' },
-    { time: 90, label: 'Phase 3', color: '#f59e0b' },
-    { time: 120, label: 'End', color: '#a855f7' },
-  ];
+  const playbackTime = usePlaybackTime(playbackState, { maxTime: duration });
 
   // Combine system markers with user annotations
-  const allMarkers = [
-    ...markers,
+  const allMarkers = useMemo(() => [
+    ...SYSTEM_MARKERS,
     ...annotations.map(a => ({
       time: a.time,
       label: a.label,
       color: a.color,
     })),
-  ];
+  ], [annotations]);
 
   const handleZoomIn = () => {
     setZoom((prev) => Math.min(prev * 1.5, 10));
@@ -66,11 +68,11 @@ export function Timeline({
   };
 
   const handleSkipBackward = () => {
-    onSeek(Math.max(0, currentTime - 5));
+    onSeek(Math.max(0, playbackTime - 5));
   };
 
   const handleSkipForward = () => {
-    onSeek(Math.min(duration, currentTime + 5));
+    onSeek(Math.min(duration, playbackTime + 5));
   };
 
   // Measure scrollbar width
@@ -129,20 +131,20 @@ export function Timeline({
     const containerWidth = container.clientWidth;
     const totalWidth = containerWidth * zoom;
     const pixelsPerSecond = totalWidth / duration;
-    const playheadPosition = currentTime * pixelsPerSecond;
+    const playheadPosition = playbackTime * pixelsPerSecond;
 
     // Keep playhead in center third of viewport
     const targetScroll = playheadPosition - containerWidth / 2;
     if (targetScroll > scrollOffset + containerWidth * 0.66 || targetScroll < scrollOffset - containerWidth * 0.33) {
       container.scrollLeft = targetScroll;
     }
-  }, [currentTime, isPlaying, zoom, duration, scrollOffset]);
+  }, [playbackTime, isPlaying, zoom, duration, scrollOffset]);
 
   return (
     <div className="flex flex-col h-full bg-zinc-900">
       <TimelineControls
         isPlaying={isPlaying}
-        currentTime={currentTime}
+        currentTime={playbackTime}
         duration={duration}
         zoom={zoom}
         onPlayPause={onPlayPause}
@@ -161,7 +163,7 @@ export function Timeline({
         <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
           <TimelineRuler
             duration={duration}
-            currentTime={currentTime}
+            currentTime={playbackTime}
             zoom={zoom}
             scrollOffset={scrollOffset}
             onSeek={onSeek}
@@ -178,9 +180,9 @@ export function Timeline({
           <TimelineTrack
             label="Heart Rate"
             type="signal"
-            data={heartRateData}
+            data={MOCK_HEART_RATE_DATA}
             duration={duration}
-            currentTime={currentTime}
+            playbackState={playbackState}
             zoom={zoom}
             scrollOffset={scrollOffset}
             color="#ef4444"
@@ -189,9 +191,9 @@ export function Timeline({
           <TimelineTrack
             label="Respiration"
             type="signal"
-            data={respirationData}
+            data={MOCK_RESPIRATION_DATA}
             duration={duration}
-            currentTime={currentTime}
+            playbackState={playbackState}
             zoom={zoom}
             scrollOffset={scrollOffset}
             color="#3b82f6"
@@ -200,9 +202,9 @@ export function Timeline({
           <TimelineTrack
             label="Skin Conductance"
             type="signal"
-            data={skinConductanceData}
+            data={MOCK_SKIN_CONDUCTANCE_DATA}
             duration={duration}
-            currentTime={currentTime}
+            playbackState={playbackState}
             zoom={zoom}
             scrollOffset={scrollOffset}
             color="#22c55e"
@@ -213,7 +215,7 @@ export function Timeline({
             type="markers"
             markers={allMarkers}
             duration={duration}
-            currentTime={currentTime}
+            playbackState={playbackState}
             zoom={zoom}
             scrollOffset={scrollOffset}
           />

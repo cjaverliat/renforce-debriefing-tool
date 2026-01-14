@@ -1,4 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
+import type {PlaybackState} from "@/shared/types/playback.ts";
+import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
 
 interface TimelineTrackProps {
   label: string;
@@ -6,7 +8,7 @@ interface TimelineTrackProps {
   data?: number[];
   markers?: Array<{ time: number; label: string; color: string }>;
   duration: number;
-  currentTime: number;
+  playbackState: PlaybackState;
   zoom: number;
   scrollOffset: number;
   color?: string;
@@ -18,14 +20,17 @@ export function TimelineTrack({
   data,
   markers,
   duration,
-  currentTime,
+  playbackState,
   zoom,
   scrollOffset,
   color = '#3b82f6',
 }: TimelineTrackProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const signalCanvasRef = useRef<HTMLCanvasElement>(null);
+  const playheadCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  const playbackTime = usePlaybackTime(playbackState, { maxTime: duration });
 
   // Track container size changes
   useEffect(() => {
@@ -43,8 +48,9 @@ export function TimelineTrack({
     return () => resizeObserver.disconnect();
   }, []);
 
+  // Draw signals/markers (static content) - only when data changes
   useEffect(() => {
-    const canvas = canvasRef.current;
+    const canvas = signalCanvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
@@ -52,10 +58,10 @@ export function TimelineTrack({
 
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    
+
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
-    
+
     ctx.scale(dpr, dpr);
 
     // Clear canvas
@@ -71,7 +77,7 @@ export function TimelineTrack({
       const pixelsPerSecond = (rect.width / duration) * zoom;
       const startTime = scrollOffset / pixelsPerSecond;
       const endTime = startTime + (rect.width / pixelsPerSecond);
-      
+
       const startIndex = Math.floor((startTime / duration) * data.length);
       const endIndex = Math.ceil((endTime / duration) * data.length);
       const visibleData = data.slice(startIndex, endIndex);
@@ -79,7 +85,7 @@ export function TimelineTrack({
       visibleData.forEach((value, index) => {
         const x = (index / visibleData.length) * rect.width;
         const y = rect.height / 2 + (value * rect.height / 4);
-        
+
         if (index === 0) {
           ctx.moveTo(x, y);
         } else {
@@ -95,7 +101,7 @@ export function TimelineTrack({
 
       markers.forEach((marker) => {
         const x = (marker.time - startTime) * pixelsPerSecond;
-        
+
         if (x >= 0 && x <= rect.width) {
           // Draw marker line
           ctx.strokeStyle = marker.color;
@@ -112,11 +118,31 @@ export function TimelineTrack({
         }
       });
     }
+  }, [data, markers, duration, zoom, scrollOffset, color, type, containerSize]);
+
+  // Draw playhead (overlay) - updates frequently
+  useEffect(() => {
+    const canvas = playheadCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    ctx.scale(dpr, dpr);
+
+    // Clear canvas (transparent)
+    ctx.clearRect(0, 0, rect.width, rect.height);
 
     // Draw playhead
     const pixelsPerSecond = (rect.width / duration) * zoom;
     const startTime = scrollOffset / pixelsPerSecond;
-    const playheadX = (currentTime - startTime) * pixelsPerSecond;
+    const playheadX = (playbackTime - startTime) * pixelsPerSecond;
 
     if (playheadX >= 0 && playheadX <= rect.width) {
       ctx.strokeStyle = '#ef4444';
@@ -126,7 +152,7 @@ export function TimelineTrack({
       ctx.lineTo(playheadX, rect.height);
       ctx.stroke();
     }
-  }, [data, markers, duration, currentTime, zoom, scrollOffset, color, type, containerSize]);
+  }, [duration, playbackTime, zoom, scrollOffset, containerSize]);
 
   return (
     <div className="flex border-b border-zinc-800">
@@ -135,8 +161,13 @@ export function TimelineTrack({
       </div>
       <div ref={containerRef} className="flex-1 relative">
         <canvas
-          ref={canvasRef}
-          className="w-full h-16"
+          ref={signalCanvasRef}
+          className="inset-0 w-full h-16"
+          style={{ width: '100%', height: '64px' }}
+        />
+        <canvas
+          ref={playheadCanvasRef}
+          className="absolute inset-0 w-full h-16 pointer-events-none"
           style={{ width: '100%', height: '64px' }}
         />
       </div>

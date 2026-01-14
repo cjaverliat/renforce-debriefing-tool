@@ -1,131 +1,130 @@
-import { app, BrowserWindow, protocol, net } from 'electron';
+import {app, BrowserWindow, protocol} from 'electron';
 import started from 'electron-squirrel-startup';
 import path from 'node:path';
-import { access, constants } from 'node:fs';
+import {registerIPCHandlers} from './ipc';
+import * as fs from "node:fs";
+import mime from 'mime-types';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
-  app.quit();
+    app.quit();
 }
 
 const createWindow = () => {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-    },
-  });
+    // Create the browser window.
+    const mainWindow = new BrowserWindow({
+        width: 1400,
+        height: 900,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+        },
+    });
 
-  // and load the index.html of the app.
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
-    );
-  }
+    // and load the index.html of the app.
+    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+        mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+    } else {
+        mainWindow.loadFile(
+            path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
+        );
+    }
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+    // Open the DevTools.
+    mainWindow.webContents.openDevTools();
 };
 
-// Register IPC handlers
-import { registerIPCHandlers } from './ipc';
+export const MediaFileProtocolName = 'media';
+export const MediaFileProtocol = process.platform === 'win32' ? `${MediaFileProtocolName}:///` : `${MediaFileProtocolName}:/`
 
-// Register protocol as privileged before app ready
 protocol.registerSchemesAsPrivileged([
-  {
-    scheme: 'media',
-    privileges: {
-      standard: true,
-      secure: true,
-      supportFetchAPI: true,
-      stream: true,
-      corsEnabled: false,
-      bypassCSP: false,
-    },
-  },
-]);
-
-// Register protocol before app is ready
-app.whenReady().then(() => {
-  // Register custom protocol for loading local video files
-  protocol.handle('media', async (request) => {
-    try {
-      const url = request.url;
-      // Remove 'media://' prefix - handle both media:// and media:/// forms
-      let filePath = url.replace(/^media:\/\//, '');
-      filePath = decodeURIComponent(filePath);
-
-      // Ensure absolute path starts with /
-      if (!filePath.startsWith('/') && !filePath.match(/^[A-Za-z]:/)) {
-        filePath = '/' + filePath;
-      }
-
-      console.log('Protocol handler called with URL:', url);
-      console.log('Resolved file path:', filePath);
-
-      // Verify file exists and is readable
-      await new Promise<void>((resolve, reject) => {
-        access(filePath, constants.R_OK, (err) => {
-          if (err) reject(new Error(`File not accessible: ${filePath}`));
-          else resolve();
-        });
-      });
-
-      console.log('File is accessible, loading via net.fetch');
-
-      // Use net.fetch with proper file:// URL format
-      // Ensure the path starts with / for absolute paths
-      const fileUrl = `file://${filePath.startsWith('/') ? '' : '/'}${filePath}`;
-      console.log('Loading from file URL:', fileUrl);
-
-      const response = await net.fetch(fileUrl);
-
-      console.log('Video loaded successfully:', {
-        status: response.status,
-        contentType: response.headers.get('content-type'),
-        contentLength: response.headers.get('content-length'),
-      });
-
-      return response;
-    } catch (error) {
-      console.error('Error in media protocol handler:', error);
-      return new Response(
-        JSON.stringify({
-          error: 'Failed to load video',
-          message: error instanceof Error ? error.message : String(error),
-        }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
+    {
+        scheme: MediaFileProtocolName,
+        privileges: {
+            standard: true,
+            secure: true,
+            bypassCSP: true,
+            allowServiceWorkers: true,
+            supportFetchAPI: true,
+            stream: true,
+            corsEnabled: true
         }
-      );
     }
-  });
+])
 
-  registerIPCHandlers();
-  createWindow();
+app.whenReady().then(() => {
+
+    protocol.handle(MediaFileProtocolName, function (request) {
+            try {
+                const url = request.url.slice(MediaFileProtocol.length)
+                const filePath = path.normalize(decodeURIComponent(url))
+
+                if (!fs.existsSync(filePath)) {
+                    return new Response('File not found', {status: 404})
+                }
+
+                const mimeType = mime.lookup(filePath) || 'application/octet-stream'
+
+                const stat = fs.statSync(filePath)
+                const fileSize = stat.size
+                const range = request.headers.get('range')
+
+                const headers: Record<string, string> = {
+                    'Content-Type': mimeType,
+                    'Accept-Ranges': 'bytes'
+                }
+
+                if (range) {
+                    const parts = range.replace(/bytes=/, '').split('-')
+                    const start = parseInt(parts[0], 10)
+                    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1
+
+                    if (start >= fileSize || end >= fileSize) {
+                        return new Response(null, {status: 416, headers})
+                    }
+
+                    const chunksize = end - start + 1
+
+                    const stream = fs.createReadStream(filePath, {start, end})
+
+                    headers['Content-Range'] = `bytes ${start}-${end}/${fileSize}`
+                    headers['Content-Length'] = chunksize.toString()
+
+                    return new Response(stream as unknown as BodyInit, {
+                        status: 206,
+                        headers
+                    });
+                } else {
+                    const stream = fs.createReadStream(filePath)
+                    headers['Content-Length'] = fileSize.toString()
+
+                    return new Response(stream as unknown as BodyInit, {
+                        status: 200,
+                        headers
+                    })
+                }
+            } catch (error) {
+                return new Response('Internal Server Error: ' + (error as Error).message, {status: 500})
+            }
+        }
+    )
+
+    registerIPCHandlers();
+    createWindow();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
 });
 
 app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+    // On OS X it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+    }
 });
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.

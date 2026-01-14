@@ -1,129 +1,96 @@
-import { useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, Maximize2 } from 'lucide-react';
-import { Button } from '@/renderer/components/ui/button';
+import {useRef, useEffect} from 'react';
+import type {PlaybackState} from '@/shared/types/playback';
+import {computeCurrentTime} from '@/shared/types/playback';
 
 interface VideoPlayerProps {
-  isPlaying: boolean;
-  currentTime: number;
-  duration: number;
-  videoSrc?: string;
-  onPlayPause: () => void;
-  onTimeUpdate: (time: number) => void;
-  onDurationChange: (duration: number) => void;
+    videoSrc?: string;
+    playbackState: PlaybackState;
+    duration: number;
 }
 
 export function VideoPlayer({
-  isPlaying,
-  currentTime,
-  videoSrc,
-  onPlayPause,
-  onTimeUpdate,
-  onDurationChange,
-}: VideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+                                videoSrc,
+                                playbackState,
+                                duration,
+                            }: VideoPlayerProps) {
 
-  useEffect(() => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.play().catch((err) => {
-          console.error('Play failed:', err);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const lastAnchorTimestampRef = useRef<number>(0);
+
+    // Sync playback rate to video element
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        video.playbackRate = playbackState.speed;
+    }, [playbackState.speed]);
+
+    // Sync play/pause state to video element
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        if (playbackState.isPlaying) {
+            video.play().catch((err) => {
+                console.error('Play failed:', err);
+            });
+        } else {
+            video.pause();
+        }
+    }, [playbackState.isPlaying]);
+
+    // Seek when anchor changes (user-initiated seek)
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        if (playbackState.anchorTimestamp !== lastAnchorTimestampRef.current) {
+            lastAnchorTimestampRef.current = playbackState.anchorTimestamp;
+            video.currentTime = playbackState.anchorTime;
+        }
+    }, [playbackState.anchorTime, playbackState.anchorTimestamp]);
+
+    // Periodic drift correction (no React state updates)
+    useEffect(() => {
+        if (!playbackState.isPlaying) return;
+
+        const checkSync = () => {
+            const video = videoRef.current;
+            if (!video) return;
+
+            const expectedTime = Math.min(computeCurrentTime(playbackState), duration);
+            const drift = Math.abs(video.currentTime - expectedTime);
+
+            if (drift > 0.2) {
+                video.currentTime = expectedTime;
+            }
+        };
+
+        const intervalId = setInterval(checkSync, 1000);
+        return () => clearInterval(intervalId);
+    }, [playbackState, duration]);
+
+    const handleError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+        const video = e.currentTarget;
+        console.error('Video error:', {
+            error: video.error,
+            errorCode: video.error?.code,
+            errorMessage: video.error?.message,
+            src: videoSrc,
+            readyState: video.readyState,
+            networkState: video.networkState,
         });
-        videoRef.current.play();
-      } else {
-        videoRef.current.pause();
-      }
-    }
-  }, [isPlaying]);
+    };
 
-  useEffect(() => {
-    if (videoRef.current && Math.abs(videoRef.current.currentTime - currentTime) > 0.5) {
-      videoRef.current.currentTime = currentTime;
-    }
-  }, [currentTime]);
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      onTimeUpdate(videoRef.current.currentTime);
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      onDurationChange(videoRef.current.duration);
-    }
-  };
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-    }
-  };
-
-  const toggleFullscreen = () => {
-    if (videoRef.current) {
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        videoRef.current.requestFullscreen();
-      }
-    }
-  };
-
-  const handleError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-    const video = e.currentTarget;
-    console.error('Video error:', {
-      error: video.error,
-      errorCode: video.error?.code,
-      errorMessage: video.error?.message,
-      src: videoSrc,
-      readyState: video.readyState,
-      networkState: video.networkState,
-    });
-  };
-
-  return (
-    <div className="relative w-full h-full bg-black rounded-lg overflow-hidden group">
-      <video
-        ref={videoRef}
-        className="w-full h-full object-contain"
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onError={handleError}
-        src={videoSrc}
-      />
-      
-      <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onPlayPause}
-            className="text-white hover:bg-white/20"
-          >
-            {isPlaying ? <Pause className="size-5" /> : <Play className="size-5" />}
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleMute}
-            className="text-white hover:bg-white/20"
-          >
-            <Volume2 className="size-5" />
-          </Button>
-          
-          <div className="flex-1" />
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleFullscreen}
-            className="text-white hover:bg-white/20"
-          >
-            <Maximize2 className="size-5" />
-          </Button>
+    return (
+        <div className="flex w-full h-full bg-black overflow-hidden">
+            <video
+                ref={videoRef}
+                onError={handleError}
+                src={videoSrc}
+                className="rounded-lg object-contain mx-auto my-auto"
+                style={{ touchAction: 'none', maxWidth: '100%', maxHeight: '100%' }}
+            />
         </div>
-      </div>
-    </div>
-  );
+    );
 }

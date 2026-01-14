@@ -31,6 +31,7 @@
     "@eslint/js": "^9.39.2",
     "@tailwindcss/vite": "^4.1.18",
     "@types/electron-squirrel-startup": "^1.0.2",
+    "@types/mime-types": "^3.0.1",
     "@types/protobufjs": "^6.0.0",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
