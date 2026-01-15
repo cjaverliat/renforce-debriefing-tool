@@ -1,9 +1,11 @@
 import { Play, Pause, SkipBack, SkipForward, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
+import {PlaybackState} from "@/shared/types/playback.ts";
+import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
 
 interface TimelineControlsProps {
   isPlaying: boolean;
-  currentTime: number;
+  playbackState: PlaybackState;
   duration: number;
   zoom: number;
   onPlayPause: () => void;
@@ -15,7 +17,7 @@ interface TimelineControlsProps {
 
 export function TimelineControls({
   isPlaying,
-  currentTime,
+  playbackState,
   duration,
   zoom,
   onPlayPause,
@@ -29,6 +31,8 @@ export function TimelineControls({
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  const playbackTime = usePlaybackTime(playbackState, { maxTime: duration });
 
   return (
     <div className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border-b border-zinc-800">
@@ -62,7 +66,7 @@ export function TimelineControls({
       </div>
 
       <div className="text-sm text-zinc-400 font-mono">
-        {formatTime(currentTime)} / {formatTime(duration)}
+        {formatTime(playbackTime)} / {formatTime(duration)}
       </div>
 
       <div className="flex-1" />

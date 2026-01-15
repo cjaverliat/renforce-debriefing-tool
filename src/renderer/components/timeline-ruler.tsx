@@ -1,8 +1,10 @@
 import {useRef, useEffect, useState} from 'react';
+import {PlaybackState} from "@/shared/types/playback.ts";
+import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
 
 interface TimelineRulerProps {
     duration: number;
-    currentTime: number;
+    playbackState: PlaybackState;
     zoom: number;
     scrollOffset: number;
     onSeek: (time: number) => void;
@@ -10,7 +12,7 @@ interface TimelineRulerProps {
 
 export function TimelineRuler({
                                   duration,
-                                  currentTime,
+                                  playbackState,
                                   zoom,
                                   scrollOffset,
                                   onSeek,
@@ -18,6 +20,8 @@ export function TimelineRuler({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const isDragging = useRef(false);
+
+    const playbackTime = usePlaybackTime(playbackState, { maxTime: duration });
 
     const [containerSize, setContainerSize] = useState({width: 0, height: 0});
 
@@ -117,7 +121,7 @@ export function TimelineRuler({
         }
 
         // Draw playhead
-        const playheadX = (currentTime - startTime) * pixelsPerSecond;
+        const playheadX = (playbackTime - startTime) * pixelsPerSecond;
         if (playheadX >= 0 && playheadX <= rect.width) {
             ctx.fillStyle = '#ef4444';
             ctx.beginPath();
@@ -127,7 +131,7 @@ export function TimelineRuler({
             ctx.closePath();
             ctx.fill();
         }
-    }, [duration, currentTime, zoom, scrollOffset, containerSize]);
+    }, [duration, playbackTime, zoom, scrollOffset, containerSize]);
 
     const seekToMouse = (e: React.MouseEvent<HTMLCanvasElement>) => {
         const canvas = canvasRef.current;

@@ -10,7 +10,7 @@ import {LoadingPanel} from '@/renderer/components/loading-panel';
 import {useAutoSave} from '@/renderer/hooks/use-auto-save';
 import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
 import type {LoadedSession, PLMDData} from '@/shared/types/session';
-import {type PlaybackState, createInitialPlaybackState} from '@/shared/types/playback';
+import {type PlaybackState, createInitialPlaybackState, computeCurrentTime} from '@/shared/types/playback';
 import {VideoPlayer} from "@/renderer/components/video-player.tsx";
 
 type AppMode = 'loading' | 'session';
@@ -42,11 +42,9 @@ export function App() {
             : new Date(),
     };
 
-    // const videoSrc = sessionState
-    //     ? `media://${sessionState.videoPath}`
-    //     : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-
-    const videoSrc = "media:///home/charles/Downloads/BigBuckBunny.mp4"
+    const videoSrc = sessionState
+        ? `media://${sessionState.videoPath}`
+        : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
 
     const handleSessionLoaded = (session: LoadedSession) => {
         setSessionState(session);
@@ -57,10 +55,16 @@ export function App() {
     };
 
     const handlePlayPause = () => {
-        setPlaybackState(prev => ({
-            ...prev,
-            isPlaying: !prev.isPlaying,
-        }));
+        setPlaybackState(prev => {
+            const now = performance.now();
+            const currentTime = computeCurrentTime(prev, now);
+            return {
+                ...prev,
+                anchorTime: currentTime,
+                anchorTimestamp: now,
+                isPlaying: !prev.isPlaying,
+            };
+        });
     };
 
     const handleSeek = (time: number) => {
@@ -73,10 +77,16 @@ export function App() {
 
     const handleAddAnnotation = () => {
         // Pause video when adding annotation
-        setPlaybackState(prev => ({
-            ...prev,
-            isPlaying: false,
-        }));
+        setPlaybackState(prev => {
+            const now = performance.now();
+            const currentTime = computeCurrentTime(prev, now);
+            return {
+                ...prev,
+                anchorTime: currentTime,
+                anchorTimestamp: now,
+                isPlaying: false,
+            };
+        });
         setIsAnnotationDialogOpen(true);
     };
 

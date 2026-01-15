@@ -5,6 +5,7 @@ import { TimelineTrack } from '@/renderer/components/timeline-track';
 import type { Annotation } from '@/renderer/components/annotations-panel';
 import type { PlaybackState } from '@/shared/types/playback';
 import { usePlaybackTime } from '@/renderer/hooks/use-playback-time';
+import { computeCurrentTime } from "@/shared/types/playback";
 
 // Generate mock physiological data once at module load
 function generateSignalData(duration: number, frequency: number, amplitude: number, samples = 1000) {
@@ -315,7 +316,7 @@ export function Timeline({
     <div className="flex flex-col h-full bg-zinc-900">
       <TimelineControls
         isPlaying={isPlaying}
-        currentTime={playbackTime}
+        playbackState={playbackState}
         duration={duration}
         zoom={zoom}
         onPlayPause={onPlayPause}
@@ -334,7 +335,7 @@ export function Timeline({
         <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
           <TimelineRuler
             duration={duration}
-            currentTime={playbackTime}
+            playbackState={playbackState}
             zoom={zoom}
             scrollOffset={scrollOffset}
             onSeek={onSeek}
