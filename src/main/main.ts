@@ -1,4 +1,4 @@
-import {app, BrowserWindow, protocol} from 'electron';
+import {app, BrowserWindow, Menu, protocol} from 'electron';
 import started from 'electron-squirrel-startup';
 import path from 'node:path';
 import {registerIPCHandlers} from './ipc';
@@ -13,6 +13,7 @@ if (started) {
 const createWindow = () => {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
+        title: 'RENFORCE - Debriefing tool',
         width: 1400,
         height: 900,
         webPreferences: {
@@ -52,6 +53,7 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 app.whenReady().then(() => {
+    Menu.setApplicationMenu(null);
 
     protocol.handle(MediaFileProtocolName, function (request) {
             try {

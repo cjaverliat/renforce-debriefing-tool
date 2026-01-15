@@ -107,7 +107,7 @@ export function LoadingPanel({ onSessionLoaded }: LoadingPanelProps) {
             Renforce Debriefing
           </h1>
           <p className="text-zinc-400">
-            Video Annotation & Analysis Tool
+            Annotation & Debriefing Tool
           </p>
         </div>
 
