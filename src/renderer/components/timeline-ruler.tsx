@@ -52,17 +52,12 @@ export function TimelineRuler({
 
         ctx.scale(dpr, dpr);
 
-        // Clear canvas
-        ctx.fillStyle = '#27272a';
-        ctx.fillRect(0, 0, rect.width, rect.height);
-
         const pixelsPerSecond = (rect.width / duration) * zoom;
         const startTime = scrollOffset / pixelsPerSecond;
-        const endTime = startTime + (rect.width / pixelsPerSecond);
 
         // Determine tick interval based on zoom
-        let majorTickInterval = 10;
-        let minorTickInterval = 1;
+        let majorTickInterval: number;
+        let minorTickInterval: number;
 
         if (zoom > 3) {
             majorTickInterval = 5;
@@ -71,18 +66,34 @@ export function TimelineRuler({
             majorTickInterval = 10;
             minorTickInterval = 2;
         } else {
-            majorTickInterval = 30;
-            minorTickInterval = 5;
+            majorTickInterval = 60;
+            minorTickInterval = 10;
         }
 
+        const recordWidth = duration * pixelsPerSecond;
+        const visibleWidth = rect.width;
+        const visibleDuration = visibleWidth / pixelsPerSecond;
+
+        // Clear canvas
+        ctx.fillStyle = '#18181b';
+        ctx.fillRect(0, 0, visibleWidth, rect.height);
+        ctx.fillStyle = '#27272a';
+        ctx.fillRect(0, 0, recordWidth, rect.height);
+
         // Draw ticks
-        for (let time = 0; time <= duration; time += minorTickInterval) {
-            if (time < startTime || time > endTime) continue;
+        for (let time = 0; time <= visibleDuration; time += minorTickInterval) {
 
             const x = (time - startTime) * pixelsPerSecond;
             const isMajor = time % majorTickInterval === 0;
 
-            ctx.strokeStyle = isMajor ? '#71717a' : '#3f3f46';
+            const outsideTimeRange = time > duration;
+
+            if (outsideTimeRange) {
+                ctx.strokeStyle = '#26262b';
+            } else {
+                ctx.strokeStyle = isMajor ? '#71717a' : '#3f3f46';
+            }
+
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(x, rect.height);
@@ -95,7 +106,12 @@ export function TimelineRuler({
                 const secs = Math.floor(time % 60);
                 const label = `${mins}:${secs.toString().padStart(2, '0')}`;
 
-                ctx.fillStyle = '#a1a1aa';
+                if (outsideTimeRange) {
+                    ctx.fillStyle = '#464650';
+                } else {
+                    ctx.fillStyle = '#a1a1aa';
+                }
+
                 ctx.font = '10px sans-serif';
                 ctx.fillText(label, x + 2, 10);
             }
