@@ -10,7 +10,7 @@ import { usePlaybackTime } from '@/renderer/hooks/use-playback-time';
 function generateSignalData(frequency: number, amplitude: number, samples = 1000) {
   return Array.from({ length: samples }, (_, i) => {
     const t = i / samples;
-    return Math.sin(t * frequency * 100) * amplitude + Math.random() * 0.1;
+    return Math.sin(t * frequency * 100) * amplitude;
   });
 }
 
