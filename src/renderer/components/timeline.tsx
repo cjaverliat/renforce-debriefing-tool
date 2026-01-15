@@ -7,16 +7,18 @@ import type { PlaybackState } from '@/shared/types/playback';
 import { usePlaybackTime } from '@/renderer/hooks/use-playback-time';
 
 // Generate mock physiological data once at module load
-function generateSignalData(frequency: number, amplitude: number, samples = 1000) {
+function generateSignalData(duration: number, frequency: number, amplitude: number, samples = 1000) {
   return Array.from({ length: samples }, (_, i) => {
-    const t = i / samples;
-    return Math.sin(t * frequency * 100) * amplitude;
+    const time = (i / samples) * duration;
+    const value = Math.sin((i / samples) * frequency * 100) * amplitude;
+    return { time, value };
   });
 }
 
-const MOCK_HEART_RATE_DATA = generateSignalData(2, 0.8);
-const MOCK_RESPIRATION_DATA = generateSignalData(0.5, 0.6);
-const MOCK_SKIN_CONDUCTANCE_DATA = generateSignalData(0.3, 0.4);
+const MOCK_DURATION = 60 * 10; // seconds
+const MOCK_HEART_RATE_DATA = generateSignalData(MOCK_DURATION, 2, 0.8);
+const MOCK_RESPIRATION_DATA = generateSignalData(MOCK_DURATION, 0.5, 0.6);
+const MOCK_SKIN_CONDUCTANCE_DATA = generateSignalData(MOCK_DURATION, 0.3, 0.4);
 
 const SYSTEM_MARKERS = [
   { time: 15, label: 'Start', color: '#22c55e' },
@@ -24,6 +26,175 @@ const SYSTEM_MARKERS = [
   { time: 90, label: 'Phase 3', color: '#f59e0b' },
   { time: 120, label: 'End', color: '#a855f7' },
 ];
+
+// Signal track content component
+interface SignalContentProps {
+  data: Array<{ time: number; value: number }>;
+  duration: number;
+  zoom: number;
+  scrollOffset: number;
+  color: string;
+}
+
+function SignalContent({ data, duration, zoom, scrollOffset, color }: SignalContentProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setContainerSize({ width, height });
+      }
+    });
+
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    ctx.scale(dpr, dpr);
+
+    // Clear canvas
+    ctx.fillStyle = '#18181b';
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    // Draw signal waveform
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+
+    // Calculate visible time range
+    const pixelsPerSecond = (rect.width / duration) * zoom;
+    const startTime = scrollOffset / pixelsPerSecond;
+    const endTime = startTime + (rect.width / pixelsPerSecond);
+
+    // Filter to visible samples and draw at correct positions
+    let isFirstPoint = true;
+    for (const sample of data) {
+      // Skip samples outside visible range (with small margin)
+      if (sample.time < startTime - 1 || sample.time > endTime + 1) continue;
+
+      const x = (sample.time - startTime) * pixelsPerSecond;
+      const y = rect.height / 2 + (sample.value * rect.height / 4);
+
+      if (isFirstPoint) {
+        ctx.moveTo(x, y);
+        isFirstPoint = false;
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+
+    ctx.stroke();
+  }, [data, duration, zoom, scrollOffset, color, containerSize]);
+
+  return (
+    <div ref={containerRef} className="w-full h-16">
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full"
+      />
+    </div>
+  );
+}
+
+// Marker track content component
+interface MarkerContentProps {
+  markers: Array<{ time: number; label: string; color: string }>;
+  duration: number;
+  zoom: number;
+  scrollOffset: number;
+}
+
+function MarkerContent({ markers, duration, zoom, scrollOffset }: MarkerContentProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setContainerSize({ width, height });
+      }
+    });
+
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    ctx.scale(dpr, dpr);
+
+    // Clear canvas
+    ctx.fillStyle = '#18181b';
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    // Draw markers
+    const pixelsPerSecond = (rect.width / duration) * zoom;
+    const startTime = scrollOffset / pixelsPerSecond;
+
+    markers.forEach((marker) => {
+      const x = (marker.time - startTime) * pixelsPerSecond;
+
+      if (x >= 0 && x <= rect.width) {
+        // Draw marker line
+        ctx.strokeStyle = marker.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, rect.height);
+        ctx.stroke();
+
+        // Draw marker label
+        ctx.fillStyle = marker.color;
+        ctx.font = '10px sans-serif';
+        ctx.fillText(marker.label, x + 4, 14);
+      }
+    });
+  }, [markers, duration, zoom, scrollOffset, containerSize]);
+
+  return (
+    <div ref={containerRef} className="w-full h-16">
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full"
+      />
+    </div>
+  );
+}
 
 interface TimelineProps {
   playbackState: PlaybackState;
@@ -178,42 +349,66 @@ export function Timeline({
       >
         <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
           <TimelineTrack
-            label="Heart Rate"
-            type="signal"
-            data={MOCK_HEART_RATE_DATA}
+            labelSlot={<span className="text-xs text-zinc-400">Heart Rate</span>}
+            contentSlot={
+              <SignalContent
+                data={MOCK_HEART_RATE_DATA}
+                duration={duration}
+                zoom={zoom}
+                scrollOffset={scrollOffset}
+                color="#ef4444"
+              />
+            }
             duration={duration}
             playbackState={playbackState}
             zoom={zoom}
             scrollOffset={scrollOffset}
-            color="#ef4444"
           />
 
           <TimelineTrack
-            label="Respiration"
-            type="signal"
-            data={MOCK_RESPIRATION_DATA}
+            labelSlot={<span className="text-xs text-zinc-400">Respiration</span>}
+            contentSlot={
+              <SignalContent
+                data={MOCK_RESPIRATION_DATA}
+                duration={duration}
+                zoom={zoom}
+                scrollOffset={scrollOffset}
+                color="#3b82f6"
+              />
+            }
             duration={duration}
             playbackState={playbackState}
             zoom={zoom}
             scrollOffset={scrollOffset}
-            color="#3b82f6"
           />
 
           <TimelineTrack
-            label="Skin Conductance"
-            type="signal"
-            data={MOCK_SKIN_CONDUCTANCE_DATA}
+            labelSlot={<span className="text-xs text-zinc-400">Skin Conductance</span>}
+            contentSlot={
+              <SignalContent
+                data={MOCK_SKIN_CONDUCTANCE_DATA}
+                duration={duration}
+                zoom={zoom}
+                scrollOffset={scrollOffset}
+                color="#22c55e"
+              />
+            }
             duration={duration}
             playbackState={playbackState}
             zoom={zoom}
             scrollOffset={scrollOffset}
-            color="#22c55e"
           />
 
           <TimelineTrack
-            label="Markers"
-            type="markers"
-            markers={allMarkers}
+            labelSlot={<span className="text-xs text-zinc-400">Markers</span>}
+            contentSlot={
+              <MarkerContent
+                markers={allMarkers}
+                duration={duration}
+                zoom={zoom}
+                scrollOffset={scrollOffset}
+              />
+            }
             duration={duration}
             playbackState={playbackState}
             zoom={zoom}

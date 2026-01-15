@@ -71,17 +71,16 @@ export function TimelineRuler({
         }
 
         const recordWidth = duration * pixelsPerSecond;
-        const visibleWidth = rect.width;
-        const visibleDuration = visibleWidth / pixelsPerSecond;
+        const endTime = (scrollOffset + rect.width) / pixelsPerSecond;
 
         // Clear canvas
         ctx.fillStyle = '#18181b';
-        ctx.fillRect(0, 0, visibleWidth, rect.height);
+        ctx.fillRect(0, 0, rect.width, rect.height);
         ctx.fillStyle = '#27272a';
         ctx.fillRect(0, 0, recordWidth, rect.height);
 
         // Draw ticks
-        for (let time = 0; time <= visibleDuration; time += minorTickInterval) {
+        for (let time = 0; time <= endTime; time += minorTickInterval) {
 
             const x = (time - startTime) * pixelsPerSecond;
             const isMajor = time % majorTickInterval === 0;
