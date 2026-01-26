@@ -3,20 +3,20 @@ import type { PlaybackState } from '@/shared/types/playback.ts';
 import { usePlaybackTime } from '@/renderer/hooks/use-playback-time.ts';
 
 interface TimelineTrackProps {
-  labelSlot: ReactNode;
   contentSlot: ReactNode;
   duration: number;
   playbackState: PlaybackState;
   zoom: number;
+  contentWidth: number;
   scrollOffset: number;
 }
 
 export function TimelineTrack({
-  labelSlot,
   contentSlot,
   duration,
   playbackState,
   zoom,
+  contentWidth,
   scrollOffset,
 }: TimelineTrackProps) {
   const playheadCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -61,7 +61,7 @@ export function TimelineTrack({
     ctx.clearRect(0, 0, rect.width, rect.height);
 
     // Draw playhead
-    const pixelsPerSecond = (rect.width / duration) * zoom;
+    const pixelsPerSecond = contentWidth / duration;
     const startTime = scrollOffset / pixelsPerSecond;
     const playheadX = (playbackTime - startTime) * pixelsPerSecond;
 
@@ -73,20 +73,15 @@ export function TimelineTrack({
       ctx.lineTo(playheadX, rect.height);
       ctx.stroke();
     }
-  }, [duration, playbackTime, zoom, scrollOffset, containerSize]);
+  }, [duration, playbackTime, zoom, contentWidth, scrollOffset, containerSize]);
 
   return (
-    <div className="flex border-b border-zinc-800">
-      <div className="w-32 shrink-0 bg-zinc-900 border-r border-zinc-800 px-3 py-2 flex items-center sticky left-0 z-10">
-        {labelSlot}
-      </div>
-      <div ref={containerRef} className="flex-1 relative">
-        {contentSlot}
-        <canvas
-          ref={playheadCanvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-none"
-        />
-      </div>
+    <div ref={containerRef} className="relative border-b border-zinc-800">
+      {contentSlot}
+      <canvas
+        ref={playheadCanvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+      />
     </div>
   );
 }

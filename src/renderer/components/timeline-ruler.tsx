@@ -1,45 +1,26 @@
-import {useRef, useEffect, useState} from 'react';
+import {useRef, useEffect, type RefObject} from 'react';
 import {PlaybackState} from "@/shared/types/playback.ts";
 import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
 
 interface TimelineRulerProps {
     duration: number;
     playbackState: PlaybackState;
-    zoom: number;
-    scrollOffset: number;
+    pixelsPerSecond: number;
     onSeek: (time: number) => void;
+    scrollRef?: RefObject<HTMLDivElement | null>;
 }
 
 export function TimelineRuler({
-                                  duration,
-                                  playbackState,
-                                  zoom,
-                                  scrollOffset,
-                                  onSeek,
-                              }: TimelineRulerProps) {
+    duration,
+    playbackState,
+                                  pixelsPerSecond,
+    onSeek,
+    scrollRef,
+}: TimelineRulerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
     const isDragging = useRef(false);
 
     const playbackTime = usePlaybackTime(playbackState, { maxTime: duration });
-
-    const [containerSize, setContainerSize] = useState({width: 0, height: 0});
-
-    // Track container size changes
-    useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-
-        const resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                const {width, height} = entry.contentRect;
-                setContainerSize({width, height});
-            }
-        });
-
-        resizeObserver.observe(container);
-        return () => resizeObserver.disconnect();
-    }, []);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -56,17 +37,14 @@ export function TimelineRuler({
 
         ctx.scale(dpr, dpr);
 
-        const pixelsPerSecond = (rect.width / duration) * zoom;
-        const startTime = scrollOffset / pixelsPerSecond;
-
         // Determine tick interval based on zoom
         let majorTickInterval: number;
         let minorTickInterval: number;
 
-        if (zoom > 3) {
+        if (pixelsPerSecond > 10) {
             majorTickInterval = 5;
             minorTickInterval = 1;
-        } else if (zoom > 1.5) {
+        } else if (pixelsPerSecond > 15) {
             majorTickInterval = 10;
             minorTickInterval = 2;
         } else {
@@ -75,7 +53,7 @@ export function TimelineRuler({
         }
 
         const recordWidth = duration * pixelsPerSecond;
-        const endTime = (scrollOffset + rect.width) / pixelsPerSecond;
+        const endTime = rect.width / pixelsPerSecond;
 
         // Clear canvas
         ctx.fillStyle = '#18181b';
@@ -86,7 +64,7 @@ export function TimelineRuler({
         // Draw ticks
         for (let time = 0; time <= endTime; time += minorTickInterval) {
 
-            const x = (time - startTime) * pixelsPerSecond;
+            const x = time * pixelsPerSecond;
             const isMajor = time % majorTickInterval === 0;
 
             const outsideTimeRange = time > duration;
@@ -121,7 +99,7 @@ export function TimelineRuler({
         }
 
         // Draw playhead
-        const playheadX = (playbackTime - startTime) * pixelsPerSecond;
+        const playheadX = playbackTime * pixelsPerSecond;
         if (playheadX >= 0 && playheadX <= rect.width) {
             ctx.fillStyle = '#ef4444';
             ctx.beginPath();
@@ -131,7 +109,7 @@ export function TimelineRuler({
             ctx.closePath();
             ctx.fill();
         }
-    }, [duration, playbackTime, zoom, scrollOffset, containerSize]);
+    }, [duration, playbackTime, pixelsPerSecond]);
 
     const seekToMouse = (e: React.MouseEvent<HTMLCanvasElement>) => {
         const canvas = canvasRef.current;
@@ -139,9 +117,7 @@ export function TimelineRuler({
 
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
-        const pixelsPerSecond = (rect.width / duration) * zoom;
-        const startTime = scrollOffset / pixelsPerSecond;
-        const time = startTime + (x / pixelsPerSecond);
+        const time = x / pixelsPerSecond;
 
         onSeek(Math.max(0, Math.min(duration, time)));
     };
@@ -161,19 +137,19 @@ export function TimelineRuler({
     };
 
     return (
-        <div className="flex border-b border-zinc-800">
-            <div className="w-32 shrink-0 bg-zinc-900 border-r border-zinc-800 sticky left-0 z-10"/>
-            <div ref={containerRef} className="flex-1 relative">
-                <canvas
-                    ref={canvasRef}
-                    onPointerDown={handlePointerDown}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                    onPointerLeave={handlePointerUp}
-                    className="w-full h-8 cursor-pointer"
-                    style={{touchAction: 'none', width: '100%', height: '32px'}}
-                />
-            </div>
+        <div
+            ref={scrollRef}
+            className="border-b border-zinc-800 bg-zinc-800"
+        >
+            <canvas
+                ref={canvasRef}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                className="w-full h-8 cursor-pointer"
+                style={{touchAction: 'none', width: '100%', height: '32px'}}
+            />
         </div>
     );
 }

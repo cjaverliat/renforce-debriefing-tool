@@ -12,6 +12,7 @@ import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
 import type {LoadedSession, PLMDData} from '@/shared/types/session';
 import {type PlaybackState, createInitialPlaybackState, computeCurrentTime} from '@/shared/types/playback';
 import {VideoPlayer} from "@/renderer/components/video-player.tsx";
+import { Group, Panel, Separator } from "react-resizable-panels";
 
 type AppMode = 'loading' | 'session';
 
@@ -230,9 +231,8 @@ export function App() {
                 </div>
             </div>
 
-            <div className="flex-1 flex overflow-hidden">
-                <div className="flex-1 flex flex-col">
-                    {/* Video Panel - takes remaining space */}
+            <Group>
+                <Panel minSize={300}>
                     <div className="flex-1 flex-col content-center p-4 overflow-hidden">
                         <VideoPlayer
                             videoSrc={videoSrc}
@@ -240,6 +240,16 @@ export function App() {
                             duration={duration}
                         />
                     </div>
+                </Panel>
+                <Separator/>
+                <Panel collapsible minSize={200}>
+                </Panel>
+            </Group>
+
+            <div className="flex-1 flex overflow-hidden">
+                <div className="flex-1 flex flex-col" style={{maxWidth: "100%"}}>
+                    {/* Video Panel - takes remaining space */}
+
 
                     {/* Resize Handle between Video and Timeline */}
                     <ResizeHandle direction="vertical" onResize={handleVerticalResize}/>
