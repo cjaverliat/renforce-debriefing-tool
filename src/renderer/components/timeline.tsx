@@ -349,6 +349,23 @@ export function Timeline({
         className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar"
       >
         <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
+
+          <TimelineTrack
+              labelSlot={<span className="text-xs text-zinc-400">Markers</span>}
+              contentSlot={
+                <MarkerContent
+                    markers={allMarkers}
+                    duration={duration}
+                    zoom={zoom}
+                    scrollOffset={scrollOffset}
+                />
+              }
+              duration={duration}
+              playbackState={playbackState}
+              zoom={zoom}
+              scrollOffset={scrollOffset}
+          />
+
           <TimelineTrack
             labelSlot={<span className="text-xs text-zinc-400">Heart Rate</span>}
             contentSlot={
@@ -392,22 +409,6 @@ export function Timeline({
                 zoom={zoom}
                 scrollOffset={scrollOffset}
                 color="#22c55e"
-              />
-            }
-            duration={duration}
-            playbackState={playbackState}
-            zoom={zoom}
-            scrollOffset={scrollOffset}
-          />
-
-          <TimelineTrack
-            labelSlot={<span className="text-xs text-zinc-400">Markers</span>}
-            contentSlot={
-              <MarkerContent
-                markers={allMarkers}
-                duration={duration}
-                zoom={zoom}
-                scrollOffset={scrollOffset}
               />
             }
             duration={duration}
