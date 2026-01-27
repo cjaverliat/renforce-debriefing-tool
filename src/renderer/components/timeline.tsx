@@ -1,4 +1,4 @@
-import {useRef, useState, useEffect, useMemo} from 'react';
+import {useRef, useState, useEffect, useMemo, ReactNode} from 'react';
 import {TimelineControls} from '@/renderer/components/timeline-controls';
 import {TimelineRuler} from '@/renderer/components/timeline-ruler';
 import {TimelineTrack} from '@/renderer/components/timeline-track';
@@ -6,6 +6,7 @@ import type {Annotation} from '@/renderer/components/annotations-panel';
 import type {PlaybackState} from '@/shared/types/playback';
 import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
 import {Group, Panel, Separator} from "react-resizable-panels";
+import {TimelineLabel} from "@/renderer/components/timeline-label.tsx";
 
 // Generate mock physiological data once at module load
 function generateSignalData(duration: number, frequency: number, amplitude: number, samples = 1000) {
@@ -34,6 +35,18 @@ interface SignalContentProps {
     duration: number;
     pixelsPerSecond: number;
     color: string;
+}
+
+interface DefaultTextLabelContentProps {
+    children: ReactNode;
+}
+
+function DefaultTextLabelContent({children}: DefaultTextLabelContentProps) {
+    return (
+        <div className="w-full h-full flex flex-col content-center justify-center">
+            <span className="text-xs text-zinc-400 px-4 py-2 truncate">{children}</span>
+        </div>
+    );
 }
 
 function SignalContent({data, duration, pixelsPerSecond, color}: SignalContentProps) {
@@ -104,7 +117,7 @@ function SignalContent({data, duration, pixelsPerSecond, color}: SignalContentPr
     }, [data, duration, pixelsPerSecond, color, containerSize]);
 
     return (
-        <div ref={containerRef} className="w-full h-16">
+        <div ref={containerRef} className="w-full h-full">
             <canvas
                 ref={canvasRef}
                 className="w-full h-full"
@@ -181,7 +194,7 @@ function MarkerContent({markers, duration, pixelsPerSecond}: MarkerContentProps)
     }, [markers, duration, pixelsPerSecond, containerSize]);
 
     return (
-        <div ref={containerRef} className="w-full h-16">
+        <div ref={containerRef} className="w-full h-full">
             <canvas
                 ref={canvasRef}
                 className="w-full h-full"
@@ -340,11 +353,9 @@ export function Timeline({
             />
 
             {/* Main timeline area with labels on left and content on right */}
-            <Group orientation="horizontal" className="relative">
+            <Group orientation="horizontal">
                 <Panel minSize={50} maxSize={150} defaultSize={80}>
-                    <div
-                        className="flex flex-col bg-zinc-900"
-                    >
+                    <div className="relative h-full w-full flex flex-col bg-zinc-900">
                         {/* Ruler label placeholder */}
                         <div className="absolute top-0 left-0 right-0 h-8 shrink-0 grow-0 border-b bg-zinc-900"/>
 
@@ -353,18 +364,21 @@ export function Timeline({
                             className="absolute top-8 left-0 right-0 bottom-0 overflow-x-hidden overflow-y-auto scrollbar-hidden"
                             style={{paddingBottom: scrollbarHeight > 0 ? `${scrollbarHeight}px` : undefined}}
                         >
-                            <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
-                                <span className="text-xs text-zinc-400 truncate">Markers</span>
-                            </div>
-                            <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
-                                <span className="text-xs text-zinc-400 truncate">Heart Rate</span>
-                            </div>
-                            <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
-                                <span className="text-xs text-zinc-400 truncate">Respiration</span>
-                            </div>
-                            <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
-                                <span className="text-xs text-zinc-400 truncate">Skin Conductance</span>
-                            </div>
+                            <TimelineLabel>
+                                <DefaultTextLabelContent>Markers</DefaultTextLabelContent>
+                            </TimelineLabel>
+
+                            <TimelineLabel>
+                                <DefaultTextLabelContent>Heart Rate</DefaultTextLabelContent>
+                            </TimelineLabel>
+
+                            <TimelineLabel>
+                                <DefaultTextLabelContent>Respiration</DefaultTextLabelContent>
+                            </TimelineLabel>
+
+                            <TimelineLabel>
+                                <DefaultTextLabelContent>Skin Conductance</DefaultTextLabelContent>
+                            </TimelineLabel>
                         </div>
                     </div>
                 </Panel>
@@ -396,59 +410,55 @@ export function Timeline({
                         <div className="flex flex-col" style={{width: `${contentWidth}px`}}>
 
                             <TimelineTrack
-                                contentSlot={
-                                    <MarkerContent
-                                        markers={allMarkers}
-                                        duration={duration}
-                                        pixelsPerSecond={pixelsPerSecond}
-                                    />
-                                }
                                 duration={duration}
                                 playbackState={playbackState}
                                 pixelsPerSecond={pixelsPerSecond}
-                            />
+                            >
+                                <MarkerContent
+                                    markers={allMarkers}
+                                    duration={duration}
+                                    pixelsPerSecond={pixelsPerSecond}
+                                />
+                            </TimelineTrack>
 
                             <TimelineTrack
-                                contentSlot={
-                                    <SignalContent
-                                        data={MOCK_HEART_RATE_DATA}
-                                        duration={duration}
-                                        pixelsPerSecond={pixelsPerSecond}
-                                        color="#ef4444"
-                                    />
-                                }
                                 duration={duration}
                                 playbackState={playbackState}
                                 pixelsPerSecond={pixelsPerSecond}
-                            />
+                            >
+                                <SignalContent
+                                    data={MOCK_HEART_RATE_DATA}
+                                    duration={duration}
+                                    pixelsPerSecond={pixelsPerSecond}
+                                    color="#ef4444"
+                                />
+                            </TimelineTrack>
 
                             <TimelineTrack
-                                contentSlot={
-                                    <SignalContent
-                                        data={MOCK_RESPIRATION_DATA}
-                                        duration={duration}
-                                        pixelsPerSecond={pixelsPerSecond}
-                                        color="#3b82f6"
-                                    />
-                                }
                                 duration={duration}
                                 playbackState={playbackState}
                                 pixelsPerSecond={pixelsPerSecond}
-                            />
+                            >
+                                <SignalContent
+                                    data={MOCK_RESPIRATION_DATA}
+                                    duration={duration}
+                                    pixelsPerSecond={pixelsPerSecond}
+                                    color="#3b82f6"
+                                />
+                            </TimelineTrack>
 
                             <TimelineTrack
-                                contentSlot={
-                                    <SignalContent
-                                        data={MOCK_SKIN_CONDUCTANCE_DATA}
-                                        duration={duration}
-                                        pixelsPerSecond={pixelsPerSecond}
-                                        color="#22c55e"
-                                    />
-                                }
                                 duration={duration}
                                 playbackState={playbackState}
                                 pixelsPerSecond={pixelsPerSecond}
-                            />
+                            >
+                                <SignalContent
+                                    data={MOCK_SKIN_CONDUCTANCE_DATA}
+                                    duration={duration}
+                                    pixelsPerSecond={pixelsPerSecond}
+                                    color="#22c55e"
+                                />
+                            </TimelineTrack>
                         </div>
                     </div>
                 </Panel>
