@@ -9,40 +9,56 @@ interface PhysiologicalSignalLabelProps {
     data: Array<{ time: number; value: number }>;
     playbackState: PlaybackState;
     duration: number;
+    /** Time threshold in seconds for finding the closest value (default: 0.001 = 1ms) */
+    valueThreshold?: number;
+    /** Number of decimal places for the value display (default: 2) */
+    valueDecimals?: number;
+    /** Number of decimal places for the sampling rate display (default: 1) */
+    samplingRateDecimals?: number;
 }
 
 /**
- * Finds the value in the signal data at the given time using linear interpolation.
+ * Finds the closest value in the signal data at the given time.
+ * Returns the value if a sample exists within the threshold, otherwise null.
  */
 function getValueAtTime(
     data: Array<{ time: number; value: number }>,
-    time: number
+    time: number,
+    threshold: number
 ): number | null {
     if (data.length === 0) return null;
-    if (time <= data[0].time) return data[0].value;
-    if (time >= data[data.length - 1].time) return data[data.length - 1].value;
 
-    // Binary search to find the surrounding samples
+    // Binary search to find the closest sample
     let low = 0;
     let high = data.length - 1;
 
-    while (high - low > 1) {
+    while (low < high) {
         const mid = Math.floor((low + high) / 2);
-        if (data[mid].time <= time) {
-            low = mid;
+        if (data[mid].time < time) {
+            low = mid + 1;
         } else {
             high = mid;
         }
     }
 
-    // Linear interpolation between low and high
-    const t0 = data[low].time;
-    const t1 = data[high].time;
-    const v0 = data[low].value;
-    const v1 = data[high].value;
+    // Check the closest candidates (low and low-1)
+    let closestIndex = low;
+    let closestDiff = Math.abs(data[low].time - time);
 
-    const ratio = (time - t0) / (t1 - t0);
-    return v0 + ratio * (v1 - v0);
+    if (low > 0) {
+        const prevDiff = Math.abs(data[low - 1].time - time);
+        if (prevDiff < closestDiff) {
+            closestIndex = low - 1;
+            closestDiff = prevDiff;
+        }
+    }
+
+    // Return value only if within threshold
+    if (closestDiff <= threshold) {
+        return data[closestIndex].value;
+    }
+
+    return null;
 }
 
 export function PhysiologicalSignalLabel({
@@ -52,20 +68,23 @@ export function PhysiologicalSignalLabel({
     data,
     playbackState,
     duration,
+    valueThreshold = .5,
+    valueDecimals = 2,
+    samplingRateDecimals = 1,
 }: PhysiologicalSignalLabelProps) {
     const playbackTime = usePlaybackTime(playbackState, {maxTime: duration});
 
     const currentValue = useMemo(() => {
-        return getValueAtTime(data, playbackTime);
-    }, [data, playbackTime]);
+        return getValueAtTime(data, playbackTime, valueThreshold);
+    }, [data, playbackTime, valueThreshold]);
 
     const formattedValue = currentValue !== null
-        ? currentValue.toFixed(2)
-        : '--';
+        ? currentValue.toFixed(valueDecimals)
+        : 'N/A';
 
     const formattedSamplingRate = samplingRate >= 1000
-        ? `${(samplingRate / 1000).toFixed(1)} kHz`
-        : `${samplingRate} Hz`;
+        ? `${(samplingRate / 1000).toFixed(samplingRateDecimals)} kHz`
+        : `${samplingRate.toFixed(samplingRateDecimals)} Hz`;
 
     return (
         <div className="w-full h-full flex flex-col justify-center px-4 py-1">
