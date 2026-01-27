@@ -7,6 +7,7 @@ import type {PlaybackState} from '@/shared/types/playback';
 import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
 import {Group, Panel, Separator} from "react-resizable-panels";
 import {TimelineLabel} from "@/renderer/components/timeline-label.tsx";
+import {PhysiologicalSignalLabel} from "@/renderer/components/physiological-signal-label.tsx";
 
 // Generate mock physiological data once at module load
 function generateSignalData(duration: number, frequency: number, amplitude: number, samples = 1000) {
@@ -18,9 +19,12 @@ function generateSignalData(duration: number, frequency: number, amplitude: numb
 }
 
 const MOCK_DURATION = 60 * 10; // seconds
-const MOCK_HEART_RATE_DATA = generateSignalData(MOCK_DURATION, 2, 0.8);
-const MOCK_RESPIRATION_DATA = generateSignalData(MOCK_DURATION, 0.5, 0.6);
-const MOCK_SKIN_CONDUCTANCE_DATA = generateSignalData(MOCK_DURATION, 0.3, 0.4);
+const MOCK_HEART_RATE_FREQUENCY = 2;
+const MOCK_RESPIRATION_FREQUENCY = 0.5;
+const MOCK_SKIN_CONDUCTANCE_FREQUENCY = 0.3;
+const MOCK_HEART_RATE_DATA = generateSignalData(MOCK_DURATION, MOCK_HEART_RATE_FREQUENCY, 0.8);
+const MOCK_RESPIRATION_DATA = generateSignalData(MOCK_DURATION, MOCK_RESPIRATION_FREQUENCY, 0.6);
+const MOCK_SKIN_CONDUCTANCE_DATA = generateSignalData(MOCK_DURATION, MOCK_SKIN_CONDUCTANCE_FREQUENCY, 0.4);
 
 const SYSTEM_MARKERS = [
     {time: 15, label: 'Start', color: '#22c55e'},
@@ -354,7 +358,9 @@ export function Timeline({
 
             {/* Main timeline area with labels on left and content on right */}
             <Group orientation="horizontal">
-                <Panel minSize={50} maxSize={150} defaultSize={80}>
+
+                {/* Labels */}
+                <Panel minSize={50} maxSize={200} defaultSize={100}>
                     <div className="relative h-full w-full flex flex-col bg-zinc-900">
                         {/* Ruler label placeholder */}
                         <div className="absolute top-0 left-0 right-0 h-8 shrink-0 grow-0 border-b bg-zinc-900"/>
@@ -369,15 +375,36 @@ export function Timeline({
                             </TimelineLabel>
 
                             <TimelineLabel>
-                                <DefaultTextLabelContent>Heart Rate</DefaultTextLabelContent>
+                                <PhysiologicalSignalLabel
+                                    name="Heart Rate"
+                                    unit="bpm"
+                                    samplingRate={MOCK_HEART_RATE_FREQUENCY}
+                                    data={MOCK_HEART_RATE_DATA}
+                                    playbackState={playbackState}
+                                    duration={duration}
+                                />
                             </TimelineLabel>
 
                             <TimelineLabel>
-                                <DefaultTextLabelContent>Respiration</DefaultTextLabelContent>
+                                <PhysiologicalSignalLabel
+                                    name="Respiration"
+                                    unit="br/min"
+                                    samplingRate={MOCK_RESPIRATION_FREQUENCY}
+                                    data={MOCK_RESPIRATION_DATA}
+                                    playbackState={playbackState}
+                                    duration={duration}
+                                />
                             </TimelineLabel>
 
                             <TimelineLabel>
-                                <DefaultTextLabelContent>Skin Conductance</DefaultTextLabelContent>
+                                <PhysiologicalSignalLabel
+                                    name="Skin Conductance"
+                                    unit="μS"
+                                    samplingRate={MOCK_SKIN_CONDUCTANCE_FREQUENCY}
+                                    data={MOCK_SKIN_CONDUCTANCE_DATA}
+                                    playbackState={playbackState}
+                                    duration={duration}
+                                />
                             </TimelineLabel>
                         </div>
                     </div>
