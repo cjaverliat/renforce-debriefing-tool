@@ -6,18 +6,14 @@ interface TimelineTrackProps {
   contentSlot: ReactNode;
   duration: number;
   playbackState: PlaybackState;
-  zoom: number;
-  contentWidth: number;
-  scrollOffset: number;
+  pixelsPerSecond: number;
 }
 
 export function TimelineTrack({
   contentSlot,
   duration,
   playbackState,
-  zoom,
-  contentWidth,
-  scrollOffset,
+  pixelsPerSecond,
 }: TimelineTrackProps) {
   const playheadCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -61,9 +57,7 @@ export function TimelineTrack({
     ctx.clearRect(0, 0, rect.width, rect.height);
 
     // Draw playhead
-    const pixelsPerSecond = contentWidth / duration;
-    const startTime = scrollOffset / pixelsPerSecond;
-    const playheadX = (playbackTime - startTime) * pixelsPerSecond;
+    const playheadX = playbackTime * pixelsPerSecond;
 
     if (playheadX >= 0 && playheadX <= rect.width) {
       ctx.strokeStyle = '#ef4444';
@@ -73,7 +67,7 @@ export function TimelineTrack({
       ctx.lineTo(playheadX, rect.height);
       ctx.stroke();
     }
-  }, [duration, playbackTime, zoom, contentWidth, scrollOffset, containerSize]);
+  }, [duration, playbackTime, pixelsPerSecond, containerSize]);
 
   return (
     <div ref={containerRef} className="relative border-b border-zinc-800">

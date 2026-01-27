@@ -1,4 +1,4 @@
-import {useRef, useEffect, type RefObject} from 'react';
+import {useRef, useEffect} from 'react';
 import {PlaybackState} from "@/shared/types/playback.ts";
 import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
 
@@ -7,15 +7,13 @@ interface TimelineRulerProps {
     playbackState: PlaybackState;
     pixelsPerSecond: number;
     onSeek: (time: number) => void;
-    scrollRef?: RefObject<HTMLDivElement | null>;
 }
 
 export function TimelineRuler({
     duration,
     playbackState,
-                                  pixelsPerSecond,
+    pixelsPerSecond,
     onSeek,
-    scrollRef,
 }: TimelineRulerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isDragging = useRef(false);
@@ -137,10 +135,7 @@ export function TimelineRuler({
     };
 
     return (
-        <div
-            ref={scrollRef}
-            className="h-8 border-b shrink-0 border-zinc-800 bg-zinc-800"
-        >
+        <div className="h-8 border-b shrink-0 border-zinc-800 bg-zinc-800">
             <canvas
                 ref={canvasRef}
                 onPointerDown={handlePointerDown}

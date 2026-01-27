@@ -1,8 +1,7 @@
-import {useRef, useState, useEffect, useMemo, useCallback} from 'react';
+import {useRef, useState, useEffect, useMemo} from 'react';
 import {TimelineControls} from '@/renderer/components/timeline-controls';
 import {TimelineRuler} from '@/renderer/components/timeline-ruler';
 import {TimelineTrack} from '@/renderer/components/timeline-track';
-import {ResizeHandle} from '@/renderer/components/resize-handle';
 import type {Annotation} from '@/renderer/components/annotations-panel';
 import type {PlaybackState} from '@/shared/types/playback';
 import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
@@ -33,12 +32,11 @@ const SYSTEM_MARKERS = [
 interface SignalContentProps {
     data: Array<{ time: number; value: number }>;
     duration: number;
-    contentWidth: number;
-    scrollOffset: number;
+    pixelsPerSecond: number;
     color: string;
 }
 
-function SignalContent({data, duration, contentWidth, scrollOffset, color}: SignalContentProps) {
+function SignalContent({data, duration, pixelsPerSecond, color}: SignalContentProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerSize, setContainerSize] = useState({width: 0, height: 0});
@@ -83,17 +81,15 @@ function SignalContent({data, duration, contentWidth, scrollOffset, color}: Sign
         ctx.beginPath();
 
         // Calculate visible time range
-        const pixelsPerSecond = contentWidth / duration;
-        const startTime = scrollOffset / pixelsPerSecond;
-        const endTime = startTime + (rect.width / pixelsPerSecond);
+        const endTime = rect.width / pixelsPerSecond;
 
         // Filter to visible samples and draw at correct positions
         let isFirstPoint = true;
         for (const sample of data) {
             // Skip samples outside visible range (with small margin)
-            if (sample.time < startTime - 1 || sample.time > endTime + 1) continue;
+            if (sample.time < -1 || sample.time > endTime + 1) continue;
 
-            const x = (sample.time - startTime) * pixelsPerSecond;
+            const x = (sample.time) * pixelsPerSecond;
             const y = rect.height / 2 + (sample.value * rect.height / 4);
 
             if (isFirstPoint) {
@@ -105,7 +101,7 @@ function SignalContent({data, duration, contentWidth, scrollOffset, color}: Sign
         }
 
         ctx.stroke();
-    }, [data, duration, contentWidth, scrollOffset, color, containerSize]);
+    }, [data, duration, pixelsPerSecond, color, containerSize]);
 
     return (
         <div ref={containerRef} className="w-full h-16">
@@ -121,11 +117,10 @@ function SignalContent({data, duration, contentWidth, scrollOffset, color}: Sign
 interface MarkerContentProps {
     markers: Array<{ time: number; label: string; color: string }>;
     duration: number;
-    contentWidth: number;
-    scrollOffset: number;
+    pixelsPerSecond: number;
 }
 
-function MarkerContent({markers, duration, contentWidth, scrollOffset}: MarkerContentProps) {
+function MarkerContent({markers, duration, pixelsPerSecond}: MarkerContentProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerSize, setContainerSize] = useState({width: 0, height: 0});
@@ -165,11 +160,8 @@ function MarkerContent({markers, duration, contentWidth, scrollOffset}: MarkerCo
         ctx.fillRect(0, 0, rect.width, rect.height);
 
         // Draw markers
-        const pixelsPerSecond = contentWidth / duration;
-        const startTime = scrollOffset / pixelsPerSecond;
-
         markers.forEach((marker) => {
-            const x = (marker.time - startTime) * pixelsPerSecond;
+            const x = marker.time * pixelsPerSecond;
 
             if (x >= 0 && x <= rect.width) {
                 // Draw marker line
@@ -186,7 +178,7 @@ function MarkerContent({markers, duration, contentWidth, scrollOffset}: MarkerCo
                 ctx.fillText(marker.label, x + 4, 14);
             }
         });
-    }, [markers, duration, contentWidth, scrollOffset, containerSize]);
+    }, [markers, duration, pixelsPerSecond, containerSize]);
 
     return (
         <div ref={containerRef} className="w-full h-16">
@@ -215,9 +207,6 @@ export function Timeline({
                          }: TimelineProps) {
     const {isPlaying} = playbackState;
     const [zoom, setZoom] = useState(1);
-    const [scrollOffset, setScrollOffset] = useState(0);
-    const [scrollbarWidth, setScrollbarWidth] = useState(0);
-    const [labelsWidth, setLabelsWidth] = useState(128); // Default 128px (w-32)
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const labelsScrollRef = useRef<HTMLDivElement>(null);
     const rulerScrollRef = useRef<HTMLDivElement>(null);
@@ -250,93 +239,45 @@ export function Timeline({
         onSeek(Math.min(duration, playbackTime + 5));
     };
 
-    // Handle labels panel resize
-    const handleLabelsResize = useCallback((delta: number) => {
-        setLabelsWidth(prev => Math.max(80, Math.min(300, prev + delta)));
-    }, []);
-
-    // Measure scrollbar width
+    // Sync horizontal scroll between ruler and tracks
     useEffect(() => {
-        const container = scrollContainerRef.current;
-        if (!container) return;
-
-        const updateScrollbarWidth = () => {
-            // Calculate scrollbar width (offsetWidth - clientWidth)
-            const width = container.offsetWidth - container.clientWidth;
-            setScrollbarWidth(width);
-        };
-
-        // Initial measurement
-        updateScrollbarWidth();
-
-        // Update on resize
-        const resizeObserver = new ResizeObserver(updateScrollbarWidth);
-        resizeObserver.observe(container);
-
-        return () => resizeObserver.disconnect();
-    }, []);
-
-    // Sync horizontal scroll between ruler and tracks, and vertical scroll between labels and tracks
-    useEffect(() => {
-        const container = scrollContainerRef.current;
+        const tracksContainer = scrollContainerRef.current;
         const rulerContainer = rulerScrollRef.current;
-        const labelsContainer = labelsScrollRef.current;
-        if (!container) return;
+        if (!tracksContainer || !rulerContainer) return;
 
-        const handleScroll = () => {
-            const scrollLeft = container.scrollLeft;
-            const scrollTop = container.scrollTop;
-            setScrollOffset(scrollLeft);
-            // Sync ruler scroll with tracks scroll
-            if (rulerContainer) {
-                rulerContainer.scrollLeft = scrollLeft;
-            }
-            // Sync labels vertical scroll with tracks scroll
-            if (labelsContainer) {
-                labelsContainer.scrollTop = scrollTop;
-            }
+        const handleTracksScroll = () => {
+            rulerContainer.scrollLeft = tracksContainer.scrollLeft;
         };
 
         const handleRulerScroll = () => {
-            if (!rulerContainer) return;
-            const scrollLeft = rulerContainer.scrollLeft;
-            setScrollOffset(scrollLeft);
-            // Sync tracks scroll with ruler scroll
-            container.scrollLeft = scrollLeft;
+            tracksContainer.scrollLeft = rulerContainer.scrollLeft;
         };
 
-        const handleLabelsScroll = () => {
-            if (!labelsContainer) return;
-            // Sync tracks vertical scroll with labels scroll
-            container.scrollTop = labelsContainer.scrollTop;
-        };
+        tracksContainer.addEventListener('scroll', handleTracksScroll);
+        rulerContainer.addEventListener('scroll', handleRulerScroll);
 
-        container.addEventListener('scroll', handleScroll);
-        rulerContainer?.addEventListener('scroll', handleRulerScroll);
-        labelsContainer?.addEventListener('scroll', handleLabelsScroll);
         return () => {
-            container.removeEventListener('scroll', handleScroll);
-            rulerContainer?.removeEventListener('scroll', handleRulerScroll);
-            labelsContainer?.removeEventListener('scroll', handleLabelsScroll);
+            tracksContainer.removeEventListener('scroll', handleTracksScroll);
+            rulerContainer.removeEventListener('scroll', handleRulerScroll);
         };
     }, []);
 
-    // Auto-scroll to follow playhead
-    useEffect(() => {
-        const container = scrollContainerRef.current;
-        if (!container || !isPlaying) return;
-
-        const containerWidth = container.clientWidth;
-        const totalWidth = containerWidth * zoom;
-        const pixelsPerSecond = totalWidth / duration;
-        const playheadPosition = playbackTime * pixelsPerSecond;
-
-        // Keep playhead in center third of viewport
-        const targetScroll = playheadPosition - containerWidth / 2;
-        if (targetScroll > scrollOffset + containerWidth * 0.66 || targetScroll < scrollOffset - containerWidth * 0.33) {
-            container.scrollLeft = targetScroll;
-        }
-    }, [playbackTime, isPlaying, zoom, duration, scrollOffset]);
+    // // Auto-scroll to follow playhead
+    // useEffect(() => {
+    //     const container = scrollContainerRef.current;
+    //     if (!container || !isPlaying) return;
+    //
+    //     const containerWidth = container.clientWidth;
+    //     const totalWidth = containerWidth * zoom;
+    //     const pixelsPerSecond = totalWidth / duration;
+    //     const playheadPosition = playbackTime * pixelsPerSecond;
+    //
+    //     // Keep playhead in center third of viewport
+    //     const targetScroll = playheadPosition - containerWidth / 2;
+    //     if (targetScroll > scrollOffset + containerWidth * 0.66 || targetScroll < scrollOffset - containerWidth * 0.33) {
+    //         container.scrollLeft = targetScroll;
+    //     }
+    // }, [playbackTime, isPlaying, zoom, duration, scrollOffset]);
 
     const pixelsPerSecond = 2 * zoom;
     const contentWidth = pixelsPerSecond * duration;
@@ -356,7 +297,7 @@ export function Timeline({
             />
 
             {/* Main timeline area with labels on left and content on right */}
-            <Group orientation="horizontal" className={"flex-1"}>
+            <Group orientation="horizontal">
                 <Panel minSize={50} maxSize={150} defaultSize={80}>
                     <div
                         className="flex flex-col bg-zinc-900"
@@ -387,83 +328,82 @@ export function Timeline({
                 <Separator className="separator"/>
 
                 <Panel minSize={100} id={"timeline-content-container"} className="relative">
-                    <div className="absolute inset-0 overflow-x-auto overflow-y-auto custom-scrollbar">
+                    {/* Sticky ruler at top */}
+                    <div
+                        ref={rulerScrollRef}
+                        className="absolute top-0 left-0 right-0 h-8 overflow-x-auto overflow-y-hidden scrollbar-hidden z-10"
+                    >
+                        <div style={{width: `${contentWidth}px`}}>
+                            <TimelineRuler
+                                duration={duration}
+                                playbackState={playbackState}
+                                pixelsPerSecond={pixelsPerSecond}
+                                onSeek={onSeek}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Scrollable tracks area */}
+                    <div
+                        ref={scrollContainerRef}
+                        className="absolute top-8 left-0 right-0 bottom-0 overflow-x-auto overflow-y-auto custom-scrollbar"
+                    >
                         <div className="flex flex-col" style={{width: `${contentWidth}px`}}>
 
-                        <TimelineRuler
-                            scrollRef={rulerScrollRef}
-                            duration={duration}
-                            playbackState={playbackState}
-                            pixelsPerSecond={pixelsPerSecond}
-                            onSeek={onSeek}
-                        />
+                            <TimelineTrack
+                                contentSlot={
+                                    <MarkerContent
+                                        markers={allMarkers}
+                                        duration={duration}
+                                        pixelsPerSecond={pixelsPerSecond}
+                                    />
+                                }
+                                duration={duration}
+                                playbackState={playbackState}
+                                pixelsPerSecond={pixelsPerSecond}
+                            />
 
-                        <TimelineTrack
-                            contentSlot={
-                                <MarkerContent
-                                    markers={allMarkers}
-                                    duration={duration}
-                                    contentWidth={contentWidth}
-                                    scrollOffset={scrollOffset}
-                                />
-                            }
-                            duration={duration}
-                            playbackState={playbackState}
-                            zoom={zoom}
-                            contentWidth={contentWidth}
-                            scrollOffset={scrollOffset}
-                        />
+                            <TimelineTrack
+                                contentSlot={
+                                    <SignalContent
+                                        data={MOCK_HEART_RATE_DATA}
+                                        duration={duration}
+                                        pixelsPerSecond={pixelsPerSecond}
+                                        color="#ef4444"
+                                    />
+                                }
+                                duration={duration}
+                                playbackState={playbackState}
+                                pixelsPerSecond={pixelsPerSecond}
+                            />
 
-                        <TimelineTrack
-                            contentSlot={
-                                <SignalContent
-                                    data={MOCK_HEART_RATE_DATA}
-                                    duration={duration}
-                                    contentWidth={contentWidth}
-                                    scrollOffset={scrollOffset}
-                                    color="#ef4444"
-                                />
-                            }
-                            duration={duration}
-                            playbackState={playbackState}
-                            zoom={zoom}
-                            contentWidth={contentWidth}
-                            scrollOffset={scrollOffset}
-                        />
+                            <TimelineTrack
+                                contentSlot={
+                                    <SignalContent
+                                        data={MOCK_RESPIRATION_DATA}
+                                        duration={duration}
+                                        pixelsPerSecond={pixelsPerSecond}
+                                        color="#3b82f6"
+                                    />
+                                }
+                                duration={duration}
+                                playbackState={playbackState}
+                                pixelsPerSecond={pixelsPerSecond}
+                            />
 
-                        <TimelineTrack
-                            contentSlot={
-                                <SignalContent
-                                    data={MOCK_RESPIRATION_DATA}
-                                    duration={duration}
-                                    contentWidth={contentWidth}
-                                    scrollOffset={scrollOffset}
-                                    color="#3b82f6"
-                                />
-                            }
-                            duration={duration}
-                            playbackState={playbackState}
-                            zoom={zoom}
-                            contentWidth={contentWidth}
-                            scrollOffset={scrollOffset}
-                        />
-
-                        <TimelineTrack
-                            contentSlot={
-                                <SignalContent
-                                    data={MOCK_SKIN_CONDUCTANCE_DATA}
-                                    duration={duration}
-                                    contentWidth={contentWidth}
-                                    scrollOffset={scrollOffset}
-                                    color="#22c55e"
-                                />
-                            }
-                            duration={duration}
-                            playbackState={playbackState}
-                            zoom={zoom}
-                            contentWidth={contentWidth}
-                            scrollOffset={scrollOffset}
-                        />
+                            <TimelineTrack
+                                contentSlot={
+                                    <SignalContent
+                                        data={MOCK_SKIN_CONDUCTANCE_DATA}
+                                        duration={duration}
+                                        pixelsPerSecond={pixelsPerSecond}
+                                        color="#22c55e"
+                                    />
+                                }
+                                duration={duration}
+                                playbackState={playbackState}
+                                pixelsPerSecond={pixelsPerSecond}
+                            />
                         </div>
                     </div>
                 </Panel>
