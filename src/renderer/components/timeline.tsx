@@ -207,6 +207,8 @@ export function Timeline({
                          }: TimelineProps) {
     const {isPlaying} = playbackState;
     const [zoom, setZoom] = useState(1);
+    const [scrollbarWidth, setScrollbarWidth] = useState(0);
+    const [scrollbarHeight, setScrollbarHeight] = useState(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const labelsScrollRef = useRef<HTMLDivElement>(null);
     const rulerScrollRef = useRef<HTMLDivElement>(null);
@@ -239,27 +241,68 @@ export function Timeline({
         onSeek(Math.min(duration, playbackTime + 5));
     };
 
-    // Sync horizontal scroll between ruler and tracks
+    // Sync scroll between ruler, tracks, and labels
     useEffect(() => {
         const tracksContainer = scrollContainerRef.current;
         const rulerContainer = rulerScrollRef.current;
+        const labelsContainer = labelsScrollRef.current;
         if (!tracksContainer || !rulerContainer) return;
 
         const handleTracksScroll = () => {
+            // Sync horizontal scroll with ruler
             rulerContainer.scrollLeft = tracksContainer.scrollLeft;
+            // Sync vertical scroll with labels
+            if (labelsContainer) {
+                labelsContainer.scrollTop = tracksContainer.scrollTop;
+            }
         };
 
         const handleRulerScroll = () => {
             tracksContainer.scrollLeft = rulerContainer.scrollLeft;
         };
 
+        const handleLabelsScroll = () => {
+            if (labelsContainer) {
+                tracksContainer.scrollTop = labelsContainer.scrollTop;
+            }
+        };
+
         tracksContainer.addEventListener('scroll', handleTracksScroll);
         rulerContainer.addEventListener('scroll', handleRulerScroll);
+        labelsContainer?.addEventListener('scroll', handleLabelsScroll);
 
         return () => {
             tracksContainer.removeEventListener('scroll', handleTracksScroll);
             rulerContainer.removeEventListener('scroll', handleRulerScroll);
+            labelsContainer?.removeEventListener('scroll', handleLabelsScroll);
         };
+    }, []);
+
+    // Measure scrollbar dimensions when they become visible
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const updateScrollbarDimensions = () => {
+            // Vertical scrollbar width (visible when content is taller than container)
+            const hasVerticalScrollbar = container.scrollHeight > container.clientHeight;
+            const verticalWidth = hasVerticalScrollbar ? container.offsetWidth - container.clientWidth : 0;
+            setScrollbarWidth(verticalWidth);
+
+            // Horizontal scrollbar height (visible when content is wider than container)
+            const hasHorizontalScrollbar = container.scrollWidth > container.clientWidth;
+            const horizontalHeight = hasHorizontalScrollbar ? container.offsetHeight - container.clientHeight : 0;
+            setScrollbarHeight(horizontalHeight);
+        };
+
+        // Initial measurement
+        updateScrollbarDimensions();
+
+        // Update on resize
+        const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
+        resizeObserver.observe(container);
+
+        return () => resizeObserver.disconnect();
     }, []);
 
     // // Auto-scroll to follow playhead
@@ -297,17 +340,18 @@ export function Timeline({
             />
 
             {/* Main timeline area with labels on left and content on right */}
-            <Group orientation="horizontal">
+            <Group orientation="horizontal" className="relative">
                 <Panel minSize={50} maxSize={150} defaultSize={80}>
                     <div
                         className="flex flex-col bg-zinc-900"
                     >
                         {/* Ruler label placeholder */}
-                        <div className="h-8 shrink-0 grow-0 border-b bg-zinc-900"/>
+                        <div className="absolute top-0 left-0 right-0 h-8 shrink-0 grow-0 border-b bg-zinc-900"/>
 
                         <div
                             ref={labelsScrollRef}
-                            className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hidden"
+                            className="absolute top-8 left-0 right-0 bottom-0 overflow-x-hidden overflow-y-auto scrollbar-hidden"
+                            style={{paddingBottom: scrollbarHeight > 0 ? `${scrollbarHeight}px` : undefined}}
                         >
                             <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
                                 <span className="text-xs text-zinc-400 truncate">Markers</span>
@@ -332,6 +376,7 @@ export function Timeline({
                     <div
                         ref={rulerScrollRef}
                         className="absolute top-0 left-0 right-0 h-8 overflow-x-auto overflow-y-hidden scrollbar-hidden z-10"
+                        style={{paddingRight: scrollbarWidth > 0 ? `${scrollbarWidth}px` : undefined}}
                     >
                         <div style={{width: `${contentWidth}px`}}>
                             <TimelineRuler
