@@ -139,7 +139,7 @@ export function TimelineRuler({
     return (
         <div
             ref={scrollRef}
-            className="border-b border-zinc-800 bg-zinc-800"
+            className="h-8 border-b shrink-0 border-zinc-800 bg-zinc-800"
         >
             <canvas
                 ref={canvasRef}
@@ -147,7 +147,7 @@ export function TimelineRuler({
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onPointerLeave={handlePointerUp}
-                className="w-full h-8 cursor-pointer"
+                className="w-full cursor-pointer"
                 style={{touchAction: 'none', width: '100%', height: '32px'}}
             />
         </div>

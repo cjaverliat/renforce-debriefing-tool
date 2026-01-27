@@ -6,6 +6,7 @@ import {ResizeHandle} from '@/renderer/components/resize-handle';
 import type {Annotation} from '@/renderer/components/annotations-panel';
 import type {PlaybackState} from '@/shared/types/playback';
 import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
+import {Group, Panel, Separator} from "react-resizable-panels";
 
 // Generate mock physiological data once at module load
 function generateSignalData(duration: number, frequency: number, amplitude: number, samples = 1000) {
@@ -355,41 +356,39 @@ export function Timeline({
             />
 
             {/* Main timeline area with labels on left and content on right */}
-            <div className="flex flex-1 overflow-hidden">
-                {/* Left labels container - resizable width */}
-                <div
-                    className="shrink-0 flex flex-col bg-zinc-900"
-                    style={{width: labelsWidth}}
-                >
-                    {/* Ruler label placeholder */}
-                    <div className="h-8 border-b bg-zinc-900"/>
-
-                    {/* Track labels - scrolls vertically with content */}
+            <Group orientation="horizontal" className={"flex-1"}>
+                <Panel minSize={50} maxSize={150} defaultSize={80}>
                     <div
-                        ref={labelsScrollRef}
-                        className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hidden"
+                        className="flex flex-col bg-zinc-900"
                     >
-                        <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
-                            <span className="text-xs text-zinc-400 truncate">Markers</span>
-                        </div>
-                        <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
-                            <span className="text-xs text-zinc-400 truncate">Heart Rate</span>
-                        </div>
-                        <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
-                            <span className="text-xs text-zinc-400 truncate">Respiration</span>
-                        </div>
-                        <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
-                            <span className="text-xs text-zinc-400 truncate">Skin Conductance</span>
+                        {/* Ruler label placeholder */}
+                        <div className="h-8 shrink-0 grow-0 border-b bg-zinc-900"/>
+
+                        <div
+                            ref={labelsScrollRef}
+                            className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hidden"
+                        >
+                            <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
+                                <span className="text-xs text-zinc-400 truncate">Markers</span>
+                            </div>
+                            <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
+                                <span className="text-xs text-zinc-400 truncate">Heart Rate</span>
+                            </div>
+                            <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
+                                <span className="text-xs text-zinc-400 truncate">Respiration</span>
+                            </div>
+                            <div className="h-16 px-3 py-2 flex items-center border-b border-zinc-800">
+                                <span className="text-xs text-zinc-400 truncate">Skin Conductance</span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </Panel>
 
-                {/* Resize handle */}
-                <ResizeHandle direction="horizontal" onResize={handleLabelsResize}/>
+                <Separator className="separator"/>
 
-                <div className="flex-1 overflow-auto custom-scrollbar">
-
-                    <div className="flex-0 flex-col" style={{width: `${contentWidth}px`}}>
+                <Panel minSize={100} id={"timeline-content-container"} className="relative">
+                    <div className="absolute inset-0 overflow-x-auto overflow-y-auto custom-scrollbar">
+                        <div className="flex flex-col" style={{width: `${contentWidth}px`}}>
 
                         <TimelineRuler
                             scrollRef={rulerScrollRef}
@@ -465,10 +464,11 @@ export function Timeline({
                             contentWidth={contentWidth}
                             scrollOffset={scrollOffset}
                         />
-
+                        </div>
                     </div>
-                </div>
-            </div>
+                </Panel>
+            </Group>
+
         </div>
     );
 }
