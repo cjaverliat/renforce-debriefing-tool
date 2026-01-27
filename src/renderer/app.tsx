@@ -5,14 +5,13 @@ import {AnnotationDialog} from '@/renderer/components/annotation-dialog';
 import {AnnotationsPanel, type Annotation} from '@/renderer/components/annotations-panel';
 import {ExportControls} from '@/renderer/components/export-controls';
 import {Button} from '@/renderer/components/ui/button';
-import {ResizeHandle} from '@/renderer/components/resize-handle';
 import {LoadingPanel} from '@/renderer/components/loading-panel';
 import {useAutoSave} from '@/renderer/hooks/use-auto-save';
 import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
 import type {LoadedSession, PLMDData} from '@/shared/types/session';
 import {type PlaybackState, createInitialPlaybackState, computeCurrentTime} from '@/shared/types/playback';
 import {VideoPlayer} from "@/renderer/components/video-player.tsx";
-import { Group, Panel, Separator } from "react-resizable-panels";
+import {Group, Panel, Separator} from "react-resizable-panels";
 
 type AppMode = 'loading' | 'session';
 
@@ -27,10 +26,6 @@ export function App() {
     const [duration, setDuration] = useState(596.48);
     const [annotations, setAnnotations] = useState<Annotation[]>([]);
     const [isAnnotationDialogOpen, setIsAnnotationDialogOpen] = useState(false);
-
-    // Panel sizes (in pixels)
-    const [timelineHeight, setTimelineHeight] = useState(300);
-    const [sidebarWidth, setSidebarWidth] = useState(320);
 
     const playbackTime = usePlaybackTime(playbackState, {maxTime: duration});
 
@@ -160,28 +155,6 @@ export function App() {
         isDirty,
     });
 
-    // Handle vertical resize (timeline height)
-    const handleVerticalResize = (delta: number) => {
-        const minTimelineHeight = 150;
-        const maxTimelineHeight = 400;
-
-        setTimelineHeight((prev) => {
-            const newHeight = prev - delta;
-            return Math.max(minTimelineHeight, Math.min(maxTimelineHeight, newHeight));
-        });
-    };
-
-    // Handle horizontal resize (sidebar width)
-    const handleHorizontalResize = (delta: number) => {
-        const minSidebarWidth = 200;
-        const maxSidebarWidth = 600;
-
-        setSidebarWidth((prev) => {
-            const newWidth = prev - delta;
-            return Math.max(minSidebarWidth, Math.min(maxSidebarWidth, newWidth));
-        });
-    };
-
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
@@ -231,53 +204,53 @@ export function App() {
                 </div>
             </div>
 
-            <Group>
-                <Panel minSize={300}>
-                    <div className="flex-1 flex-col content-center p-4 overflow-hidden">
-                        <VideoPlayer
-                            videoSrc={videoSrc}
-                            playbackState={playbackState}
-                            duration={duration}
-                        />
-                    </div>
+            <Group orientation="vertical">
+                <Panel minSize={200}>
+                    <Group orientation="horizontal">
+
+                        {/* Left side panel */}
+                        <Panel minSize={200} defaultSize={210}>
+
+                        </Panel>
+
+                        <Separator className={"separator"}/>
+
+                        {/* Player panel */}
+                        <Panel minSize={300}>
+                            <div className="h-full p-4 overflow-hidden">
+                                <VideoPlayer
+                                    videoSrc={videoSrc}
+                                    playbackState={playbackState}
+                                    duration={duration}
+                                />
+                            </div>
+                        </Panel>
+
+                        <Separator className={"separator"}/>
+
+                        {/* Right side panel */}
+                        <Panel minSize={200} defaultSize={210}>
+                            <AnnotationsPanel
+                                annotations={annotations}
+                                onDeleteAnnotation={handleDeleteAnnotation}
+                                onSeekToAnnotation={handleSeekToAnnotation}
+                            />
+                        </Panel>
+                    </Group>
                 </Panel>
-                <Separator/>
-                <Panel collapsible minSize={200}>
+
+                <Separator className={"separator"}/>
+
+                <Panel minSize={300}>
+                    <Timeline
+                        playbackState={playbackState}
+                        duration={duration}
+                        annotations={annotations}
+                        onPlayPause={handlePlayPause}
+                        onSeek={handleSeek}
+                    />
                 </Panel>
             </Group>
-
-            <div className="flex-1 flex overflow-hidden">
-                <div className="flex-1 flex flex-col" style={{maxWidth: "100%"}}>
-                    {/* Video Panel - takes remaining space */}
-
-
-                    {/* Resize Handle between Video and Timeline */}
-                    <ResizeHandle direction="vertical" onResize={handleVerticalResize}/>
-
-                    {/* Timeline Panel - fixed height at bottom */}
-                    <div className="shrink-0" style={{height: `${timelineHeight}px`}}>
-                        <Timeline
-                            playbackState={playbackState}
-                            duration={duration}
-                            annotations={annotations}
-                            onPlayPause={handlePlayPause}
-                            onSeek={handleSeek}
-                        />
-                    </div>
-                </div>
-
-                {/* Resize Handle between Main and Sidebar */}
-                <ResizeHandle direction="horizontal" onResize={handleHorizontalResize}/>
-
-                {/* Annotations Sidebar - fixed width on right */}
-                <div className="shrink-0" style={{width: `${sidebarWidth}px`}}>
-                    <AnnotationsPanel
-                        annotations={annotations}
-                        onDeleteAnnotation={handleDeleteAnnotation}
-                        onSeekToAnnotation={handleSeekToAnnotation}
-                    />
-                </div>
-            </div>
 
             {/* Annotation Dialog */}
             <AnnotationDialog

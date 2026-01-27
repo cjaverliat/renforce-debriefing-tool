@@ -22,3 +22,16 @@ body {
 .scrollbar-hidden::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
 }
+
+.separator {
+    @apply bg-zinc-800 hover:bg-blue-500/50 active:bg-blue-500 transition-colors;
+    border-radius: 0.25rem;
+}
+
+.separator[aria-orientation="vertical"] {
+    min-width: 0.1rem;
+}
+
+.separator[aria-orientation="horizontal"] {
+    min-height: 0.1rem;
+}

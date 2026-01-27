@@ -83,12 +83,12 @@ export function VideoPlayer({
     };
 
     return (
-        <div className="flex w-full h-full bg-black overflow-hidden">
+        <div className="flex w-full h-full overflow-hidden">
             <video
                 ref={videoRef}
                 onError={handleError}
                 src={videoSrc}
-                className="rounded-lg object-contain mx-auto my-auto"
+                className="rounded-lg object-contain bg-black mx-auto my-auto"
                 style={{ touchAction: 'none', maxWidth: '100%', maxHeight: '100%' }}
             />
         </div>
