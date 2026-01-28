@@ -219,13 +219,16 @@ export function Timeline({
                              tracks,
                              systemMarkers,
                              onPlayPause,
-                             onSeek,
+                             onSeek
                          }: TimelineProps) {
     const {isPlaying} = playbackState;
     const [zoom, setZoom] = useState(1);
     const [scrollbarWidth, setScrollbarWidth] = useState(0);
     const [scrollbarHeight, setScrollbarHeight] = useState(0);
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    const [visibleWidth, setVisibleWidth] = useState(0);
+
+    const tracksContainerRef = useRef<HTMLDivElement>(null);
     const labelsScrollRef = useRef<HTMLDivElement>(null);
     const rulerScrollRef = useRef<HTMLDivElement>(null);
 
@@ -263,7 +266,7 @@ export function Timeline({
 
     // Sync scroll between ruler, tracks, and labels
     useEffect(() => {
-        const tracksContainer = scrollContainerRef.current;
+        const tracksContainer = tracksContainerRef.current;
         const rulerContainer = rulerScrollRef.current;
         const labelsContainer = labelsScrollRef.current;
         if (!tracksContainer || !rulerContainer) return;
@@ -300,10 +303,12 @@ export function Timeline({
 
     // Measure scrollbar dimensions when they become visible
     useEffect(() => {
-        const container = scrollContainerRef.current;
+        const container = tracksContainerRef.current;
         if (!container) return;
 
-        const updateScrollbarDimensions = () => {
+        const updateTracksContainerSize = () => {
+            // Update scrollbar dimensions
+
             // Vertical scrollbar width (visible when content is taller than container)
             const hasVerticalScrollbar = container.scrollHeight > container.clientHeight;
             const verticalWidth = hasVerticalScrollbar ? container.offsetWidth - container.clientWidth : 0;
@@ -313,13 +318,17 @@ export function Timeline({
             const hasHorizontalScrollbar = container.scrollWidth > container.clientWidth;
             const horizontalHeight = hasHorizontalScrollbar ? container.offsetHeight - container.clientHeight : 0;
             setScrollbarHeight(horizontalHeight);
+
+            // Update visible width
+            const visibleWidth = container.clientWidth;
+            setVisibleWidth(visibleWidth);
         };
 
         // Initial measurement
-        updateScrollbarDimensions();
+        updateTracksContainerSize();
 
         // Update on resize
-        const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
+        const resizeObserver = new ResizeObserver(updateTracksContainerSize);
         resizeObserver.observe(container);
 
         return () => resizeObserver.disconnect();
@@ -327,7 +336,7 @@ export function Timeline({
 
     // // Auto-scroll to follow playhead
     // useEffect(() => {
-    //     const container = scrollContainerRef.current;
+    //     const container = tracksContainerRef.current;
     //     if (!container || !isPlaying) return;
     //
     //     const containerWidth = container.clientWidth;
@@ -343,7 +352,7 @@ export function Timeline({
     // }, [playbackTime, isPlaying, zoom, duration, scrollOffset]);
 
     const pixelsPerSecond = 2 * zoom;
-    const contentWidth = pixelsPerSecond * duration;
+    const contentWidth = Math.max(pixelsPerSecond * duration, visibleWidth);
 
     return (
         <div className="flex flex-col h-full bg-zinc-900">
@@ -399,7 +408,7 @@ export function Timeline({
 
                 <Separator className="separator"/>
 
-                <Panel minSize={100} id={"timeline-content-container"} className="relative">
+                <Panel minSize={100} className="relative">
                     {/* Sticky ruler at top */}
                     <div
                         ref={rulerScrollRef}
@@ -418,7 +427,7 @@ export function Timeline({
 
                     {/* Scrollable tracks area */}
                     <div
-                        ref={scrollContainerRef}
+                        ref={tracksContainerRef}
                         className="absolute top-8 left-0 right-0 bottom-0 overflow-x-auto overflow-y-auto custom-scrollbar"
                     >
                         <div className="flex flex-col" style={{width: `${contentWidth}px`}}>

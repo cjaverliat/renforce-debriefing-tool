@@ -9,6 +9,95 @@ interface TimelineRulerProps {
     onSeek: (time: number) => void;
 }
 
+function drawRuler(canvasRef: React.RefObject<HTMLCanvasElement>, pixelsPerSecond: number, duration: number, playbackTime: number) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    ctx.scale(dpr, dpr);
+
+    // Determine tick interval based on zoom
+    let majorTickInterval: number;
+    let minorTickInterval: number;
+
+    if (pixelsPerSecond > 10) {
+        majorTickInterval = 5;
+        minorTickInterval = 1;
+    } else if (pixelsPerSecond > 15) {
+        majorTickInterval = 10;
+        minorTickInterval = 2;
+    } else {
+        majorTickInterval = 60;
+        minorTickInterval = 10;
+    }
+
+    const recordWidth = duration * pixelsPerSecond;
+    const endTime = rect.width / pixelsPerSecond;
+
+    // Clear canvas
+    ctx.fillStyle = '#18181b';
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    ctx.fillStyle = '#27272a';
+    ctx.fillRect(0, 0, recordWidth, rect.height);
+
+    // Draw ticks
+    for (let time = 0; time <= endTime; time += minorTickInterval) {
+
+        const x = time * pixelsPerSecond;
+        const isMajor = time % majorTickInterval === 0;
+
+        const outsideTimeRange = time > duration;
+
+        if (outsideTimeRange) {
+            ctx.strokeStyle = '#26262b';
+        } else {
+            ctx.strokeStyle = isMajor ? '#71717a' : '#3f3f46';
+        }
+
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, rect.height);
+        ctx.lineTo(x, rect.height - (isMajor ? 12 : 6));
+        ctx.stroke();
+
+        // Draw time labels for major ticks
+        if (isMajor) {
+            const mins = Math.floor(time / 60);
+            const secs = Math.floor(time % 60);
+            const label = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+            if (outsideTimeRange) {
+                ctx.fillStyle = '#464650';
+            } else {
+                ctx.fillStyle = '#a1a1aa';
+            }
+
+            ctx.font = '10px sans-serif';
+            ctx.fillText(label, x + 2, 10);
+        }
+    }
+
+    // Draw playhead
+    const playheadX = playbackTime * pixelsPerSecond;
+    if (playheadX >= 0 && playheadX <= rect.width) {
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(playheadX, rect.height);
+        ctx.lineTo(playheadX - 5, rect.height - 8);
+        ctx.lineTo(playheadX + 5, rect.height - 8);
+        ctx.closePath();
+        ctx.fill();
+    }
+}
+
 export function TimelineRuler({
     duration,
     playbackState,
@@ -21,92 +110,21 @@ export function TimelineRuler({
     const playbackTime = usePlaybackTime(playbackState, { maxTime: duration });
 
     useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+        drawRuler(canvasRef, pixelsPerSecond, duration, playbackTime);
+    }, [duration, playbackTime, pixelsPerSecond]);
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+    useEffect(() => {
+        const container = canvasRef.current;
+        if (!container) return;
 
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-
-        ctx.scale(dpr, dpr);
-
-        // Determine tick interval based on zoom
-        let majorTickInterval: number;
-        let minorTickInterval: number;
-
-        if (pixelsPerSecond > 10) {
-            majorTickInterval = 5;
-            minorTickInterval = 1;
-        } else if (pixelsPerSecond > 15) {
-            majorTickInterval = 10;
-            minorTickInterval = 2;
-        } else {
-            majorTickInterval = 60;
-            minorTickInterval = 10;
+        const handleResize = () => {
+            drawRuler(canvasRef, pixelsPerSecond, duration, playbackTime);
         }
 
-        const recordWidth = duration * pixelsPerSecond;
-        const endTime = rect.width / pixelsPerSecond;
+        const resizeObserver = new ResizeObserver(handleResize);
+        resizeObserver.observe(container);
 
-        // Clear canvas
-        ctx.fillStyle = '#18181b';
-        ctx.fillRect(0, 0, rect.width, rect.height);
-        ctx.fillStyle = '#27272a';
-        ctx.fillRect(0, 0, recordWidth, rect.height);
-
-        // Draw ticks
-        for (let time = 0; time <= endTime; time += minorTickInterval) {
-
-            const x = time * pixelsPerSecond;
-            const isMajor = time % majorTickInterval === 0;
-
-            const outsideTimeRange = time > duration;
-
-            if (outsideTimeRange) {
-                ctx.strokeStyle = '#26262b';
-            } else {
-                ctx.strokeStyle = isMajor ? '#71717a' : '#3f3f46';
-            }
-
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(x, rect.height);
-            ctx.lineTo(x, rect.height - (isMajor ? 12 : 6));
-            ctx.stroke();
-
-            // Draw time labels for major ticks
-            if (isMajor) {
-                const mins = Math.floor(time / 60);
-                const secs = Math.floor(time % 60);
-                const label = `${mins}:${secs.toString().padStart(2, '0')}`;
-
-                if (outsideTimeRange) {
-                    ctx.fillStyle = '#464650';
-                } else {
-                    ctx.fillStyle = '#a1a1aa';
-                }
-
-                ctx.font = '10px sans-serif';
-                ctx.fillText(label, x + 2, 10);
-            }
-        }
-
-        // Draw playhead
-        const playheadX = playbackTime * pixelsPerSecond;
-        if (playheadX >= 0 && playheadX <= rect.width) {
-            ctx.fillStyle = '#ef4444';
-            ctx.beginPath();
-            ctx.moveTo(playheadX, rect.height);
-            ctx.lineTo(playheadX - 5, rect.height - 8);
-            ctx.lineTo(playheadX + 5, rect.height - 8);
-            ctx.closePath();
-            ctx.fill();
-        }
+        return () => resizeObserver.disconnect();
     }, [duration, playbackTime, pixelsPerSecond]);
 
     const seekToMouse = (e: React.MouseEvent<HTMLCanvasElement>) => {
