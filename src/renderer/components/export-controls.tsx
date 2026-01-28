@@ -1,17 +1,12 @@
 import { FileText, FileJson } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
-import type { Annotation } from '@/renderer/components/annotations-panel';
+import {SessionData} from "@/shared/types/session.ts";
 
 interface ExportControlsProps {
-  annotations: Annotation[];
-  sessionData: {
-    duration: number;
-    videoName: string;
-    sessionDate: Date;
-  };
+  sessionData: SessionData;
 }
 
-export function ExportControls({ annotations, sessionData }: ExportControlsProps) {
+export function ExportControls({ sessionData }: ExportControlsProps) {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -25,18 +20,18 @@ export function ExportControls({ annotations, sessionData }: ExportControlsProps
     lines.push('='.repeat(50));
     lines.push('');
     lines.push(`Session Date: ${sessionData.sessionDate.toLocaleString()}`);
-    lines.push(`Video: ${sessionData.videoName}`);
-    lines.push(`Duration: ${formatTime(sessionData.duration)}`);
-    lines.push(`Total Annotations: ${annotations.length}`);
+    lines.push(`Video: ${sessionData.recordData.videoPath}`);
+    lines.push(`Duration: ${formatTime(sessionData.recordData.duration)}`);
+    lines.push(`Total Annotations: ${sessionData.manualAnnotations.length}`);
     lines.push('');
     lines.push('='.repeat(50));
     lines.push('');
     
     // Group by category
-    const categories = Array.from(new Set(annotations.map(a => a.category)));
+    const categories = Array.from(new Set(sessionData.manualAnnotations.map(a => a.category)));
     
     categories.forEach(category => {
-      const categoryAnnotations = annotations
+      const categoryAnnotations = sessionData.manualAnnotations
         .filter(a => a.category === category)
         .sort((a, b) => a.time - b.time);
       
@@ -66,7 +61,7 @@ export function ExportControls({ annotations, sessionData }: ExportControlsProps
     lines.push('');
     
     categories.forEach(category => {
-      const count = annotations.filter(a => a.category === category).length;
+      const count = sessionData.manualAnnotations.filter(a => a.category === category).length;
       lines.push(`${category}: ${count}`);
     });
     
@@ -77,10 +72,10 @@ export function ExportControls({ annotations, sessionData }: ExportControlsProps
     return {
       session: {
         date: sessionData.sessionDate.toISOString(),
-        video: sessionData.videoName,
-        duration: sessionData.duration,
+        video: sessionData.recordData.videoPath,
+        duration: sessionData.recordData.duration,
       },
-      annotations: annotations.map(a => ({
+      annotations: sessionData.manualAnnotations.map(a => ({
         id: a.id,
         time: a.time,
         label: a.label,
@@ -90,10 +85,10 @@ export function ExportControls({ annotations, sessionData }: ExportControlsProps
         timestamp: a.timestamp.toISOString(),
       })),
       summary: {
-        totalAnnotations: annotations.length,
-        categories: Array.from(new Set(annotations.map(a => a.category))).map(cat => ({
+        totalAnnotations: sessionData.manualAnnotations.length,
+        categories: Array.from(new Set(sessionData.manualAnnotations.map(a => a.category))).map(cat => ({
           name: cat,
-          count: annotations.filter(a => a.category === cat).length,
+          count: sessionData.manualAnnotations.filter(a => a.category === cat).length,
         })),
       },
     };
@@ -130,7 +125,7 @@ export function ExportControls({ annotations, sessionData }: ExportControlsProps
         size="sm"
         onClick={handleExportText}
         className="text-zinc-300 hover:bg-zinc-800 hover:text-white"
-        disabled={annotations.length === 0}
+        disabled={sessionData.manualAnnotations.length === 0}
       >
         <FileText className="size-4 mr-2" />
         Export Report (.txt)
@@ -141,7 +136,7 @@ export function ExportControls({ annotations, sessionData }: ExportControlsProps
         size="sm"
         onClick={handleExportJSON}
         className="text-zinc-300 hover:bg-zinc-800 hover:text-white"
-        disabled={annotations.length === 0}
+        disabled={sessionData.manualAnnotations.length === 0}
       >
         <FileJson className="size-4 mr-2" />
         Export Data (.json)

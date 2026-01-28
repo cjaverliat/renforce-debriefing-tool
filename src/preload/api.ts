@@ -1,57 +1,53 @@
 // Preload API exposed to renderer via contextBridge
-import { ipcRenderer } from 'electron';
-import type { PLMData } from '../shared/types/ipc';
-import type {
-  PLMDData,
-  LoadedSession,
-  CreateSessionParams,
-} from '../shared/types/session';
+import {ipcRenderer} from 'electron';
+import {RecordData} from "@/shared/types/record.ts";
 
 export const electronAPI = {
-  openFileDialog: (): Promise<string | null> => {
-    return ipcRenderer.invoke('file:open-dialog');
-  },
+    openFileDialog: (): Promise<string | null> => {
+        return ipcRenderer.invoke('file:open-dialog');
+    },
 
-  loadPLMFile: (filePath: string): Promise<PLMData> => {
-    return ipcRenderer.invoke('file:load-plm', filePath);
-  },
+    loadPLMFile: (filePath: string): Promise<RecordData> => {
+        return ipcRenderer.invoke('file:load-plm', filePath);
+    },
 
-  onError: (callback: (error: string) => void) => {
-    ipcRenderer.on('error:notify', (_event, error) => callback(error));
-  },
+    onError: (callback: (error: string) => void) => {
+        ipcRenderer.on('error:notify', (_event, error) => callback(error));
+    },
 
-  // Session management methods
-  openSessionDialog: (): Promise<string | null> => {
-    return ipcRenderer.invoke('session:open-dialog');
-  },
+    // Session management methods
+    openSessionDialog: (): Promise<string | null> => {
+        return ipcRenderer.invoke('session:open-dialog');
+    },
 
-  loadPlmd: (plmdPath: string): Promise<LoadedSession> => {
-    return ipcRenderer.invoke('session:load-plmd', plmdPath);
-  },
+    selectPlm: (): Promise<string | null> => {
+        return ipcRenderer.invoke('session:select-plm');
+    },
 
-  savePlmd: (plmdPath: string, data: PLMDData): Promise<void> => {
-    return ipcRenderer.invoke('session:save-plmd', plmdPath, data);
-  },
+    selectVideo: (): Promise<string | null> => {
+        return ipcRenderer.invoke('session:select-video');
+    },
 
-  savePlmdAs: (params: CreateSessionParams): Promise<string | null> => {
-    return ipcRenderer.invoke('session:save-plmd-as', params);
-  },
+    makeRelativePath: (basePath: string, targetPath: string): Promise<string> => {
+        return ipcRenderer.invoke('path:make-relative', basePath, targetPath);
+    },
 
-  selectPlm: (): Promise<string | null> => {
-    return ipcRenderer.invoke('session:select-plm');
-  },
+    resolvePath: (basePath: string, relativePath: string): Promise<string> => {
+        return ipcRenderer.invoke('path:resolve', basePath, relativePath);
+    },
 
-  selectVideo: (): Promise<string | null> => {
-    return ipcRenderer.invoke('session:select-video');
-  },
+    // Resource path methods (for bundled assets)
+    getResourcePath: (resourcePath: string): Promise<string> => {
+        return ipcRenderer.invoke('resource:get-path', resourcePath);
+    },
 
-  makeRelativePath: (basePath: string, targetPath: string): Promise<string> => {
-    return ipcRenderer.invoke('path:make-relative', basePath, targetPath);
-  },
+    resourceExists: (resourcePath: string): Promise<boolean> => {
+        return ipcRenderer.invoke('resource:exists', resourcePath);
+    },
 
-  resolvePath: (basePath: string, relativePath: string): Promise<string> => {
-    return ipcRenderer.invoke('path:resolve', basePath, relativePath);
-  },
+    getVideoDuration(videoPath: string): Promise<number> {
+        return ipcRenderer.invoke('video:get-duration', videoPath);
+    }
 };
 
 export type ElectronAPI = typeof electronAPI;

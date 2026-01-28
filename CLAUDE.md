@@ -50,11 +50,8 @@ The application follows Electron's standard three-process model:
 
 ### Shared Types
 
-Common types defined in `src/shared/types/ipc.ts`:
-- `PLMData`: Main data structure for protobuf files
-- `Track`: Time-series or event data tracks
-- `MediaInfo`: Video/audio metadata
-- IPC type definitions shared between main and renderer
+Common types defined in `src/shared/types/*.ts`:
+- Type definitions shared between main and renderer
 
 ### Key Components
 

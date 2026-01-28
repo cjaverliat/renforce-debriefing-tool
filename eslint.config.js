@@ -12,17 +12,6 @@ export default [
       'out/**',
       '*.config.js',
       '*.config.ts',
-      // // Ignore UI components with optional dependencies not installed
-      // 'src/renderer/components/ui/calendar.tsx',
-      // 'src/renderer/components/ui/carousel.tsx',
-      // 'src/renderer/components/ui/chart.tsx',
-      // 'src/renderer/components/ui/command.tsx',
-      // 'src/renderer/components/ui/drawer.tsx',
-      // 'src/renderer/components/ui/form.tsx',
-      // 'src/renderer/components/ui/input-otp.tsx',
-      // 'src/renderer/components/ui/resizable.tsx',
-      // 'src/renderer/components/ui/sidebar.tsx',
-      // 'src/renderer/components/ui/sonner.tsx',
     ],
   },
 

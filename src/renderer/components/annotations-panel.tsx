@@ -1,18 +1,9 @@
 import { useState } from 'react';
 import { Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
+import {Annotation} from "@/shared/types/session.ts";
 
-export interface Annotation {
-  id: string;
-  time: number;
-  label: string;
-  description: string;
-  color: string;
-  category: string;
-  timestamp: Date;
-}
-
-interface AnnotationsPanelProps {
+interface ManualAnnotationsPanelProps {
   annotations: Annotation[];
   onDeleteAnnotation: (id: string) => void;
   onSeekToAnnotation: (time: number) => void;
@@ -22,7 +13,7 @@ export function AnnotationsPanel({
   annotations,
   onDeleteAnnotation,
   onSeekToAnnotation,
-}: AnnotationsPanelProps) {
+}: ManualAnnotationsPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 

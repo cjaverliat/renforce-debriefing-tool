@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { FileVideo, FolderOpen, AlertCircle } from 'lucide-react';
-import type { LoadedSession } from '@/shared/types/session';
+import {SessionData} from "@/shared/types/session.ts";
 
 interface LoadingPanelProps {
-  onSessionLoaded: (session: LoadedSession) => void;
+  onSessionLoaded: (session: SessionData) => void;
 }
 
 export function LoadingPanel({ onSessionLoaded }: LoadingPanelProps) {
@@ -11,91 +11,91 @@ export function LoadingPanel({ onSessionLoaded }: LoadingPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateNew = async () => {
-    setError(null);
-    setIsLoading(true);
-
-    try {
-      // Step 1: Select PLM file
-      const plmPath = await window.electronAPI.selectPlm();
-      if (!plmPath) {
-        setIsLoading(false);
-        return; // User cancelled
-      }
-
-      // Step 2: Select video file
-      const videoPath = await window.electronAPI.selectVideo();
-      if (!videoPath) {
-        setIsLoading(false);
-        return; // User cancelled
-      }
-
-      // Step 3: Parse PLM file to get duration and metadata
-      const plmData = await window.electronAPI.loadPLMFile(plmPath);
-
-      // Step 4: Generate session name
-      const sessionDate = new Date();
-      const sessionName = `Training Session - ${sessionDate.toLocaleDateString()}`;
-
-      // Extract video filename for display
-      const videoName = videoPath.split(/[\\/]/).pop() || 'Video';
-
-      // Step 5: Save new .plmd file
-      const plmdPath = await window.electronAPI.savePlmdAs({
-        plmPath,
-        videoPath,
-        sessionName,
-        duration: plmData.metadata.duration / 1000, // Convert ms to seconds
-        videoName,
-      });
-
-      if (!plmdPath) {
-        setIsLoading(false);
-        return; // User cancelled save dialog
-      }
-
-      // Step 6: Load the newly created session
-      const loadedSession = await window.electronAPI.loadPlmd(plmdPath);
-      onSessionLoaded(loadedSession);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(message);
-      setIsLoading(false);
-    }
+    // setError(null);
+    // setIsLoading(true);
+    //
+    // try {
+    //   // Step 1: Select PLM file
+    //   const plmPath = await window.electronAPI.selectPlm();
+    //   if (!plmPath) {
+    //     setIsLoading(false);
+    //     return; // User cancelled
+    //   }
+    //
+    //   // Step 2: Select video file
+    //   const videoPath = await window.electronAPI.selectVideo();
+    //   if (!videoPath) {
+    //     setIsLoading(false);
+    //     return; // User cancelled
+    //   }
+    //
+    //   // Step 3: Parse PLM file to get duration and metadata
+    //   const plmData = await window.electronAPI.loadPLMFile(plmPath);
+    //
+    //   // Step 4: Generate session name
+    //   const sessionDate = new Date();
+    //   const sessionName = `Training Session - ${sessionDate.toLocaleDateString()}`;
+    //
+    //   // Extract video filename for display
+    //   const videoName = videoPath.split(/[\\/]/).pop() || 'Video';
+    //
+    //   // Step 5: Save new .plmd file
+    //   const plmdPath = await window.electronAPI.savePlmdAs({
+    //     plmPath,
+    //     videoPath,
+    //     sessionName,
+    //     duration: plmData.metadata.duration / 1000, // Convert ms to seconds
+    //     videoName,
+    //   });
+    //
+    //   if (!plmdPath) {
+    //     setIsLoading(false);
+    //     return; // User cancelled save dialog
+    //   }
+    //
+    //   // Step 6: Load the newly created session
+    //   const loadedSession = await window.electronAPI.loadPlmd(plmdPath);
+    //   onSessionLoaded(loadedSession);
+    // } catch (err) {
+    //   const message = err instanceof Error ? err.message : 'Unknown error occurred';
+    //   setError(message);
+    //   setIsLoading(false);
+    // }
   };
 
   const handleLoadExisting = async () => {
-    setError(null);
-    setIsLoading(true);
-
-    try {
-      // Step 1: Open .plmd file dialog
-      const plmdPath = await window.electronAPI.openSessionDialog();
-      if (!plmdPath) {
-        setIsLoading(false);
-        return; // User cancelled
-      }
-
-      // Step 2: Load and validate session
-      const loadedSession = await window.electronAPI.loadPlmd(plmdPath);
-      onSessionLoaded(loadedSession);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error occurred';
-
-      // Parse error message for user-friendly display
-      let displayMessage = message;
-      if (message.includes('version')) {
-        displayMessage = 'Incompatible session file version';
-      } else if (message.includes('not found')) {
-        displayMessage = message; // Already has file path
-      } else if (message.includes('corrupted')) {
-        displayMessage = 'Session file is corrupted or invalid';
-      } else {
-        displayMessage = `Failed to load session: ${message}`;
-      }
-
-      setError(displayMessage);
-      setIsLoading(false);
-    }
+    // setError(null);
+    // setIsLoading(true);
+    //
+    // try {
+    //   // Step 1: Open .plmd file dialog
+    //   const plmdPath = await window.electronAPI.openSessionDialog();
+    //   if (!plmdPath) {
+    //     setIsLoading(false);
+    //     return; // User cancelled
+    //   }
+    //
+    //   // Step 2: Load and validate session
+    //   const loadedSession = await window.electronAPI.loadPlmd(plmdPath);
+    //   onSessionLoaded(loadedSession);
+    // } catch (err) {
+    //   const message = err instanceof Error ? err.message : 'Unknown error occurred';
+    //
+    //   // Parse error message for user-friendly display
+    //   let displayMessage = message;
+    //   if (message.includes('version')) {
+    //     displayMessage = 'Incompatible session file version';
+    //   } else if (message.includes('not found')) {
+    //     displayMessage = message; // Already has file path
+    //   } else if (message.includes('corrupted')) {
+    //     displayMessage = 'Session file is corrupted or invalid';
+    //   } else {
+    //     displayMessage = `Failed to load session: ${message}`;
+    //   }
+    //
+    //   setError(displayMessage);
+    //   setIsLoading(false);
+    // }
   };
 
   return (

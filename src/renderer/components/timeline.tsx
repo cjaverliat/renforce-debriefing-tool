@@ -2,36 +2,14 @@ import {useRef, useState, useEffect, useMemo, ReactNode} from 'react';
 import {TimelineControls} from '@/renderer/components/timeline-controls';
 import {TimelineRuler} from '@/renderer/components/timeline-ruler';
 import {TimelineTrack} from '@/renderer/components/timeline-track';
-import type {Annotation} from '@/renderer/components/annotations-panel';
 import type {PlaybackState} from '@/shared/types/playback';
 import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
 import {Group, Panel, Separator} from "react-resizable-panels";
 import {TimelineLabel} from "@/renderer/components/timeline-label.tsx";
 import {PhysiologicalSignalLabel} from "@/renderer/components/physiological-signal-label.tsx";
-
-// Generate mock physiological data once at module load
-function generateSignalData(duration: number, frequency: number, amplitude: number, samples = 1000) {
-    return Array.from({length: samples}, (_, i) => {
-        const time = (i / samples) * duration;
-        const value = Math.sin((i / samples) * frequency * 100) * amplitude;
-        return {time, value};
-    });
-}
-
-const MOCK_DURATION = 60 * 10; // seconds
-const MOCK_HEART_RATE_FREQUENCY = 2;
-const MOCK_RESPIRATION_FREQUENCY = 0.5;
-const MOCK_SKIN_CONDUCTANCE_FREQUENCY = 0.3;
-const MOCK_HEART_RATE_DATA = generateSignalData(MOCK_DURATION, MOCK_HEART_RATE_FREQUENCY, 0.8);
-const MOCK_RESPIRATION_DATA = generateSignalData(MOCK_DURATION, MOCK_RESPIRATION_FREQUENCY, 0.6);
-const MOCK_SKIN_CONDUCTANCE_DATA = generateSignalData(MOCK_DURATION, MOCK_SKIN_CONDUCTANCE_FREQUENCY, 0.4);
-
-const SYSTEM_MARKERS = [
-    {time: 15, label: 'Start', color: '#22c55e'},
-    {time: 45, label: 'Phase 2', color: '#eab308'},
-    {time: 90, label: 'Phase 3', color: '#f59e0b'},
-    {time: 120, label: 'End', color: '#a855f7'},
-];
+import {getTrackDisplayConfig, getMarkerColor} from '@/renderer/config/track-display';
+import {Annotation} from "@/shared/types/session.ts";
+import {PhysiologicalTrack, SystemMarker} from "@/shared/types/record.ts";
 
 // Signal track content component
 interface SignalContentProps {
@@ -57,6 +35,20 @@ function SignalContent({data, duration, pixelsPerSecond, color}: SignalContentPr
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerSize, setContainerSize] = useState({width: 0, height: 0});
+
+    // Calculate min/max for normalization
+    const {minValue, maxValue} = useMemo(() => {
+        if (data.length === 0) return {minValue: 0, maxValue: 1};
+        let min = data[0].value;
+        let max = data[0].value;
+        for (const sample of data) {
+            if (sample.value < min) min = sample.value;
+            if (sample.value > max) max = sample.value;
+        }
+        // Add small padding to prevent clipping
+        const padding = (max - min) * 0.1;
+        return {minValue: min - padding, maxValue: max + padding};
+    }, [data]);
 
     useEffect(() => {
         const container = containerRef.current;
@@ -99,6 +91,7 @@ function SignalContent({data, duration, pixelsPerSecond, color}: SignalContentPr
 
         // Calculate visible time range
         const endTime = rect.width / pixelsPerSecond;
+        const valueRange = maxValue - minValue;
 
         // Filter to visible samples and draw at correct positions
         let isFirstPoint = true;
@@ -107,7 +100,9 @@ function SignalContent({data, duration, pixelsPerSecond, color}: SignalContentPr
             if (sample.time < -1 || sample.time > endTime + 1) continue;
 
             const x = (sample.time) * pixelsPerSecond;
-            const y = rect.height / 2 + (sample.value * rect.height / 4);
+            // Normalize value to 0-1 range, then map to canvas height (inverted for canvas coords)
+            const normalizedValue = (sample.value - minValue) / valueRange;
+            const y = rect.height - (normalizedValue * rect.height);
 
             if (isFirstPoint) {
                 ctx.moveTo(x, y);
@@ -118,7 +113,7 @@ function SignalContent({data, duration, pixelsPerSecond, color}: SignalContentPr
         }
 
         ctx.stroke();
-    }, [data, duration, pixelsPerSecond, color, containerSize]);
+    }, [data, duration, pixelsPerSecond, color, containerSize, minValue, maxValue]);
 
     return (
         <div ref={containerRef} className="w-full h-full">
@@ -211,6 +206,8 @@ interface TimelineProps {
     playbackState: PlaybackState;
     duration: number;
     annotations: Annotation[];
+    tracks: PhysiologicalTrack[];
+    systemMarkers: SystemMarker[];
     onPlayPause: () => void;
     onSeek: (time: number) => void;
 }
@@ -219,6 +216,8 @@ export function Timeline({
                              playbackState,
                              duration,
                              annotations,
+                             tracks,
+                             systemMarkers,
                              onPlayPause,
                              onSeek,
                          }: TimelineProps) {
@@ -234,13 +233,17 @@ export function Timeline({
 
     // Combine system markers with user annotations
     const allMarkers = useMemo(() => [
-        ...SYSTEM_MARKERS,
+        ...systemMarkers.map(m => ({
+            time: m.time,
+            label: m.label,
+            color: getMarkerColor(m.label),
+        })),
         ...annotations.map(a => ({
             time: a.time,
             label: a.label,
             color: a.color,
         })),
-    ], [annotations]);
+    ], [systemMarkers, annotations]);
 
     const handleZoomIn = () => {
         setZoom((prev) => Math.min(prev * 1.5, 10));
@@ -374,38 +377,22 @@ export function Timeline({
                                 <DefaultTextLabelContent>Markers</DefaultTextLabelContent>
                             </TimelineLabel>
 
-                            <TimelineLabel>
-                                <PhysiologicalSignalLabel
-                                    name="Heart Rate"
-                                    unit="bpm"
-                                    samplingRate={MOCK_HEART_RATE_FREQUENCY}
-                                    data={MOCK_HEART_RATE_DATA}
-                                    playbackState={playbackState}
-                                    duration={duration}
-                                />
-                            </TimelineLabel>
-
-                            <TimelineLabel>
-                                <PhysiologicalSignalLabel
-                                    name="Respiration"
-                                    unit="br/min"
-                                    samplingRate={MOCK_RESPIRATION_FREQUENCY}
-                                    data={MOCK_RESPIRATION_DATA}
-                                    playbackState={playbackState}
-                                    duration={duration}
-                                />
-                            </TimelineLabel>
-
-                            <TimelineLabel>
-                                <PhysiologicalSignalLabel
-                                    name="Skin Conductance"
-                                    unit="μS"
-                                    samplingRate={MOCK_SKIN_CONDUCTANCE_FREQUENCY}
-                                    data={MOCK_SKIN_CONDUCTANCE_DATA}
-                                    playbackState={playbackState}
-                                    duration={duration}
-                                />
-                            </TimelineLabel>
+                            {tracks.map((track, index) => {
+                                const displayConfig = getTrackDisplayConfig(track.id, index);
+                                return (
+                                    <TimelineLabel key={track.id}>
+                                        <PhysiologicalSignalLabel
+                                            name={track.name}
+                                            unit={track.unit}
+                                            samplingRate={track.sampleRate}
+                                            data={track.data}
+                                            playbackState={playbackState}
+                                            duration={duration}
+                                            valueDecimals={displayConfig.valueDecimals}
+                                        />
+                                    </TimelineLabel>
+                                );
+                            })}
                         </div>
                     </div>
                 </Panel>
@@ -448,44 +435,24 @@ export function Timeline({
                                 />
                             </TimelineTrack>
 
-                            <TimelineTrack
-                                duration={duration}
-                                playbackState={playbackState}
-                                pixelsPerSecond={pixelsPerSecond}
-                            >
-                                <SignalContent
-                                    data={MOCK_HEART_RATE_DATA}
-                                    duration={duration}
-                                    pixelsPerSecond={pixelsPerSecond}
-                                    color="#ef4444"
-                                />
-                            </TimelineTrack>
-
-                            <TimelineTrack
-                                duration={duration}
-                                playbackState={playbackState}
-                                pixelsPerSecond={pixelsPerSecond}
-                            >
-                                <SignalContent
-                                    data={MOCK_RESPIRATION_DATA}
-                                    duration={duration}
-                                    pixelsPerSecond={pixelsPerSecond}
-                                    color="#3b82f6"
-                                />
-                            </TimelineTrack>
-
-                            <TimelineTrack
-                                duration={duration}
-                                playbackState={playbackState}
-                                pixelsPerSecond={pixelsPerSecond}
-                            >
-                                <SignalContent
-                                    data={MOCK_SKIN_CONDUCTANCE_DATA}
-                                    duration={duration}
-                                    pixelsPerSecond={pixelsPerSecond}
-                                    color="#22c55e"
-                                />
-                            </TimelineTrack>
+                            {tracks.map((track, index) => {
+                                const displayConfig = getTrackDisplayConfig(track.id, index);
+                                return (
+                                    <TimelineTrack
+                                        key={track.id}
+                                        duration={duration}
+                                        playbackState={playbackState}
+                                        pixelsPerSecond={pixelsPerSecond}
+                                    >
+                                        <SignalContent
+                                            data={track.data}
+                                            duration={duration}
+                                            pixelsPerSecond={pixelsPerSecond}
+                                            color={displayConfig.color}
+                                        />
+                                    </TimelineTrack>
+                                );
+                            })}
                         </div>
                     </div>
                 </Panel>
