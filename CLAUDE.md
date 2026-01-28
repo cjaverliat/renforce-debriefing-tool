@@ -144,3 +144,10 @@ Makers configured for: Windows (Squirrel), macOS (ZIP), Linux (DEB, RPM)
 - Main window size: 1400x900px
 - Uses protobufjs for PLM file parsing (types: `@types/protobufjs`)
 - TypeScript with strict mode (`noImplicitAny: true`)
+
+## UI Component Conventions
+
+- Prefer using existing primitive UI components from `src/renderer/components/ui` whenever possible.
+- When implementing new UI elements, first check whether an appropriate primitive component already exists in `src/renderer/components/ui` and compose from it rather than creating ad-hoc markup.
+- If a required primitive component does not exist, create it in `src/renderer/components/ui` following the existing Radix UI + shadcn/ui patterns (headless primitives, forwardRef, Tailwind-based styling).
+- Higher-level, feature-specific components should only compose primitives and should not reimplement low-level UI behavior or styling directly.
