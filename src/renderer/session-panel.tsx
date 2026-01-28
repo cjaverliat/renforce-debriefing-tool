@@ -8,6 +8,7 @@ import {VideoPlayer} from "@/renderer/components/video-player.tsx";
 import {AnnotationsPanel} from "@/renderer/components/annotations-panel.tsx";
 import {Timeline} from "@/renderer/components/timeline.tsx";
 import {AnnotationDialog} from "@/renderer/components/annotation-dialog.tsx";
+import {SessionInfoPanel} from "@/renderer/components/session-info-panel.tsx";
 import {computeCurrentTime, createInitialPlaybackState, PlaybackState} from "@/shared/types/playback.ts";
 import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
 
@@ -165,8 +166,12 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                     <Group orientation="horizontal">
 
                         {/* Left side panel */}
-                        <Panel minSize={200} defaultSize={210}>
-                            {/* TODO: add the session info */}
+                        <Panel minSize={200} defaultSize={210} className="w-full">
+                            <SessionInfoPanel
+                                tracks={sessionData.recordData.tracks}
+                                systemMarkers={sessionData.recordData.systemMarkers}
+                                procedures={sessionData.recordData.procedures}
+                            />
                         </Panel>
 
                         <Separator className={"separator"}/>
