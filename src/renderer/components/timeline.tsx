@@ -212,6 +212,8 @@ interface TimelineProps {
     onSeek: (time: number) => void;
 }
 
+const ZOOM_LEVELS = [0.5, 0.75, 1, 1.5, 2, 3, 5, 10];
+
 export function Timeline({
                              playbackState,
                              duration,
@@ -222,7 +224,7 @@ export function Timeline({
                              onSeek
                          }: TimelineProps) {
     const {isPlaying} = playbackState;
-    const [zoom, setZoom] = useState(1);
+    const [zoomIndex, setZoomIndex] = useState(ZOOM_LEVELS.indexOf(1));
     const [scrollbarWidth, setScrollbarWidth] = useState(0);
     const [scrollbarHeight, setScrollbarHeight] = useState(0);
 
@@ -233,6 +235,8 @@ export function Timeline({
     const rulerScrollRef = useRef<HTMLDivElement>(null);
 
     const playbackTime = usePlaybackTime(playbackState, {maxTime: duration});
+
+    const zoom = ZOOM_LEVELS[zoomIndex];
 
     // Combine system markers with user annotations
     const allMarkers = useMemo(() => [
@@ -249,11 +253,15 @@ export function Timeline({
     ], [systemMarkers, annotations]);
 
     const handleZoomIn = () => {
-        setZoom((prev) => Math.min(prev * 1.5, 10));
+        setZoomIndex((prev) => Math.min(prev + 1, ZOOM_LEVELS.length - 1));
     };
 
     const handleZoomOut = () => {
-        setZoom((prev) => Math.max(prev / 1.5, 0.5));
+        setZoomIndex((prev) => Math.max(prev - 1, 0));
+    };
+
+    const handleZoomReset = () => {
+        setZoomIndex(ZOOM_LEVELS.indexOf(1));
     };
 
     const handleSkipBackward = () => {
@@ -366,6 +374,7 @@ export function Timeline({
                 onSkipForward={handleSkipForward}
                 onZoomIn={handleZoomIn}
                 onZoomOut={handleZoomOut}
+                onZoomReset={handleZoomReset}
             />
 
             {/* Main timeline area with labels on left and content on right */}

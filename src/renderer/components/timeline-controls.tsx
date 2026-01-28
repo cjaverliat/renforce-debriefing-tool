@@ -13,6 +13,7 @@ interface TimelineControlsProps {
   onSkipForward: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  onZoomReset: () => void;
 }
 
 export function TimelineControls({
@@ -25,6 +26,7 @@ export function TimelineControls({
   onSkipForward,
   onZoomIn,
   onZoomOut,
+  onZoomReset,
 }: TimelineControlsProps) {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -81,9 +83,12 @@ export function TimelineControls({
           <ZoomOut className="size-4" />
         </Button>
         
-        <div className="text-xs text-zinc-400 font-mono w-12 text-center">
+        <button
+          onClick={onZoomReset}
+          className="text-xs text-zinc-400 hover:text-white font-mono w-12 text-center"
+        >
           {Math.round(zoom * 100)}%
-        </div>
+        </button>
         
         <Button
           variant="ghost"
