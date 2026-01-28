@@ -9,7 +9,7 @@ import {TimelineLabel} from "@/renderer/components/timeline-label.tsx";
 import {PhysiologicalSignalLabel} from "@/renderer/components/physiological-signal-label.tsx";
 import {getTrackDisplayConfig, getMarkerColor} from '@/renderer/config/track-display';
 import {Annotation} from "@/shared/types/session.ts";
-import {PhysiologicalTrack, SystemMarker} from "@/shared/types/record.ts";
+import {PhysiologicalTrack, Procedure, SystemMarker} from "@/shared/types/record.ts";
 
 // Signal track content component
 interface SignalContentProps {
@@ -208,6 +208,7 @@ interface TimelineProps {
     annotations: Annotation[];
     tracks: PhysiologicalTrack[];
     systemMarkers: SystemMarker[];
+    procedures: Procedure[];
     onPlayPause: () => void;
     onSeek: (time: number) => void;
 }
@@ -220,6 +221,7 @@ export function Timeline({
                              annotations,
                              tracks,
                              systemMarkers,
+                             procedures,
                              onPlayPause,
                              onSeek
                          }: TimelineProps) {
@@ -238,19 +240,26 @@ export function Timeline({
 
     const zoom = ZOOM_LEVELS[zoomIndex];
 
-    // Combine system markers with user annotations
+    // Combine system markers, procedure action markers, and user annotations
     const allMarkers = useMemo(() => [
         ...systemMarkers.map(m => ({
             time: m.time,
             label: m.label,
             color: getMarkerColor(m.label),
         })),
+        ...procedures.flatMap(p =>
+            p.actionMarkers.map(m => ({
+                time: m.time,
+                label: m.label,
+                color: '#3b82f6', // Blue for procedure action markers
+            }))
+        ),
         ...annotations.map(a => ({
             time: a.time,
             label: a.label,
             color: a.color,
         })),
-    ], [systemMarkers, annotations]);
+    ], [systemMarkers, procedures, annotations]);
 
     const handleZoomIn = () => {
         setZoomIndex((prev) => Math.min(prev + 1, ZOOM_LEVELS.length - 1));

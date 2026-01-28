@@ -1,5 +1,6 @@
 import {useEffect, useMemo, useState} from 'react';
 import {Annotation, SessionData} from "@/shared/types/session.ts";
+import {VisibilityState} from "@/shared/types/visibility.ts";
 import {ExportControls} from "@/renderer/components/export-controls.tsx";
 import {Button} from "@/renderer/components/ui/button.tsx";
 import {Plus} from "lucide-react";
@@ -11,6 +12,26 @@ import {AnnotationDialog} from "@/renderer/components/annotation-dialog.tsx";
 import {SessionInfoPanel} from "@/renderer/components/session-info-panel.tsx";
 import {computeCurrentTime, createInitialPlaybackState, PlaybackState} from "@/shared/types/playback.ts";
 import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
+
+function createInitialVisibilityState(sessionData: SessionData): VisibilityState {
+    const {tracks, systemMarkers, procedures} = sessionData.recordData;
+
+    return {
+        physioTracksVisible: true,
+        systemMarkersVisible: true,
+        proceduresVisible: true,
+        visibleTrackIds: new Set(tracks.map(t => t.id)),
+        visibleSystemMarkerIds: new Set(
+            systemMarkers.map((m, i) => `${m.time}:${m.label}:${i}`)
+        ),
+        visibleProcedureIds: new Set(procedures.map(p => p.id)),
+        visibleActionMarkerIds: new Set(
+            procedures.flatMap(p =>
+                p.actionMarkers.map((_, i) => `${p.id}:${i}`)
+            )
+        ),
+    };
+}
 
 /**
  * Converts a video path to a source URL.
@@ -37,6 +58,100 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
     const [isAnnotationDialogOpen, setIsAnnotationDialogOpen] = useState(false);
 
     const playbackTime = usePlaybackTime(playbackState, {maxTime: sessionData.recordData.duration});
+
+    // Visibility state
+    const [visibility, setVisibility] = useState<VisibilityState>(() =>
+        createInitialVisibilityState(sessionData)
+    );
+
+    // Category-level toggle handlers
+    const handleTogglePhysioTracks = (checked: boolean) => {
+        setVisibility(prev => ({...prev, physioTracksVisible: checked}));
+    };
+
+    const handleToggleSystemMarkers = (checked: boolean) => {
+        setVisibility(prev => ({...prev, systemMarkersVisible: checked}));
+    };
+
+    const handleToggleProcedures = (checked: boolean) => {
+        setVisibility(prev => ({...prev, proceduresVisible: checked}));
+    };
+
+    // Individual item toggle handlers
+    const handleToggleTrack = (trackId: string, checked: boolean) => {
+        setVisibility(prev => {
+            const newSet = new Set(prev.visibleTrackIds);
+            if (checked) {
+                newSet.add(trackId);
+            } else {
+                newSet.delete(trackId);
+            }
+            return {...prev, visibleTrackIds: newSet};
+        });
+    };
+
+    const handleToggleSystemMarker = (markerId: string, checked: boolean) => {
+        setVisibility(prev => {
+            const newSet = new Set(prev.visibleSystemMarkerIds);
+            if (checked) {
+                newSet.add(markerId);
+            } else {
+                newSet.delete(markerId);
+            }
+            return {...prev, visibleSystemMarkerIds: newSet};
+        });
+    };
+
+    const handleToggleProcedure = (procedureId: string, checked: boolean) => {
+        setVisibility(prev => {
+            const newSet = new Set(prev.visibleProcedureIds);
+            if (checked) {
+                newSet.add(procedureId);
+            } else {
+                newSet.delete(procedureId);
+            }
+            return {...prev, visibleProcedureIds: newSet};
+        });
+    };
+
+    const handleToggleActionMarker = (actionMarkerId: string, checked: boolean) => {
+        setVisibility(prev => {
+            const newSet = new Set(prev.visibleActionMarkerIds);
+            if (checked) {
+                newSet.add(actionMarkerId);
+            } else {
+                newSet.delete(actionMarkerId);
+            }
+            return {...prev, visibleActionMarkerIds: newSet};
+        });
+    };
+
+    // Filtered data for Timeline
+    const filteredTracks = useMemo(() => {
+        if (!visibility.physioTracksVisible) return [];
+        return sessionData.recordData.tracks.filter(
+            track => visibility.visibleTrackIds.has(track.id)
+        );
+    }, [sessionData.recordData.tracks, visibility.physioTracksVisible, visibility.visibleTrackIds]);
+
+    const filteredSystemMarkers = useMemo(() => {
+        if (!visibility.systemMarkersVisible) return [];
+        return sessionData.recordData.systemMarkers.filter(
+            (marker, index) => visibility.visibleSystemMarkerIds.has(`${marker.time}:${marker.label}:${index}`)
+        );
+    }, [sessionData.recordData.systemMarkers, visibility.systemMarkersVisible, visibility.visibleSystemMarkerIds]);
+
+    const filteredProcedures = useMemo(() => {
+        if (!visibility.proceduresVisible) return [];
+        return sessionData.recordData.procedures
+            .filter(proc => visibility.visibleProcedureIds.has(proc.id))
+            .map(proc => ({
+                ...proc,
+                actionMarkers: proc.actionMarkers.filter(
+                    (_, index) => visibility.visibleActionMarkerIds.has(`${proc.id}:${index}`)
+                )
+            }));
+    }, [sessionData.recordData.procedures, visibility.proceduresVisible, visibility.visibleProcedureIds, visibility.visibleActionMarkerIds]);
 
     const handlePlayPause = () => {
         setPlaybackState(prev => {
@@ -171,6 +286,14 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                                 tracks={sessionData.recordData.tracks}
                                 systemMarkers={sessionData.recordData.systemMarkers}
                                 procedures={sessionData.recordData.procedures}
+                                visibility={visibility}
+                                onTogglePhysioTracks={handleTogglePhysioTracks}
+                                onToggleSystemMarkers={handleToggleSystemMarkers}
+                                onToggleProcedures={handleToggleProcedures}
+                                onToggleTrack={handleToggleTrack}
+                                onToggleSystemMarker={handleToggleSystemMarker}
+                                onToggleProcedure={handleToggleProcedure}
+                                onToggleActionMarker={handleToggleActionMarker}
                             />
                         </Panel>
 
@@ -208,8 +331,9 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                         playbackState={playbackState}
                         duration={sessionData.recordData.duration}
                         annotations={sessionData.manualAnnotations}
-                        tracks={sessionData.recordData.tracks}
-                        systemMarkers={sessionData.recordData.systemMarkers}
+                        tracks={filteredTracks}
+                        systemMarkers={filteredSystemMarkers}
+                        procedures={filteredProcedures}
                         onPlayPause={handlePlayPause}
                         onSeek={handleSeek}
                     />
