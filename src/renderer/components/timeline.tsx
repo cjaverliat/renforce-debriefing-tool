@@ -1,4 +1,4 @@
-import {useRef, useState, useEffect, useMemo, ReactNode} from 'react';
+import {ReactNode, useEffect, useRef, useState} from 'react';
 import {TimelineControls} from '@/renderer/components/timeline-controls';
 import {TimelineRuler} from '@/renderer/components/timeline-ruler';
 import {TimelineTrack} from '@/renderer/components/timeline-track';
@@ -7,17 +7,12 @@ import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
 import {Group, Panel, Separator} from "react-resizable-panels";
 import {TimelineLabel} from "@/renderer/components/timeline-label.tsx";
 import {PhysiologicalSignalLabel} from "@/renderer/components/physiological-signal-label.tsx";
-import {getTrackDisplayConfig, getMarkerColor} from '@/renderer/config/track-display';
 import {Annotation} from "@/shared/types/session.ts";
 import {PhysiologicalTrack, Procedure, SystemMarker} from "@/shared/types/record.ts";
-
-// Signal track content component
-interface SignalContentProps {
-    data: Array<{ time: number; value: number }>;
-    duration: number;
-    pixelsPerSecond: number;
-    color: string;
-}
+import {SignalContent} from "@/renderer/components/timeline-track-physio.tsx";
+import {SystemContent} from "@/renderer/components/timeline-track-system.tsx";
+import {ProcedureLabel} from "@/renderer/components/procedure-label.tsx";
+import {ProcedureContent} from "@/renderer/components/timeline-track-procedure.tsx";
 
 interface DefaultTextLabelContentProps {
     children: ReactNode;
@@ -25,189 +20,21 @@ interface DefaultTextLabelContentProps {
 
 function DefaultTextLabelContent({children}: DefaultTextLabelContentProps) {
     return (
-        <div className="w-full h-full flex flex-col content-center justify-center">
-            <span className="text-xs text-zinc-400 px-4 py-2 truncate">{children}</span>
+        <div className="w-full h-full flex flex-col justify-center px-4 py-1">
+            <span className="text-xs font-medium text-zinc-300 truncate">
+                {children}
+            </span>
         </div>
     );
 }
 
-function SignalContent({data, duration, pixelsPerSecond, color}: SignalContentProps) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [containerSize, setContainerSize] = useState({width: 0, height: 0});
-
-    // Calculate min/max for normalization
-    const {minValue, maxValue} = useMemo(() => {
-        if (data.length === 0) return {minValue: 0, maxValue: 1};
-        let min = data[0].value;
-        let max = data[0].value;
-        for (const sample of data) {
-            if (sample.value < min) min = sample.value;
-            if (sample.value > max) max = sample.value;
-        }
-        // Add small padding to prevent clipping
-        const padding = (max - min) * 0.1;
-        return {minValue: min - padding, maxValue: max + padding};
-    }, [data]);
-
-    useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-
-        const resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                const {width, height} = entry.contentRect;
-                setContainerSize({width, height});
-            }
-        });
-
-        resizeObserver.observe(container);
-        return () => resizeObserver.disconnect();
-    }, []);
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-
-        ctx.scale(dpr, dpr);
-
-        // Clear canvas
-        ctx.fillStyle = '#18181b';
-        ctx.fillRect(0, 0, rect.width, rect.height);
-
-        // Draw signal waveform
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-
-        // Calculate visible time range
-        const endTime = rect.width / pixelsPerSecond;
-        const valueRange = maxValue - minValue;
-
-        // Filter to visible samples and draw at correct positions
-        let isFirstPoint = true;
-        for (const sample of data) {
-            // Skip samples outside visible range (with small margin)
-            if (sample.time < -1 || sample.time > endTime + 1) continue;
-
-            const x = (sample.time) * pixelsPerSecond;
-            // Normalize value to 0-1 range, then map to canvas height (inverted for canvas coords)
-            const normalizedValue = (sample.value - minValue) / valueRange;
-            const y = rect.height - (normalizedValue * rect.height);
-
-            if (isFirstPoint) {
-                ctx.moveTo(x, y);
-                isFirstPoint = false;
-            } else {
-                ctx.lineTo(x, y);
-            }
-        }
-
-        ctx.stroke();
-    }, [data, duration, pixelsPerSecond, color, containerSize, minValue, maxValue]);
-
-    return (
-        <div ref={containerRef} className="w-full h-full">
-            <canvas
-                ref={canvasRef}
-                className="w-full h-full"
-            />
-        </div>
-    );
-}
-
-// Marker track content component
-interface MarkerContentProps {
-    markers: Array<{ time: number; label: string; color: string }>;
-    duration: number;
-    pixelsPerSecond: number;
-}
-
-function MarkerContent({markers, duration, pixelsPerSecond}: MarkerContentProps) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [containerSize, setContainerSize] = useState({width: 0, height: 0});
-
-    useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-
-        const resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                const {width, height} = entry.contentRect;
-                setContainerSize({width, height});
-            }
-        });
-
-        resizeObserver.observe(container);
-        return () => resizeObserver.disconnect();
-    }, []);
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-
-        ctx.scale(dpr, dpr);
-
-        // Clear canvas
-        ctx.fillStyle = '#18181b';
-        ctx.fillRect(0, 0, rect.width, rect.height);
-
-        // Draw markers
-        markers.forEach((marker) => {
-            const x = marker.time * pixelsPerSecond;
-
-            if (x >= 0 && x <= rect.width) {
-                // Draw marker line
-                ctx.strokeStyle = marker.color;
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, rect.height);
-                ctx.stroke();
-
-                // Draw marker label
-                ctx.fillStyle = marker.color;
-                ctx.font = '10px sans-serif';
-                ctx.fillText(marker.label, x + 4, 14);
-            }
-        });
-    }, [markers, duration, pixelsPerSecond, containerSize]);
-
-    return (
-        <div ref={containerRef} className="w-full h-full">
-            <canvas
-                ref={canvasRef}
-                className="w-full h-full"
-            />
-        </div>
-    );
-}
 
 interface TimelineProps {
     playbackState: PlaybackState;
     duration: number;
     annotations: Annotation[];
     tracks: PhysiologicalTrack[];
-    systemMarkers: SystemMarker[];
+    systemMarkers: SystemMarker[] | null;
     procedures: Procedure[];
     onPlayPause: () => void;
     onSeek: (time: number) => void;
@@ -225,6 +52,9 @@ export function Timeline({
                              onPlayPause,
                              onSeek
                          }: TimelineProps) {
+
+    const showSystemMarkers = Array.isArray(systemMarkers);
+
     const {isPlaying} = playbackState;
     const [zoomIndex, setZoomIndex] = useState(ZOOM_LEVELS.indexOf(1));
     const [scrollbarWidth, setScrollbarWidth] = useState(0);
@@ -239,27 +69,6 @@ export function Timeline({
     const playbackTime = usePlaybackTime(playbackState, {maxTime: duration});
 
     const zoom = ZOOM_LEVELS[zoomIndex];
-
-    // Combine system markers, procedure action markers, and user annotations
-    const allMarkers = useMemo(() => [
-        ...systemMarkers.map(m => ({
-            time: m.time,
-            label: m.label,
-            color: getMarkerColor(m.label),
-        })),
-        ...procedures.flatMap(p =>
-            p.actionMarkers.map(m => ({
-                time: m.time,
-                label: m.label,
-                color: '#3b82f6', // Blue for procedure action markers
-            }))
-        ),
-        ...annotations.map(a => ({
-            time: a.time,
-            label: a.label,
-            color: a.color,
-        })),
-    ], [systemMarkers, procedures, annotations]);
 
     const handleZoomIn = () => {
         setZoomIndex((prev) => Math.min(prev + 1, ZOOM_LEVELS.length - 1));
@@ -400,14 +209,23 @@ export function Timeline({
                             className="absolute top-8 left-0 right-0 bottom-0 overflow-x-hidden overflow-y-auto scrollbar-hidden"
                             style={{paddingBottom: scrollbarHeight > 0 ? `${scrollbarHeight}px` : undefined}}
                         >
-                            <TimelineLabel>
-                                <DefaultTextLabelContent>Markers</DefaultTextLabelContent>
-                            </TimelineLabel>
+                            {procedures.map((procedure, index) => {
+                                return (
+                                    <TimelineLabel key={index}>
+                                        <ProcedureLabel name={procedure.name}/>
+                                    </TimelineLabel>
+                                );
+                            })}
+
+                            {showSystemMarkers && (
+                                <TimelineLabel>
+                                    <DefaultTextLabelContent>System Markers</DefaultTextLabelContent>
+                                </TimelineLabel>
+                            )}
 
                             {tracks.map((track, index) => {
-                                const displayConfig = getTrackDisplayConfig(track.id, index);
                                 return (
-                                    <TimelineLabel key={track.id}>
+                                    <TimelineLabel key={index}>
                                         <PhysiologicalSignalLabel
                                             name={track.name}
                                             unit={track.unit}
@@ -415,7 +233,6 @@ export function Timeline({
                                             data={track.data}
                                             playbackState={playbackState}
                                             duration={duration}
-                                            valueDecimals={displayConfig.valueDecimals}
                                         />
                                     </TimelineLabel>
                                 );
@@ -450,23 +267,41 @@ export function Timeline({
                     >
                         <div className="flex flex-col" style={{width: `${contentWidth}px`}}>
 
-                            <TimelineTrack
-                                duration={duration}
-                                playbackState={playbackState}
-                                pixelsPerSecond={pixelsPerSecond}
-                            >
-                                <MarkerContent
-                                    markers={allMarkers}
-                                    duration={duration}
-                                    pixelsPerSecond={pixelsPerSecond}
-                                />
-                            </TimelineTrack>
-
-                            {tracks.map((track, index) => {
-                                const displayConfig = getTrackDisplayConfig(track.id, index);
+                            {procedures.map((procedure, index) => {
                                 return (
                                     <TimelineTrack
-                                        key={track.id}
+                                        key={index}
+                                        duration={duration}
+                                        playbackState={playbackState}
+                                        pixelsPerSecond={pixelsPerSecond}
+                                    >
+                                        <ProcedureContent
+                                            procedure={procedure}
+                                            duration={duration}
+                                            pixelsPerSecond={pixelsPerSecond}
+                                        />
+                                    </TimelineTrack>
+                                );
+                            })}
+
+                            {showSystemMarkers && (
+                                <TimelineTrack
+                                    duration={duration}
+                                    playbackState={playbackState}
+                                    pixelsPerSecond={pixelsPerSecond}
+                                >
+                                    <SystemContent
+                                        markers={systemMarkers}
+                                        duration={duration}
+                                        pixelsPerSecond={pixelsPerSecond}
+                                    />
+                                </TimelineTrack>
+                            )}
+
+                            {tracks.map((track, index) => {
+                                return (
+                                    <TimelineTrack
+                                        key={index}
                                         duration={duration}
                                         playbackState={playbackState}
                                         pixelsPerSecond={pixelsPerSecond}
@@ -475,7 +310,7 @@ export function Timeline({
                                             data={track.data}
                                             duration={duration}
                                             pixelsPerSecond={pixelsPerSecond}
-                                            color={displayConfig.color}
+                                            color="red"
                                         />
                                     </TimelineTrack>
                                 );

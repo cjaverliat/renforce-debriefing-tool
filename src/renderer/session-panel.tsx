@@ -135,7 +135,7 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
     }, [sessionData.recordData.tracks, visibility.physioTracksVisible, visibility.visibleTrackIds]);
 
     const filteredSystemMarkers = useMemo(() => {
-        if (!visibility.systemMarkersVisible) return [];
+        if (!visibility.systemMarkersVisible) return null;
         return sessionData.recordData.systemMarkers.filter(
             (marker, index) => visibility.visibleSystemMarkerIds.has(`${marker.time}:${marker.label}:${index}`)
         );
