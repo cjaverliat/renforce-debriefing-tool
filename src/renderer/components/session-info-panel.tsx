@@ -1,7 +1,7 @@
 import {useState} from 'react';
-import {ChevronRight, ChevronDown, ChevronUp, Activity, Flag, ListChecks} from 'lucide-react';
+import {ChevronRight, ChevronDown, ChevronUp, Activity, Flag, ListChecks, Eye, EyeOff} from 'lucide-react';
 import {Button} from '@/renderer/components/ui/button';
-import {Checkbox} from '@/renderer/components/ui/checkbox';
+import {Toggle} from '@/renderer/components/ui/toggle';
 import {PhysiologicalTrack, Procedure, SystemMarker} from '@/shared/types/record';
 import {VisibilityState} from '@/shared/types/visibility';
 
@@ -11,9 +11,8 @@ interface TreeNodeProps {
     children?: React.ReactNode;
     defaultExpanded?: boolean;
     isRoot?: boolean;
-    checked?: boolean;
-    indeterminate?: boolean;
-    onCheckedChange?: (checked: boolean) => void;
+    visible?: boolean;
+    onVisibilityChange?: (visible: boolean) => void;
 }
 
 function TreeNode({
@@ -22,13 +21,12 @@ function TreeNode({
     children,
     defaultExpanded = false,
     isRoot = false,
-    checked,
-    indeterminate,
-    onCheckedChange
+    visible,
+    onVisibilityChange
 }: TreeNodeProps) {
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
     const hasChildren = !!children;
-    const hasCheckbox = onCheckedChange !== undefined;
+    const hasToggle = onVisibilityChange !== undefined;
 
     return (
         <div className={isRoot ? 'bg-zinc-800 rounded p-2 mb-2' : ''}>
@@ -50,18 +48,25 @@ function TreeNode({
                     )}
                 </button>
 
-                {hasCheckbox && (
-                    <Checkbox
-                        checked={indeterminate ? 'indeterminate' : checked}
-                        onCheckedChange={(value) => onCheckedChange(value === true)}
-                        className="size-3.5"
-                    />
-                )}
-
                 {icon && <span className="shrink-0">{icon}</span>}
                 <span className={`truncate ${isRoot ? 'text-sm text-zinc-100' : 'text-sm text-zinc-300'}`}>
                     {label}
                 </span>
+
+                {hasToggle && (
+                    <Toggle
+                        pressed={visible}
+                        onPressedChange={onVisibilityChange}
+                        size="sm"
+                        className="size-6 p-0 ml-auto bg-transparent hover:bg-transparent data-[state=on]:bg-transparent data-[state=off]:bg-transparent"
+                    >
+                        {visible ? (
+                            <Eye className="size-3.5 text-zinc-300"/>
+                        ) : (
+                            <EyeOff className="size-3.5 text-zinc-500"/>
+                        )}
+                    </Toggle>
+                )}
             </div>
             {hasChildren && isExpanded && (
                 <div className={isRoot ? 'ml-2' : 'ml-4'}>
@@ -75,24 +80,31 @@ function TreeNode({
 interface LeafNodeProps {
     label: string;
     sublabel?: string;
-    checked?: boolean;
-    onCheckedChange?: (checked: boolean) => void;
+    visible?: boolean;
+    onVisibilityChange?: (visible: boolean) => void;
 }
 
-function LeafNode({label, sublabel, checked, onCheckedChange}: LeafNodeProps) {
-    const hasCheckbox = onCheckedChange !== undefined;
+function LeafNode({label, sublabel, visible, onVisibilityChange}: LeafNodeProps) {
+    const hasToggle = onVisibilityChange !== undefined;
 
     return (
         <div className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-700 rounded">
-            {hasCheckbox && (
-                <Checkbox
-                    checked={checked}
-                    onCheckedChange={(value) => onCheckedChange(value === true)}
-                    className="size-3"
-                />
-            )}
             <span className="text-sm text-zinc-400 truncate">{label}</span>
             {sublabel && <span className="text-zinc-500 text-xs font-mono ml-auto shrink-0">{sublabel}</span>}
+            {hasToggle && (
+                <Toggle
+                    pressed={visible}
+                    onPressedChange={onVisibilityChange}
+                    size="sm"
+                    className={`size-5 p-0 bg-transparent hover:bg-transparent data-[state=on]:bg-transparent data-[state=off]:bg-transparent ${sublabel ? '' : 'ml-auto'}`}
+                >
+                    {visible ? (
+                        <Eye className="size-3 text-zinc-300"/>
+                    ) : (
+                        <EyeOff className="size-3 text-zinc-500"/>
+                    )}
+                </Toggle>
+            )}
         </div>
     );
 }
@@ -108,13 +120,13 @@ interface SessionInfoPanelProps {
     systemMarkers: SystemMarker[];
     procedures: Procedure[];
     visibility: VisibilityState;
-    onTogglePhysioTracks: (checked: boolean) => void;
-    onToggleSystemMarkers: (checked: boolean) => void;
-    onToggleProcedures: (checked: boolean) => void;
-    onToggleTrack: (trackId: string, checked: boolean) => void;
-    onToggleSystemMarker: (markerId: string, checked: boolean) => void;
-    onToggleProcedure: (procedureId: string, checked: boolean) => void;
-    onToggleActionMarker: (actionMarkerId: string, checked: boolean) => void;
+    onTogglePhysioTracks: (visible: boolean) => void;
+    onToggleSystemMarkers: (visible: boolean) => void;
+    onToggleProcedures: (visible: boolean) => void;
+    onToggleTrack: (trackId: string, visible: boolean) => void;
+    onToggleSystemMarker: (markerId: string, visible: boolean) => void;
+    onToggleProcedure: (procedureId: string, visible: boolean) => void;
+    onToggleActionMarker: (actionMarkerId: string, visible: boolean) => void;
 }
 
 export function SessionInfoPanel({
@@ -133,24 +145,6 @@ export function SessionInfoPanel({
     const [isExpanded, setIsExpanded] = useState(true);
 
     const totalItems = tracks.length + systemMarkers.length + procedures.length;
-
-    // Calculate indeterminate states for category checkboxes
-    const visibleTrackCount = tracks.filter(t => visibility.visibleTrackIds.has(t.id)).length;
-    const physioIndeterminate = visibility.physioTracksVisible &&
-        visibleTrackCount > 0 &&
-        visibleTrackCount < tracks.length;
-
-    const visibleMarkerCount = systemMarkers.filter((m, i) =>
-        visibility.visibleSystemMarkerIds.has(`${m.time}:${m.label}:${i}`)
-    ).length;
-    const markersIndeterminate = visibility.systemMarkersVisible &&
-        visibleMarkerCount > 0 &&
-        visibleMarkerCount < systemMarkers.length;
-
-    const visibleProcedureCount = procedures.filter(p => visibility.visibleProcedureIds.has(p.id)).length;
-    const proceduresIndeterminate = visibility.proceduresVisible &&
-        visibleProcedureCount > 0 &&
-        visibleProcedureCount < procedures.length;
 
     return (
         <div className="flex flex-col h-full bg-zinc-900 border-r border-zinc-800">
@@ -177,17 +171,16 @@ export function SessionInfoPanel({
                         icon={<Activity className="size-4 text-emerald-500"/>}
                         defaultExpanded
                         isRoot
-                        checked={visibility.physioTracksVisible && visibleTrackCount === tracks.length}
-                        indeterminate={physioIndeterminate}
-                        onCheckedChange={onTogglePhysioTracks}
+                        visible={visibility.physioTracksVisible}
+                        onVisibilityChange={onTogglePhysioTracks}
                     >
                         {tracks.map((track) => (
                             <LeafNode
                                 key={track.id}
                                 label={track.name}
                                 sublabel={track.unit}
-                                checked={visibility.visibleTrackIds.has(track.id)}
-                                onCheckedChange={(checked) => onToggleTrack(track.id, checked)}
+                                visible={visibility.visibleTrackIds.has(track.id) && visibility.physioTracksVisible}
+                                onVisibilityChange={(visible) => onToggleTrack(track.id, visible)}
                             />
                         ))}
                     </TreeNode>
@@ -197,9 +190,8 @@ export function SessionInfoPanel({
                         icon={<Flag className="size-4 text-amber-500"/>}
                         defaultExpanded
                         isRoot
-                        checked={visibility.systemMarkersVisible && visibleMarkerCount === systemMarkers.length}
-                        indeterminate={markersIndeterminate}
-                        onCheckedChange={onToggleSystemMarkers}
+                        visible={visibility.systemMarkersVisible}
+                        onVisibilityChange={onToggleSystemMarkers}
                     >
                         {systemMarkers.map((marker, index) => {
                             const markerId = `${marker.time}:${marker.label}:${index}`;
@@ -208,8 +200,8 @@ export function SessionInfoPanel({
                                     key={markerId}
                                     label={marker.label}
                                     sublabel={formatTime(marker.time)}
-                                    checked={visibility.visibleSystemMarkerIds.has(markerId)}
-                                    onCheckedChange={(checked) => onToggleSystemMarker(markerId, checked)}
+                                    visible={visibility.visibleSystemMarkerIds.has(markerId) && visibility.systemMarkersVisible}
+                                    onVisibilityChange={(visible) => onToggleSystemMarker(markerId, visible)}
                                 />
                             );
                         })}
@@ -220,27 +212,19 @@ export function SessionInfoPanel({
                         icon={<ListChecks className="size-4 text-blue-500"/>}
                         defaultExpanded
                         isRoot
-                        checked={visibility.proceduresVisible && visibleProcedureCount === procedures.length}
-                        indeterminate={proceduresIndeterminate}
-                        onCheckedChange={onToggleProcedures}
+                        visible={visibility.proceduresVisible}
+                        onVisibilityChange={onToggleProcedures}
                     >
                         {procedures.map((procedure) => {
-                            const visibleActionCount = procedure.actionMarkers.filter(
-                                (_, i) => visibility.visibleActionMarkerIds.has(`${procedure.id}:${i}`)
-                            ).length;
-                            const procIndeterminate = visibility.visibleProcedureIds.has(procedure.id) &&
-                                visibleActionCount > 0 &&
-                                visibleActionCount < procedure.actionMarkers.length;
+                            const procedureVisible = visibility.visibleProcedureIds.has(procedure.id) && visibility.proceduresVisible;
 
                             return (
                                 <TreeNode
                                     key={procedure.id}
                                     label={procedure.name}
                                     defaultExpanded
-                                    checked={visibility.visibleProcedureIds.has(procedure.id) &&
-                                        visibleActionCount === procedure.actionMarkers.length}
-                                    indeterminate={procIndeterminate}
-                                    onCheckedChange={(checked) => onToggleProcedure(procedure.id, checked)}
+                                    visible={procedureVisible}
+                                    onVisibilityChange={(visible) => onToggleProcedure(procedure.id, visible)}
                                 >
                                     {procedure.actionMarkers.map((marker, index) => {
                                         const actionMarkerId = `${procedure.id}:${index}`;
@@ -249,8 +233,8 @@ export function SessionInfoPanel({
                                                 key={actionMarkerId}
                                                 label={marker.label}
                                                 sublabel={formatTime(marker.time)}
-                                                checked={visibility.visibleActionMarkerIds.has(actionMarkerId)}
-                                                onCheckedChange={(checked) => onToggleActionMarker(actionMarkerId, checked)}
+                                                visible={visibility.visibleActionMarkerIds.has(actionMarkerId) && procedureVisible}
+                                                onVisibilityChange={(visible) => onToggleActionMarker(actionMarkerId, visible)}
                                             />
                                         );
                                     })}
