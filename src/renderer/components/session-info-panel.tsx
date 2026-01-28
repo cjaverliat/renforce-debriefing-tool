@@ -1,5 +1,6 @@
 import {useState} from 'react';
-import {ChevronRight, ChevronDown, Activity, Flag, ListChecks, Circle} from 'lucide-react';
+import {ChevronRight, ChevronDown, ChevronUp, Activity, Flag, ListChecks, Circle} from 'lucide-react';
+import {Button} from '@/renderer/components/ui/button';
 import {PhysiologicalTrack, Procedure, SystemMarker} from '@/shared/types/record';
 
 interface TreeNodeProps {
@@ -7,19 +8,20 @@ interface TreeNodeProps {
     icon?: React.ReactNode;
     children?: React.ReactNode;
     defaultExpanded?: boolean;
+    isRoot?: boolean;
 }
 
-function TreeNode({label, icon, children, defaultExpanded = false}: TreeNodeProps) {
+function TreeNode({label, icon, children, defaultExpanded = false, isRoot = false}: TreeNodeProps) {
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
     const hasChildren = !!children;
 
     return (
-        <div>
+        <div className={isRoot ? 'bg-zinc-800 rounded p-2 mb-2' : ''}>
             <button
                 onClick={() => hasChildren && setIsExpanded(!isExpanded)}
-                className={`flex items-center gap-1 w-full px-2 py-1 text-left text-sm hover:bg-zinc-800 rounded ${
+                className={`flex items-center gap-2 w-full text-left ${
                     hasChildren ? 'cursor-pointer' : 'cursor-default'
-                }`}
+                } ${isRoot ? 'mb-1' : 'px-2 py-1 hover:bg-zinc-700 rounded'}`}
             >
                 {hasChildren ? (
                     isExpanded ? (
@@ -31,10 +33,10 @@ function TreeNode({label, icon, children, defaultExpanded = false}: TreeNodeProp
                     <span className="w-4 shrink-0"/>
                 )}
                 {icon && <span className="shrink-0">{icon}</span>}
-                <span className="text-zinc-300 truncate">{label}</span>
+                <span className={`truncate ${isRoot ? 'text-sm text-zinc-100' : 'text-sm text-zinc-300'}`}>{label}</span>
             </button>
             {hasChildren && isExpanded && (
-                <div className="ml-4">
+                <div className={isRoot ? 'ml-2' : 'ml-4'}>
                     {children}
                 </div>
             )}
@@ -49,11 +51,10 @@ interface LeafNodeProps {
 
 function LeafNode({label, sublabel}: LeafNodeProps) {
     return (
-        <div className="flex items-center gap-1 px-2 py-1 text-sm">
-            <span className="w-4 shrink-0"/>
+        <div className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-700 rounded">
             <Circle className="size-2 text-zinc-600 shrink-0"/>
-            <span className="text-zinc-400 truncate">{label}</span>
-            {sublabel && <span className="text-zinc-600 text-xs ml-auto shrink-0">{sublabel}</span>}
+            <span className="text-sm text-zinc-400 truncate">{label}</span>
+            {sublabel && <span className="text-zinc-500 text-xs font-mono ml-auto shrink-0">{sublabel}</span>}
         </div>
     );
 }
@@ -61,7 +62,7 @@ function LeafNode({label, sublabel}: LeafNodeProps) {
 function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 interface SessionInfoPanelProps {
@@ -71,48 +72,52 @@ interface SessionInfoPanelProps {
 }
 
 export function SessionInfoPanel({tracks, systemMarkers, procedures}: SessionInfoPanelProps) {
+    const [isExpanded, setIsExpanded] = useState(true);
+
+    const totalItems = tracks.length + systemMarkers.length + procedures.length;
+
     return (
-        <div className="h-full overflow-y-auto p-2 custom-scrollbar">
-            <TreeNode
-                label="Physio Tracks"
-                icon={<Activity className="size-4 text-emerald-500"/>}
-                defaultExpanded
-            >
-                {tracks.map((track) => (
-                    <LeafNode
-                        key={track.id}
-                        label={track.name}
-                        sublabel={track.unit}
-                    />
-                ))}
-            </TreeNode>
-
-            <TreeNode
-                label="System Markers"
-                icon={<Flag className="size-4 text-amber-500"/>}
-                defaultExpanded
-            >
-                {systemMarkers.map((marker, index) => (
-                    <LeafNode
-                        key={index}
-                        label={marker.label}
-                        sublabel={formatTime(marker.time)}
-                    />
-                ))}
-            </TreeNode>
-
-            <TreeNode
-                label="Procedures"
-                icon={<ListChecks className="size-4 text-blue-500"/>}
-                defaultExpanded
-            >
-                {procedures.map((procedure) => (
-                    <TreeNode
-                        key={procedure.id}
-                        label={procedure.name}
-                        defaultExpanded
+        <div className="flex flex-col h-full bg-zinc-900 border-r border-zinc-800">
+            <div className="flex items-center justify-between p-3 border-b border-zinc-800">
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="size-6 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
                     >
-                        {procedure.actionMarkers.map((marker, index) => (
+                        {isExpanded ? <ChevronUp className="size-4"/> : <ChevronDown className="size-4"/>}
+                    </Button>
+                    <h3 className="text-sm text-zinc-100">
+                        Session Info ({totalItems})
+                    </h3>
+                </div>
+            </div>
+
+            {isExpanded && (
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+                    <TreeNode
+                        label="Physio Tracks"
+                        icon={<Activity className="size-4 text-emerald-500"/>}
+                        defaultExpanded
+                        isRoot
+                    >
+                        {tracks.map((track) => (
+                            <LeafNode
+                                key={track.id}
+                                label={track.name}
+                                sublabel={track.unit}
+                            />
+                        ))}
+                    </TreeNode>
+
+                    <TreeNode
+                        label="System Markers"
+                        icon={<Flag className="size-4 text-amber-500"/>}
+                        defaultExpanded
+                        isRoot
+                    >
+                        {systemMarkers.map((marker, index) => (
                             <LeafNode
                                 key={index}
                                 label={marker.label}
@@ -120,8 +125,31 @@ export function SessionInfoPanel({tracks, systemMarkers, procedures}: SessionInf
                             />
                         ))}
                     </TreeNode>
-                ))}
-            </TreeNode>
+
+                    <TreeNode
+                        label="Procedures"
+                        icon={<ListChecks className="size-4 text-blue-500"/>}
+                        defaultExpanded
+                        isRoot
+                    >
+                        {procedures.map((procedure) => (
+                            <TreeNode
+                                key={procedure.id}
+                                label={procedure.name}
+                                defaultExpanded
+                            >
+                                {procedure.actionMarkers.map((marker, index) => (
+                                    <LeafNode
+                                        key={index}
+                                        label={marker.label}
+                                        sublabel={formatTime(marker.time)}
+                                    />
+                                ))}
+                            </TreeNode>
+                        ))}
+                    </TreeNode>
+                </div>
+            )}
         </div>
     );
 }
