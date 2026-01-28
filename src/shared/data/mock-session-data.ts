@@ -3,7 +3,7 @@
  * This module generates mock PLM session data for development and testing.
  * It will be replaced by actual PLM file parsing when implemented.
  */
-import {PhysiologicalDataPoint, PhysiologicalTrack, SystemMarker} from "@/shared/types/record.ts";
+import {PhysiologicalDataPoint, PhysiologicalTrack, Procedure, SystemMarker} from "@/shared/types/record.ts";
 import {SessionData} from "@/shared/types/session.ts";
 
 /**
@@ -80,6 +80,46 @@ function createMockSystemMarkers(): SystemMarker[] {
 }
 
 /**
+ * Creates mock procedures with action markers.
+ */
+function createMockProcedures(duration: number): Procedure[] {
+    return [
+        {
+            id: 'baseline',
+            name: 'Baseline',
+            startTime: 0,
+            endTime: 30,
+            actionMarkers: [
+                {time: 5, label: 'Eyes closed'},
+                {time: 20, label: 'Eyes open'},
+            ],
+        },
+        {
+            id: 'stress-test',
+            name: 'Stress Test',
+            startTime: 30,
+            endTime: 90,
+            actionMarkers: [
+                {time: 35, label: 'Task started'},
+                {time: 50, label: 'Difficulty increased'},
+                {time: 70, label: 'Peak stress'},
+                {time: 85, label: 'Task completed'},
+            ],
+        },
+        {
+            id: 'recovery',
+            name: 'Recovery',
+            startTime: 90,
+            endTime: -1,
+            actionMarkers: [
+                {time: 95, label: 'Relaxation started'},
+                {time: 110, label: 'Breathing exercise'},
+            ],
+        },
+    ];
+}
+
+/**
  * Creates a complete mock PLM session data object.
  * This simulates what would be loaded from an actual PLM file.
  */
@@ -99,8 +139,8 @@ export async function createMockSessionData(): Promise<SessionData> {
             duration: duration,
             videoPath: videoPath,
             tracks: createMockTracks(duration, MOCK_SAMPLING_RATE),
+            procedures: createMockProcedures(duration),
             systemMarkers: createMockSystemMarkers(),
-            actionMarkers: []
         }
     };
 }

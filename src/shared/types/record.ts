@@ -27,7 +27,23 @@ export interface PhysiologicalTrack {
     data: PhysiologicalDataPoint[];
 }
 
-export interface ActionMarker {
+/**
+ * A procedure represents a distinct phase or activity within a session.
+ */
+export interface Procedure {
+    /** Unique identifier for the procedure */
+    id: string;
+    /** Display name for the procedure */
+    name: string;
+    /** Start time in seconds */
+    startTime: number;
+    /** End time in seconds, or -1 if the procedure lasts for the entire record duration */
+    endTime: number;
+    /** Action markers within this procedure */
+    actionMarkers: ProcedureActionMarker[];
+}
+
+export interface ProcedureActionMarker {
     time: number;  // Time in seconds
     label: string;
 }
@@ -50,7 +66,8 @@ export interface RecordData {
     videoPath: string;
     /** Physiological signal tracks */
     tracks: PhysiologicalTrack[];
+    /** Procedures (phases/activities within the session) */
+    procedures: Procedure[];
     /** System markers (manual press during experiment) */
     systemMarkers: SystemMarker[];
-    actionMarkers: ActionMarker[];
 }

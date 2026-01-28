@@ -159,12 +159,14 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
             </div>
 
             <Group orientation="vertical">
+
+                {/* Top part panel containing the info about the session, the video player and annotations  */}
                 <Panel minSize={200}>
                     <Group orientation="horizontal">
 
                         {/* Left side panel */}
                         <Panel minSize={200} defaultSize={210}>
-
+                            {/* TODO: add the session info */}
                         </Panel>
 
                         <Separator className={"separator"}/>
@@ -195,6 +197,7 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
 
                 <Separator className={"separator"}/>
 
+                {/* Timeline panel (bottom part) */}
                 <Panel minSize={300}>
                     <Timeline
                         playbackState={playbackState}
