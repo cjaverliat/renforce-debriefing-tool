@@ -2,9 +2,6 @@
 import {ipcMain} from 'electron';
 
 import ffmpeg from 'fluent-ffmpeg';
-import ffmpegPath from 'ffmpeg-static';
-
-ffmpeg.setFfmpegPath(ffmpegPath);
 
 export function registerVideoHandlers() {
     ipcMain.handle('video:get-duration', async (_, videoPath: string) => {
