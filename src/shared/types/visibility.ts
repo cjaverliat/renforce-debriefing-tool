@@ -8,6 +8,8 @@ export interface VisibilityState {
     systemMarkersVisible: boolean;
     /** Whether the procedures category is visible */
     proceduresVisible: boolean;
+    /** Whether the incident markers category is visible */
+    incidentMarkersVisible: boolean;
 
     /** Set of visible track IDs */
     visibleTrackIds: Set<string>;
@@ -17,4 +19,6 @@ export interface VisibilityState {
     visibleProcedureIds: Set<string>;
     /** Set of visible action marker IDs (format: `${procedureId}:${index}`) */
     visibleActionMarkerIds: Set<string>;
+    /** Set of visible incident marker IDs (format: `${time}:${label}:${index}`) */
+    visibleIncidentMarkerIds: Set<string>;
 }

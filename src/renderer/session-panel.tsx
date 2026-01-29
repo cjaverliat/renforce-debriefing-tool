@@ -14,15 +14,19 @@ import {computeCurrentTime, createInitialPlaybackState, PlaybackState} from "@/s
 import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
 
 function createInitialVisibilityState(sessionData: SessionData): VisibilityState {
-    const {tracks, systemMarkers, procedures} = sessionData.recordData;
+    const {tracks, systemMarkers, incidentMarkers, procedures} = sessionData.recordData;
 
     return {
         physioTracksVisible: true,
         systemMarkersVisible: true,
+        incidentMarkersVisible: true,
         proceduresVisible: true,
         visibleTrackIds: new Set(tracks.map(t => t.id)),
         visibleSystemMarkerIds: new Set(
             systemMarkers.map((m, i) => `${m.time}:${m.label}:${i}`)
+        ),
+        visibleIncidentMarkerIds: new Set(
+            incidentMarkers.map((m, i) => `${m.time}:${m.label}:${i}`)
         ),
         visibleProcedureIds: new Set(procedures.map(p => p.id)),
         visibleActionMarkerIds: new Set(
@@ -78,6 +82,10 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
         setVisibility(prev => ({...prev, proceduresVisible: checked}));
     };
 
+    const handleToggleIncidentMarkers = (checked: boolean) => {
+        setVisibility(prev => ({...prev, incidentMarkersVisible: checked}));
+    };
+
     // Individual item toggle handlers
     const handleToggleTrack = (trackId: string, checked: boolean) => {
         setVisibility(prev => {
@@ -100,6 +108,18 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                 newSet.delete(markerId);
             }
             return {...prev, visibleSystemMarkerIds: newSet};
+        });
+    };
+
+    const handleToggleIncidentMarker = (markerId: string, checked: boolean) => {
+        setVisibility(prev => {
+            const newSet = new Set(prev.visibleIncidentMarkerIds);
+            if (checked) {
+                newSet.add(markerId);
+            } else {
+                newSet.delete(markerId);
+            }
+            return {...prev, visibleIncidentMarkerIds: newSet};
         });
     };
 
@@ -256,13 +276,16 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                             <SessionInfoPanel
                                 tracks={sessionData.recordData.tracks}
                                 systemMarkers={sessionData.recordData.systemMarkers}
+                                incidentMarkers={sessionData.recordData.incidentMarkers}
                                 procedures={sessionData.recordData.procedures}
                                 visibility={visibility}
                                 onTogglePhysioTracks={handleTogglePhysioTracks}
                                 onToggleSystemMarkers={handleToggleSystemMarkers}
+                                onToggleIncidentMarkers={handleToggleIncidentMarkers}
                                 onToggleProcedures={handleToggleProcedures}
                                 onToggleTrack={handleToggleTrack}
                                 onToggleSystemMarker={handleToggleSystemMarker}
+                                onToggleIncidentMarker={handleToggleIncidentMarker}
                                 onToggleProcedure={handleToggleProcedure}
                                 onToggleActionMarker={handleToggleActionMarker}
                                 onSeek={handleSeek}
@@ -305,6 +328,7 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                         annotations={annotations}
                         tracks={sessionData.recordData.tracks}
                         systemMarkers={sessionData.recordData.systemMarkers}
+                        incidentMarkers={sessionData.recordData.incidentMarkers}
                         procedures={sessionData.recordData.procedures}
                         visibility={visibility}
                         onPlayPause={handlePlayPause}

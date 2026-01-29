@@ -8,10 +8,11 @@ import {Group, Panel, Separator} from "react-resizable-panels";
 import {TimelineLabel} from "@/renderer/components/timeline-label.tsx";
 import {PhysiologicalSignalLabel} from "@/renderer/components/physiological-signal-label.tsx";
 import {Annotation} from "@/shared/types/session.ts";
-import {PhysiologicalSignal, Procedure, SystemMarker} from "@/shared/types/record.ts";
+import {IncidentMarker, PhysiologicalSignal, Procedure, SystemMarker} from "@/shared/types/record.ts";
 import {SignalContent} from "@/renderer/components/timeline-track-physio.tsx";
 import {SystemContent} from "@/renderer/components/timeline-track-system.tsx";
 import {ProceduresContent} from "@/renderer/components/timeline-track-procedures.tsx";
+import {IncidentsContent} from "@/renderer/components/timeline-track-incidents.tsx";
 import {AnnotationsContent} from "@/renderer/components/timeline-track-annotations.tsx";
 import {VisibilityState} from "@/shared/types/visibility.ts";
 
@@ -36,6 +37,7 @@ interface TimelineProps {
     annotations: Annotation[];
     tracks: PhysiologicalSignal[];
     systemMarkers: SystemMarker[];
+    incidentMarkers: IncidentMarker[];
     procedures: Procedure[];
     visibility: VisibilityState;
     onPlayPause: () => void;
@@ -63,6 +65,7 @@ export function Timeline({
                              annotations,
                              tracks,
                              systemMarkers,
+                             incidentMarkers,
                              procedures,
                              visibility,
                              onPlayPause,
@@ -218,6 +221,12 @@ export function Timeline({
             }));
     }, [procedures, visibility.proceduresVisible, visibility.visibleProcedureIds, visibility.visibleActionMarkerIds]);
 
+    const filteredIncidentMarkers = useMemo(() => {
+        return incidentMarkers.filter(
+            (marker, index) => visibility.visibleIncidentMarkerIds.has(`${marker.time}:${marker.label}:${index}`)
+        );
+    }, [incidentMarkers, visibility.incidentMarkersVisible, visibility.visibleIncidentMarkerIds]);
+
     return (
         <div className="flex flex-col h-full bg-zinc-900">
             <TimelineControls
@@ -250,6 +259,12 @@ export function Timeline({
                             {visibility.proceduresVisible && (
                                 <TimelineLabel>
                                     <DefaultTextLabelContent>Procedures</DefaultTextLabelContent>
+                                </TimelineLabel>
+                            )}
+
+                            {visibility.incidentMarkersVisible && (
+                                <TimelineLabel>
+                                    <DefaultTextLabelContent>Incidents</DefaultTextLabelContent>
                                 </TimelineLabel>
                             )}
 
@@ -317,6 +332,19 @@ export function Timeline({
                                     <ProceduresContent
                                         procedures={filteredProcedures}
                                         duration={duration}
+                                        pixelsPerSecond={pixelsPerSecond}
+                                    />
+                                </TimelineTrack>
+                            )}
+
+                            {visibility.incidentMarkersVisible && (
+                                <TimelineTrack
+                                    duration={duration}
+                                    playbackState={playbackState}
+                                    pixelsPerSecond={pixelsPerSecond}
+                                >
+                                    <IncidentsContent
+                                        incidentMarkers={filteredIncidentMarkers}
                                         pixelsPerSecond={pixelsPerSecond}
                                     />
                                 </TimelineTrack>
