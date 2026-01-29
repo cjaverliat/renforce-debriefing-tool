@@ -1,8 +1,9 @@
 import {useState} from 'react';
 import {ChevronDown, ChevronRight, Activity, Flag, ListChecks, Eye, EyeOff} from 'lucide-react';
 import {Toggle} from '@/renderer/components/ui/toggle';
+import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/renderer/components/ui/tabs';
 import {Collapsible, CollapsibleTrigger, CollapsibleContent} from '@/renderer/components/ui/collapsible';
-import {PhysiologicalTrack, Procedure, SystemMarker} from '@/shared/types/record';
+import {PhysiologicalSignal, Procedure, SystemMarker} from '@/shared/types/record';
 import {VisibilityState} from '@/shared/types/visibility';
 
 interface VisibilityToggleProps {
@@ -40,7 +41,7 @@ function formatTime(seconds: number): string {
 }
 
 interface SessionInfoPanelProps {
-    tracks: PhysiologicalTrack[];
+    tracks: PhysiologicalSignal[];
     systemMarkers: SystemMarker[];
     procedures: Procedure[];
     visibility: VisibilityState;
@@ -68,32 +69,34 @@ export function SessionInfoPanel({
     onToggleActionMarker,
     onSeek,
 }: SessionInfoPanelProps) {
-    const [physioExpanded, setPhysioExpanded] = useState(true);
-    const [proceduresExpanded, setProceduresExpanded] = useState(true);
-    const [markersExpanded, setMarkersExpanded] = useState(true);
-
     return (
-        <div className="flex flex-col h-full bg-zinc-900 border-r border-zinc-800 overflow-y-auto custom-scrollbar p-2 space-y-2">
-            {/* Physio Tracks */}
-            <Collapsible open={physioExpanded} onOpenChange={setPhysioExpanded}>
-                <div className="flex items-center gap-2 px-2 py-2 border-b border-zinc-800">
-                    <CollapsibleTrigger className="shrink-0 p-0.5 hover:bg-zinc-800 rounded">
-                        {physioExpanded ? (
-                            <ChevronDown className="size-4 text-zinc-400"/>
-                        ) : (
-                            <ChevronRight className="size-4 text-zinc-400"/>
-                        )}
-                    </CollapsibleTrigger>
-                    <Activity className="size-4 text-emerald-500 shrink-0"/>
-                    <span className="text-sm text-zinc-100 flex-1">Physio Tracks</span>
-                    <span className="text-xs text-zinc-500">({tracks.length})</span>
-                    <VisibilityToggle
-                        visible={visibility.physioTracksVisible}
-                        onVisibilityChange={onTogglePhysioTracks}
-                    />
-                </div>
-                <CollapsibleContent className="pt-2">
-                    <div className="space-y-2">
+        <div className="flex flex-col h-full bg-zinc-900 border-r border-zinc-800">
+            <Tabs defaultValue="physio" className="flex flex-col h-full">
+                <TabsList className="w-full shrink-0 bg-zinc-800 rounded-none border-b border-zinc-700">
+                    <TabsTrigger value="physio" className="flex-1 gap-1 data-[state=active]:bg-zinc-900!">
+                        <Activity className="size-4 text-emerald-500"/>
+                        <span className="text-xs text-zinc-400">({tracks.length})</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="procedures" className="flex-1 gap-1 data-[state=active]:bg-zinc-900!">
+                        <ListChecks className="size-4 text-blue-500"/>
+                        <span className="text-xs text-zinc-400">({procedures.length})</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="markers" className="flex-1 gap-1 data-[state=active]:bg-zinc-900!">
+                        <Flag className="size-4 text-amber-500"/>
+                        <span className="text-xs text-zinc-400">({systemMarkers.length})</span>
+                    </TabsTrigger>
+                </TabsList>
+
+                {/* Physio Tracks Tab */}
+                <TabsContent value="physio" className="flex-1 overflow-y-auto custom-scrollbar m-0">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
+                        <span className="text-sm text-zinc-100">Physiological Signals</span>
+                        <VisibilityToggle
+                            visible={visibility.physioTracksVisible}
+                            onVisibilityChange={onTogglePhysioTracks}
+                        />
+                    </div>
+                    <div className="p-2 space-y-2">
                         {tracks.map((track) => (
                             <div
                                 key={track.id}
@@ -119,29 +122,18 @@ export function SessionInfoPanel({
                             </div>
                         ))}
                     </div>
-                </CollapsibleContent>
-            </Collapsible>
+                </TabsContent>
 
-            {/* Procedures */}
-            <Collapsible open={proceduresExpanded} onOpenChange={setProceduresExpanded}>
-                <div className="flex items-center gap-2 px-2 py-2 border-b border-zinc-800">
-                    <CollapsibleTrigger className="shrink-0 p-0.5 hover:bg-zinc-800 rounded">
-                        {proceduresExpanded ? (
-                            <ChevronDown className="size-4 text-zinc-400"/>
-                        ) : (
-                            <ChevronRight className="size-4 text-zinc-400"/>
-                        )}
-                    </CollapsibleTrigger>
-                    <ListChecks className="size-4 text-blue-500 shrink-0"/>
-                    <span className="text-sm text-zinc-100 flex-1">Procedures</span>
-                    <span className="text-xs text-zinc-500">({procedures.length})</span>
-                    <VisibilityToggle
-                        visible={visibility.proceduresVisible}
-                        onVisibilityChange={onToggleProcedures}
-                    />
-                </div>
-                <CollapsibleContent className="pt-2">
-                    <div className="space-y-2">
+                {/* Procedures Tab */}
+                <TabsContent value="procedures" className="flex-1 overflow-y-auto custom-scrollbar m-0">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
+                        <span className="text-sm text-zinc-100">Procedures</span>
+                        <VisibilityToggle
+                            visible={visibility.proceduresVisible}
+                            onVisibilityChange={onToggleProcedures}
+                        />
+                    </div>
+                    <div className="p-2 space-y-2">
                         {procedures.map((procedure) => (
                             <ProcedureCard
                                 key={procedure.id}
@@ -153,29 +145,18 @@ export function SessionInfoPanel({
                             />
                         ))}
                     </div>
-                </CollapsibleContent>
-            </Collapsible>
+                </TabsContent>
 
-            {/* System Markers */}
-            <Collapsible open={markersExpanded} onOpenChange={setMarkersExpanded}>
-                <div className="flex items-center gap-2 px-2 py-2 border-b border-zinc-800">
-                    <CollapsibleTrigger className="shrink-0 p-0.5 hover:bg-zinc-800 rounded">
-                        {markersExpanded ? (
-                            <ChevronDown className="size-4 text-zinc-400"/>
-                        ) : (
-                            <ChevronRight className="size-4 text-zinc-400"/>
-                        )}
-                    </CollapsibleTrigger>
-                    <Flag className="size-4 text-amber-500 shrink-0"/>
-                    <span className="text-sm text-zinc-100 flex-1">System Markers</span>
-                    <span className="text-xs text-zinc-500">({systemMarkers.length})</span>
-                    <VisibilityToggle
-                        visible={visibility.systemMarkersVisible}
-                        onVisibilityChange={onToggleSystemMarkers}
-                    />
-                </div>
-                <CollapsibleContent className="pt-2">
-                    <div className="space-y-2">
+                {/* System Markers Tab */}
+                <TabsContent value="markers" className="flex-1 overflow-y-auto custom-scrollbar m-0">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
+                        <span className="text-sm text-zinc-100">System Markers</span>
+                        <VisibilityToggle
+                            visible={visibility.systemMarkersVisible}
+                            onVisibilityChange={onToggleSystemMarkers}
+                        />
+                    </div>
+                    <div className="p-2 space-y-2">
                         {systemMarkers.map((marker, index) => {
                             const markerId = `${marker.time}:${marker.label}:${index}`;
                             return (
@@ -207,8 +188,8 @@ export function SessionInfoPanel({
                             );
                         })}
                     </div>
-                </CollapsibleContent>
-            </Collapsible>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

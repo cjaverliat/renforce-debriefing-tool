@@ -18,8 +18,8 @@ export function ProcedureBar({procedure, pixelsPerSecond, duration, tooltip}: Pr
 
     const barContent = (
         <div
-            className={"absolute rounded-md h-full bg-blue-400 cursor-pointer"}
-            style={{left: startPosition, width}}
+            className="absolute rounded-md h-full bg-blue-400 cursor-pointer"
+            style={{left: startPosition, width: width}}
         />
     );
 

@@ -126,33 +126,6 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
         });
     };
 
-    // Filtered data for Timeline
-    const filteredTracks = useMemo(() => {
-        if (!visibility.physioTracksVisible) return [];
-        return sessionData.recordData.tracks.filter(
-            track => visibility.visibleTrackIds.has(track.id)
-        );
-    }, [sessionData.recordData.tracks, visibility.physioTracksVisible, visibility.visibleTrackIds]);
-
-    const filteredSystemMarkers = useMemo(() => {
-        if (!visibility.systemMarkersVisible) return null;
-        return sessionData.recordData.systemMarkers.filter(
-            (marker, index) => visibility.visibleSystemMarkerIds.has(`${marker.time}:${marker.label}:${index}`)
-        );
-    }, [sessionData.recordData.systemMarkers, visibility.systemMarkersVisible, visibility.visibleSystemMarkerIds]);
-
-    const filteredProcedures = useMemo(() => {
-        if (!visibility.proceduresVisible) return [];
-        return sessionData.recordData.procedures
-            .filter(proc => visibility.visibleProcedureIds.has(proc.id))
-            .map(proc => ({
-                ...proc,
-                actionMarkers: proc.actionMarkers.filter(
-                    (_, index) => visibility.visibleActionMarkerIds.has(`${proc.id}:${index}`)
-                )
-            }));
-    }, [sessionData.recordData.procedures, visibility.proceduresVisible, visibility.visibleProcedureIds, visibility.visibleActionMarkerIds]);
-
     const handlePlayPause = () => {
         setPlaybackState(prev => {
             const now = performance.now();
@@ -332,10 +305,10 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                         playbackState={playbackState}
                         duration={sessionData.recordData.duration}
                         annotations={sessionData.manualAnnotations}
-                        tracks={filteredTracks}
-                        systemMarkers={filteredSystemMarkers}
-                        procedures={filteredProcedures}
-                        proceduresVisible={visibility.proceduresVisible}
+                        tracks={sessionData.recordData.tracks}
+                        systemMarkers={sessionData.recordData.systemMarkers}
+                        procedures={sessionData.recordData.procedures}
+                        visibility={visibility}
                         onPlayPause={handlePlayPause}
                         onSeek={handleSeek}
                     />

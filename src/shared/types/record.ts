@@ -11,10 +11,10 @@ export interface PhysiologicalDataPoint {
 }
 
 /**
- * A physiological signal track as loaded from a PLM file.
+ * A physiological signal as loaded from a PLM file.
  * Contains only the raw data and metadata from the file.
  */
-export interface PhysiologicalTrack {
+export interface PhysiologicalSignal {
     /** Unique identifier for the track */
     id: string;
     /** Display name for the track (e.g., "Heart Rate") */
@@ -48,9 +48,26 @@ export interface ProcedureActionMarker {
     label: string;
 }
 
+/**
+ * Represents a system-generated marker, such as save points or manual annotations, emitted by the application during an experiment.
+ */
 export interface SystemMarker {
     time: number;  // Time in seconds
     label: string;
+    category: 'automatic' | 'manual';
+}
+
+/**
+ * Incident markers emitted by the application to classify events based on severity.
+ *
+ * - Critical Incident: Dangerous situation, such as overflow, contamination, or improper dilution.
+ * - Moderate Incident: Non-critical anomaly, e.g., handling error without major risk.
+ */
+export interface IncidentMarker {
+    severity: 'critical' | 'moderate';
+    label: string;
+    description?: string;
+    time: number;  // Time in seconds
 }
 
 /**
@@ -65,9 +82,11 @@ export interface RecordData {
     /** Path to the video file (relative or absolute) */
     videoPath: string;
     /** Physiological signal tracks */
-    tracks: PhysiologicalTrack[];
+    tracks: PhysiologicalSignal[];
     /** Procedures (phases/activities within the session) */
     procedures: Procedure[];
-    /** System markers (manual press during experiment) */
+    /** System-generated markers such as save points or manual annotations */
     systemMarkers: SystemMarker[];
+    /** Incident markers classifying events based on severity during the session */
+    incidentMarkers: IncidentMarker[];
 }

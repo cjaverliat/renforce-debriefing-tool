@@ -1,4 +1,4 @@
-import {ReactNode, useEffect, useRef, useState} from 'react';
+import {ReactNode, useEffect, useMemo, useRef, useState} from 'react';
 import {TimelineControls} from '@/renderer/components/timeline-controls';
 import {TimelineRuler} from '@/renderer/components/timeline-ruler';
 import {TimelineTrack} from '@/renderer/components/timeline-track';
@@ -8,11 +8,12 @@ import {Group, Panel, Separator} from "react-resizable-panels";
 import {TimelineLabel} from "@/renderer/components/timeline-label.tsx";
 import {PhysiologicalSignalLabel} from "@/renderer/components/physiological-signal-label.tsx";
 import {Annotation} from "@/shared/types/session.ts";
-import {PhysiologicalTrack, Procedure, SystemMarker} from "@/shared/types/record.ts";
+import {PhysiologicalSignal, Procedure, SystemMarker} from "@/shared/types/record.ts";
 import {SignalContent} from "@/renderer/components/timeline-track-physio.tsx";
 import {SystemContent} from "@/renderer/components/timeline-track-system.tsx";
 import {ProceduresContent} from "@/renderer/components/timeline-track-procedures.tsx";
 import {AnnotationsContent} from "@/renderer/components/timeline-track-annotations.tsx";
+import {VisibilityState} from "@/shared/types/visibility.ts";
 
 interface DefaultTextLabelContentProps {
     children: ReactNode;
@@ -33,10 +34,10 @@ interface TimelineProps {
     playbackState: PlaybackState;
     duration: number;
     annotations: Annotation[];
-    tracks: PhysiologicalTrack[];
-    systemMarkers: SystemMarker[] | null;
+    tracks: PhysiologicalSignal[];
+    systemMarkers: SystemMarker[];
     procedures: Procedure[];
-    proceduresVisible: boolean;
+    visibility: VisibilityState;
     onPlayPause: () => void;
     onSeek: (time: number) => void;
 }
@@ -63,12 +64,10 @@ export function Timeline({
                              tracks,
                              systemMarkers,
                              procedures,
-                             proceduresVisible,
+                             visibility,
                              onPlayPause,
                              onSeek
                          }: TimelineProps) {
-
-    const showSystemMarkers = Array.isArray(systemMarkers);
 
     const {isPlaying} = playbackState;
     const [zoomIndex, setZoomIndex] = useState(ZOOM_LEVELS.indexOf(1));
@@ -195,8 +194,32 @@ export function Timeline({
     const pixelsPerSecond = 2 * zoom;
     const contentWidth = Math.max(pixelsPerSecond * duration, visibleWidth);
 
+    // Filtered data for Timeline
+    const filteredTracks = useMemo(() => {
+        return tracks.filter(
+            track => visibility.visibleTrackIds.has(track.id)
+        );
+    }, [tracks, visibility.physioTracksVisible, visibility.visibleTrackIds]);
+
+    const filteredSystemMarkers = useMemo(() => {
+        return systemMarkers.filter(
+            (marker, index) => visibility.visibleSystemMarkerIds.has(`${marker.time}:${marker.label}:${index}`)
+        );
+    }, [systemMarkers, visibility.systemMarkersVisible, visibility.visibleSystemMarkerIds]);
+
+    const filteredProcedures = useMemo(() => {
+        return procedures
+            .filter(proc => visibility.visibleProcedureIds.has(proc.id))
+            .map(proc => ({
+                ...proc,
+                actionMarkers: proc.actionMarkers.filter(
+                    (_, index) => visibility.visibleActionMarkerIds.has(`${proc.id}:${index}`)
+                )
+            }));
+    }, [procedures, visibility.proceduresVisible, visibility.visibleProcedureIds, visibility.visibleActionMarkerIds]);
+
     return (
-        <div className="flex flex-col h-full bg-zinc-900">
+        <div className="relative h-full bg-zinc-900">
             <TimelineControls
                 isPlaying={isPlaying}
                 playbackState={playbackState}
@@ -224,13 +247,13 @@ export function Timeline({
                             className="absolute top-8 left-0 right-0 bottom-0 overflow-x-hidden overflow-y-auto scrollbar-hidden"
                             style={{paddingBottom: scrollbarHeight > 0 ? `${scrollbarHeight}px` : undefined}}
                         >
-                            {proceduresVisible && (
+                            {visibility.proceduresVisible && (
                                 <TimelineLabel>
                                     <DefaultTextLabelContent>Procedures</DefaultTextLabelContent>
                                 </TimelineLabel>
                             )}
 
-                            {showSystemMarkers && (
+                            {visibility.systemMarkersVisible && (
                                 <TimelineLabel>
                                     <DefaultTextLabelContent>System Markers</DefaultTextLabelContent>
                                 </TimelineLabel>
@@ -240,7 +263,7 @@ export function Timeline({
                                 <DefaultTextLabelContent>Annotations</DefaultTextLabelContent>
                             </TimelineLabel>
 
-                            {tracks.map((track, index) => {
+                            {visibility.physioTracksVisible && (filteredTracks.map((track, index) => {
                                 return (
                                     <TimelineLabel key={index}>
                                         <PhysiologicalSignalLabel
@@ -253,7 +276,8 @@ export function Timeline({
                                         />
                                     </TimelineLabel>
                                 );
-                            })}
+                            }))
+                            }
                         </div>
                     </div>
                 </Panel>
@@ -284,28 +308,28 @@ export function Timeline({
                     >
                         <div className="flex flex-col" style={{width: `${contentWidth}px`}}>
 
-                            {proceduresVisible && (
+                            {visibility.proceduresVisible && (
                                 <TimelineTrack
                                     duration={duration}
                                     playbackState={playbackState}
                                     pixelsPerSecond={pixelsPerSecond}
                                 >
                                     <ProceduresContent
-                                        procedures={procedures}
+                                        procedures={filteredProcedures}
                                         duration={duration}
                                         pixelsPerSecond={pixelsPerSecond}
                                     />
                                 </TimelineTrack>
                             )}
 
-                            {showSystemMarkers && (
+                            {visibility.systemMarkersVisible && (
                                 <TimelineTrack
                                     duration={duration}
                                     playbackState={playbackState}
                                     pixelsPerSecond={pixelsPerSecond}
                                 >
                                     <SystemContent
-                                        markers={systemMarkers}
+                                        markers={filteredSystemMarkers}
                                         duration={duration}
                                         pixelsPerSecond={pixelsPerSecond}
                                     />
@@ -324,7 +348,7 @@ export function Timeline({
                                 />
                             </TimelineTrack>
 
-                            {tracks.map((track, index) => {
+                            {visibility.physioTracksVisible && (filteredTracks.map((track, index) => {
                                 return (
                                     <TimelineTrack
                                         key={index}
@@ -340,7 +364,7 @@ export function Timeline({
                                         />
                                     </TimelineTrack>
                                 );
-                            })}
+                            }))}
                         </div>
                     </div>
                 </Panel>

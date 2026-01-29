@@ -3,7 +3,7 @@
  * This module generates mock PLM session data for development and testing.
  * It will be replaced by actual PLM file parsing when implemented.
  */
-import {PhysiologicalDataPoint, PhysiologicalTrack, Procedure, SystemMarker} from "@/shared/types/record.ts";
+import {PhysiologicalDataPoint, PhysiologicalSignal, Procedure, SystemMarker} from "@/shared/types/record.ts";
 import {SessionData} from "@/shared/types/session.ts";
 
 /**
@@ -41,7 +41,7 @@ const MOCK_PLMD_PATH = "./session.plmd"
 /**
  * Creates mock physiological tracks.
  */
-function createMockTracks(duration: number, sampleRate: number): PhysiologicalTrack[] {
+function createMockTracks(duration: number, sampleRate: number): PhysiologicalSignal[] {
     return [
         {
             id: 'heart-rate',
