@@ -158,7 +158,15 @@ export async function createMockSessionData(): Promise<SessionData> {
 
     return {
         sessionDate: new Date(),
-        manualAnnotations: [],
+        manualAnnotations: [
+            {
+                id: 'manual-1',
+                time: 45,
+                label: 'Bonne technique de pipetage',
+                description: 'L\'apprenant a démontré une technique de pipetage précise et sécuritaire',
+                color: '#22c55e',
+            },
+        ],
         plmdPath: MOCK_PLMD_PATH,
         recordData: {
             recordPath: MOCK_RECORD_PATH,
