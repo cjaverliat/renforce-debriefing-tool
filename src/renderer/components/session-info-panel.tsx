@@ -3,8 +3,14 @@ import {ChevronDown, ChevronRight, Activity, Flag, ListChecks, Eye, EyeOff} from
 import {Toggle} from '@/renderer/components/ui/toggle';
 import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/renderer/components/ui/tabs';
 import {Collapsible, CollapsibleTrigger, CollapsibleContent} from '@/renderer/components/ui/collapsible';
-import {PhysiologicalSignal, Procedure, SystemMarker} from '@/shared/types/record';
+import {PhysiologicalSignal, Procedure, ProcedureActionMarker, SystemMarker} from '@/shared/types/record';
 import {VisibilityState} from '@/shared/types/visibility';
+
+const ACTION_MARKER_COLORS: Record<ProcedureActionMarker['category'], string> = {
+    correct_action: '#22c55e',     // Green
+    incorrect_action: '#ef4444',   // Red
+    timeout_exceeded: '#f97316',   // Orange
+};
 
 interface VisibilityToggleProps {
     visible: boolean;
@@ -246,7 +252,7 @@ function ProcedureCard({
                                     className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-700 rounded cursor-pointer"
                                     onClick={() => onSeek(marker.time)}
                                 >
-                                    <div className="size-1.5 rounded-full bg-blue-500 shrink-0"/>
+                                    <div className="size-1.5 rounded-full shrink-0" style={{backgroundColor: ACTION_MARKER_COLORS[marker.category]}}/>
                                     <span className="text-sm text-zinc-400 truncate flex-1">
                                         {marker.label}
                                     </span>

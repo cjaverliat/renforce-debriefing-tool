@@ -1,6 +1,12 @@
-import {Procedure} from "@/shared/types/record.ts";
+import {Procedure, ProcedureActionMarker} from "@/shared/types/record.ts";
 import {TimelineMarker} from "@/renderer/components/ui/timeline-marker.tsx";
 import {ProcedureBar} from "@/renderer/components/ui/procedure-bar.tsx";
+
+const ACTION_MARKER_COLORS: Record<ProcedureActionMarker['category'], string> = {
+    correct_action: '#22c55e',     // Green
+    incorrect_action: '#ef4444',   // Red
+    timeout_exceeded: '#f97316',   // Orange
+};
 
 interface ProceduresContentProps {
     procedures: Procedure[];
@@ -16,8 +22,6 @@ interface ProcedureRowProps {
 }
 
 function ProcedureRow({procedure, duration, pixelsPerSecond}: ProcedureRowProps) {
-    const actionColor = "#4286d1";
-
     return (
         <div
             className="relative flex-1 w-full"
@@ -36,7 +40,7 @@ function ProcedureRow({procedure, duration, pixelsPerSecond}: ProcedureRowProps)
                     key={index}
                     position={marker.time * pixelsPerSecond}
                     tooltip={marker.label}
-                    color={actionColor}
+                    color={ACTION_MARKER_COLORS[marker.category]}
                 />
             ))}
         </div>
@@ -45,7 +49,7 @@ function ProcedureRow({procedure, duration, pixelsPerSecond}: ProcedureRowProps)
 
 export function ProceduresContent({procedures, duration, pixelsPerSecond}: ProceduresContentProps) {
     return (
-        <div className="flex flex-col w-full h-full">
+        <div className="flex flex-col w-full h-full py-2">
             {procedures.map((procedure, index) => (
                 <ProcedureRow
                     key={procedure.id}
