@@ -8,9 +8,10 @@ interface ProcedureBarProps extends React.HTMLAttributes<HTMLDivElement> {
     duration: number;
     /** Optional tooltip content (shown on hover) */
     tooltip?: React.ReactNode;
+    color: string;
 }
 
-export function ProcedureBar({procedure, pixelsPerSecond, duration, tooltip}: ProcedureBarProps) {
+export function ProcedureBar({procedure, pixelsPerSecond, duration, tooltip, color = "#516db1"}: ProcedureBarProps) {
 
     const startPosition = procedure.startTime * pixelsPerSecond;
     const endPosition = (procedure.endTime < 0 ? duration : procedure.endTime) * pixelsPerSecond;
@@ -18,8 +19,8 @@ export function ProcedureBar({procedure, pixelsPerSecond, duration, tooltip}: Pr
 
     const barContent = (
         <div
-            className="absolute rounded-md h-full bg-blue-400 cursor-pointer"
-            style={{left: startPosition, width: width}}
+            className="absolute rounded-md h-full cursor-pointer"
+            style={{left: startPosition, width: width, backgroundColor: color}}
         />
     );
 

@@ -10,7 +10,6 @@ export interface Annotation {
     label: string;
     description?: string;
     color: string;
-    category: string;
 }
 
 export interface SessionData {

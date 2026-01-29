@@ -14,7 +14,6 @@ interface AnnotationDialogProps {
     label: string;
     description: string;
     color: string;
-    category: string;
   }) => void;
 }
 
@@ -28,16 +27,6 @@ const ANNOTATION_COLORS = [
   { name: 'Pink', value: '#ec4899' },
 ];
 
-const CATEGORIES = [
-  'Critical Event',
-  'Decision Point',
-  'Communication',
-  'Stress Response',
-  'Performance Peak',
-  'Error',
-  'Other',
-];
-
 export function AnnotationDialog({
   isOpen,
   currentTime,
@@ -47,7 +36,6 @@ export function AnnotationDialog({
   const [label, setLabel] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState(ANNOTATION_COLORS[0].value);
-  const [category, setCategory] = useState(CATEGORIES[0]);
 
   if (!isOpen) return null;
 
@@ -65,14 +53,12 @@ export function AnnotationDialog({
       label: label.trim(),
       description: description.trim(),
       color,
-      category,
     });
 
     // Reset form
     setLabel('');
     setDescription('');
     setColor(ANNOTATION_COLORS[0].value);
-    setCategory(CATEGORIES[0]);
     onClose();
   };
 
@@ -120,22 +106,6 @@ export function AnnotationDialog({
           </div>
 
           <div>
-            <Label htmlFor="category" className="text-zinc-300">Category</Label>
-            <select
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full mt-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
             <Label className="text-zinc-300">Color</Label>
             <div className="flex gap-2 mt-1">
               {ANNOTATION_COLORS.map((c) => (
@@ -159,7 +129,7 @@ export function AnnotationDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter detailed description (optional)"
-              className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 min-h-[100px]"
+              className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 min-h-25"
             />
           </div>
         </div>

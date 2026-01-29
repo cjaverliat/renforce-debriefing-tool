@@ -1,8 +1,8 @@
 import {useState} from 'react';
-import {ChevronDown, ChevronRight, Activity, Flag, ListChecks, Eye, EyeOff} from 'lucide-react';
+import {ChevronDown, ChevronUp, Activity, Flag, ListChecks, Eye, EyeOff} from 'lucide-react';
 import {Toggle} from '@/renderer/components/ui/toggle';
+import {Button} from '@/renderer/components/ui/button';
 import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/renderer/components/ui/tabs';
-import {Collapsible, CollapsibleTrigger, CollapsibleContent} from '@/renderer/components/ui/collapsible';
 import {PhysiologicalSignal, Procedure, ProcedureActionMarker, SystemMarker} from '@/shared/types/record';
 import {VisibilityState} from '@/shared/types/visibility';
 
@@ -215,62 +215,84 @@ function ProcedureCard({
     onToggleActionMarker,
     onSeek,
 }: ProcedureCardProps) {
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
     const procedureVisible = visibility.visibleProcedureIds.has(procedure.id) && visibility.proceduresVisible;
 
     return (
-        <div className="bg-zinc-800 rounded p-2">
-            <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+        <div className="flex flex-col bg-zinc-800 rounded">
+            {/* Procedure Header - Accordion style matching annotations */}
+            <div className="flex items-center justify-between p-2 border-b border-zinc-700">
                 <div className="flex items-center gap-2">
-                    <CollapsibleTrigger className="shrink-0 p-0.5 hover:bg-zinc-700 rounded">
-                        {isExpanded ? (
-                            <ChevronDown className="size-4 text-zinc-500"/>
-                        ) : (
-                            <ChevronRight className="size-4 text-zinc-500"/>
-                        )}
-                    </CollapsibleTrigger>
-                    <span className="text-sm text-zinc-100 truncate flex-1">
-                        {procedure.name}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="size-6 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700"
+                    >
+                        {isExpanded ? <ChevronUp className="size-4"/> : <ChevronDown className="size-4"/>}
+                    </Button>
+                    <span className="text-sm text-zinc-100">
+                        {procedure.name} ({procedure.actionMarkers.length})
                     </span>
-                    <span className="text-xs text-zinc-500 font-mono">
-                        {formatTime(procedure.startTime)}
-                    </span>
-                    <VisibilityToggle
-                        visible={procedureVisible}
-                        onVisibilityChange={(visible) => onToggleProcedure(procedure.id, visible)}
-                        size="sm"
-                    />
                 </div>
+                <VisibilityToggle
+                    visible={procedureVisible}
+                    onVisibilityChange={(visible) => onToggleProcedure(procedure.id, visible)}
+                    size="sm"
+                />
+            </div>
 
-                <CollapsibleContent>
-                    <div className="ml-4 mt-2 space-y-1">
-                        {procedure.actionMarkers.map((marker, index) => {
+            {/* Action Markers - styled like annotation items */}
+            {isExpanded && (
+                <div className="p-2 space-y-2">
+                    {procedure.actionMarkers.length === 0 ? (
+                        <div className="p-2 text-center text-xs text-zinc-500">
+                            No action markers
+                        </div>
+                    ) : (
+                        procedure.actionMarkers.map((marker, index) => {
                             const actionMarkerId = `${procedure.id}:${index}`;
                             return (
                                 <div
                                     key={actionMarkerId}
-                                    className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-700 rounded cursor-pointer"
-                                    onClick={() => onSeek(marker.time)}
+                                    className="bg-zinc-750 rounded p-2 hover:bg-zinc-700 transition-colors group"
                                 >
-                                    <div className="size-1.5 rounded-full shrink-0" style={{backgroundColor: ACTION_MARKER_COLORS[marker.category]}}/>
-                                    <span className="text-sm text-zinc-400 truncate flex-1">
-                                        {marker.label}
-                                    </span>
-                                    <span className="text-xs text-zinc-500 font-mono">
-                                        {formatTime(marker.time)}
-                                    </span>
-                                    <VisibilityToggle
-                                        visible={visibility.visibleActionMarkerIds.has(actionMarkerId) && procedureVisible}
-                                        onVisibilityChange={(visible) => onToggleActionMarker(actionMarkerId, visible)}
-                                        size="sm"
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
+                                    <div className="flex items-start justify-between gap-2">
+                                        <button
+                                            onClick={() => onSeek(marker.time)}
+                                            className="flex-1 text-left"
+                                        >
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div
+                                                    className="size-2 rounded-full flex-shrink-0"
+                                                    style={{backgroundColor: ACTION_MARKER_COLORS[marker.category]}}
+                                                />
+                                                <span className="text-xs font-mono text-zinc-400">
+                                                    {formatTime(marker.time)}
+                                                </span>
+                                            </div>
+                                            <div className="text-sm text-zinc-100 mb-1">
+                                                {marker.label}
+                                            </div>
+                                            {marker.description && (
+                                                <div className="text-xs text-zinc-400 line-clamp-2">
+                                                    {marker.description}
+                                                </div>
+                                            )}
+                                        </button>
+                                        <VisibilityToggle
+                                            visible={visibility.visibleActionMarkerIds.has(actionMarkerId) && procedureVisible}
+                                            onVisibilityChange={(visible) => onToggleActionMarker(actionMarkerId, visible)}
+                                            size="sm"
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
                                 </div>
                             );
-                        })}
-                    </div>
-                </CollapsibleContent>
-            </Collapsible>
+                        })
+                    )}
+                </div>
+            )}
         </div>
     );
 }
