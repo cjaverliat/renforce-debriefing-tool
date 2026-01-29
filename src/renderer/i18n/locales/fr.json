@@ -1,0 +1,87 @@
+{
+  "app": {
+    "title": "Renforce Debriefing",
+    "subtitle": "Outil d'annotation et de débriefing"
+  },
+  "loading": {
+    "createNew": "Créer une nouvelle session",
+    "createNewDescription": "Démarrer une nouvelle session de débriefing avec des fichiers PLM et vidéo",
+    "loadExisting": "Charger une session existante",
+    "loadExistingDescription": "Ouvrir un fichier de session .plmd sauvegardé",
+    "error": "Erreur",
+    "loadingSession": "Chargement de la session..."
+  },
+  "session": {
+    "title": "Session de débriefing",
+    "addAnnotation": "Ajouter une annotation (M)"
+  },
+  "annotations": {
+    "title": "Annotations",
+    "count": "Annotations ({{count}})",
+    "noAnnotations": "Aucune annotation",
+    "addAnnotation": "Ajouter une annotation",
+    "saveAnnotation": "Enregistrer l'annotation",
+    "deleteAnnotation": "Supprimer l'annotation"
+  },
+  "annotationDialog": {
+    "title": "Ajouter une annotation",
+    "time": "Temps",
+    "label": "Libellé",
+    "labelRequired": "Libellé *",
+    "labelPlaceholder": "Entrez le libellé de l'annotation",
+    "color": "Couleur",
+    "description": "Description",
+    "descriptionPlaceholder": "Entrez une description détaillée (optionnel)",
+    "cancel": "Annuler",
+    "save": "Enregistrer l'annotation",
+    "shortcutHint": "Appuyez sur Ctrl+Entrée pour enregistrer, Échap pour annuler"
+  },
+  "colors": {
+    "red": "Rouge",
+    "orange": "Orange",
+    "yellow": "Jaune",
+    "green": "Vert",
+    "blue": "Bleu",
+    "purple": "Violet",
+    "pink": "Rose"
+  },
+  "sessionInfo": {
+    "physioSignals": "Signaux physiologiques",
+    "procedures": "Procédures",
+    "incidentMarkers": "Marqueurs d'incidents",
+    "systemMarkers": "Marqueurs système",
+    "noActionMarkers": "Aucun marqueur d'action"
+  },
+  "severity": {
+    "critical": "Critique",
+    "moderate": "Modéré"
+  },
+  "timeline": {
+    "procedures": "Procédures",
+    "incidents": "Incidents",
+    "systemMarkers": "Marqueurs système",
+    "annotations": "Annotations"
+  },
+  "export": {
+    "exportReport": "Exporter le rapport (.txt)",
+    "reportTitle": "RAPPORT DE SESSION DE DÉBRIEFING",
+    "sessionDate": "Date de session",
+    "video": "Vidéo",
+    "duration": "Durée",
+    "totalAnnotations": "Total des annotations",
+    "summary": "RÉSUMÉ",
+    "time": "Temps",
+    "label": "Libellé",
+    "description": "Description"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "close": "Fermer"
+  },
+  "language": {
+    "en": "English",
+    "fr": "Français"
+  }
+}

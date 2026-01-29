@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {ChevronDown, ChevronUp, Activity, Flag, ListChecks, Eye, EyeOff, AlertTriangle} from 'lucide-react';
 import {Toggle} from '@/renderer/components/ui/toggle';
 import {Button} from '@/renderer/components/ui/button';
@@ -81,6 +82,8 @@ export function SessionInfoPanel({
     onToggleActionMarker,
     onSeek,
 }: SessionInfoPanelProps) {
+    const {t} = useTranslation();
+
     return (
         <div className="flex flex-col h-full bg-zinc-900 border-r border-zinc-800">
             <Tabs defaultValue="physio" className="flex flex-col h-full">
@@ -106,7 +109,7 @@ export function SessionInfoPanel({
                 {/* Physio Tracks Tab */}
                 <TabsContent value="physio" className="flex-1 overflow-y-auto custom-scrollbar m-0">
                     <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
-                        <span className="text-sm text-zinc-100">Physiological Signals</span>
+                        <span className="text-sm text-zinc-100">{t('sessionInfo.physioSignals')}</span>
                         <VisibilityToggle
                             visible={visibility.physioTracksVisible}
                             onVisibilityChange={onTogglePhysioTracks}
@@ -143,7 +146,7 @@ export function SessionInfoPanel({
                 {/* Procedures Tab */}
                 <TabsContent value="procedures" className="flex-1 overflow-y-auto custom-scrollbar m-0">
                     <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
-                        <span className="text-sm text-zinc-100">Procedures</span>
+                        <span className="text-sm text-zinc-100">{t('sessionInfo.procedures')}</span>
                         <VisibilityToggle
                             visible={visibility.proceduresVisible}
                             onVisibilityChange={onToggleProcedures}
@@ -166,7 +169,7 @@ export function SessionInfoPanel({
                 {/* Incident Markers Tab */}
                 <TabsContent value="incidents" className="flex-1 overflow-y-auto custom-scrollbar m-0">
                     <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
-                        <span className="text-sm text-zinc-100">Incident Markers</span>
+                        <span className="text-sm text-zinc-100">{t('sessionInfo.incidentMarkers')}</span>
                         <VisibilityToggle
                             visible={visibility.incidentMarkersVisible}
                             onVisibilityChange={onToggleIncidentMarkers}
@@ -190,7 +193,7 @@ export function SessionInfoPanel({
                                                     {formatTime(marker.time)}
                                                 </span>
                                                 <span className={`text-xs px-1.5 py-0.5 rounded ${marker.severity === 'critical' ? 'bg-red-500/20 text-red-400' : 'bg-orange-500/20 text-orange-400'}`}>
-                                                    {marker.severity}
+                                                    {t(`severity.${marker.severity}`)}
                                                 </span>
                                             </div>
                                             <div className="text-sm text-zinc-100">
@@ -218,7 +221,7 @@ export function SessionInfoPanel({
                 {/* System Markers Tab */}
                 <TabsContent value="markers" className="flex-1 overflow-y-auto custom-scrollbar m-0">
                     <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
-                        <span className="text-sm text-zinc-100">System Markers</span>
+                        <span className="text-sm text-zinc-100">{t('sessionInfo.systemMarkers')}</span>
                         <VisibilityToggle
                             visible={visibility.systemMarkersVisible}
                             onVisibilityChange={onToggleSystemMarkers}
@@ -277,6 +280,7 @@ function ProcedureCard({
     onToggleActionMarker,
     onSeek,
 }: ProcedureCardProps) {
+    const {t} = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
     const procedureVisible = visibility.visibleProcedureIds.has(procedure.id) && visibility.proceduresVisible;
 
@@ -309,7 +313,7 @@ function ProcedureCard({
                 <div className="p-2 space-y-2">
                     {procedure.actionMarkers.length === 0 ? (
                         <div className="p-2 text-center text-xs text-zinc-500">
-                            No action markers
+                            {t('sessionInfo.noActionMarkers')}
                         </div>
                     ) : (
                         procedure.actionMarkers.map((marker, index) => {

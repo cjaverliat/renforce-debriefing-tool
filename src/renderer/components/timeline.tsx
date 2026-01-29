@@ -1,4 +1,5 @@
 import {ReactNode, useEffect, useMemo, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {TimelineControls} from '@/renderer/components/timeline-controls';
 import {TimelineRuler} from '@/renderer/components/timeline-ruler';
 import {TimelineTrack} from '@/renderer/components/timeline-track';
@@ -71,7 +72,7 @@ export function Timeline({
                              onPlayPause,
                              onSeek
                          }: TimelineProps) {
-
+    const {t} = useTranslation();
     const {isPlaying} = playbackState;
     const [zoomIndex, setZoomIndex] = useState(ZOOM_LEVELS.indexOf(1));
     const [scrollbarWidth, setScrollbarWidth] = useState(0);
@@ -258,24 +259,24 @@ export function Timeline({
                         >
                             {visibility.proceduresVisible && (
                                 <TimelineLabel>
-                                    <DefaultTextLabelContent>Procedures</DefaultTextLabelContent>
+                                    <DefaultTextLabelContent>{t('timeline.procedures')}</DefaultTextLabelContent>
                                 </TimelineLabel>
                             )}
 
                             {visibility.incidentMarkersVisible && (
                                 <TimelineLabel>
-                                    <DefaultTextLabelContent>Incidents</DefaultTextLabelContent>
+                                    <DefaultTextLabelContent>{t('timeline.incidents')}</DefaultTextLabelContent>
                                 </TimelineLabel>
                             )}
 
                             {visibility.systemMarkersVisible && (
                                 <TimelineLabel>
-                                    <DefaultTextLabelContent>System Markers</DefaultTextLabelContent>
+                                    <DefaultTextLabelContent>{t('timeline.systemMarkers')}</DefaultTextLabelContent>
                                 </TimelineLabel>
                             )}
 
                             <TimelineLabel>
-                                <DefaultTextLabelContent>Annotations</DefaultTextLabelContent>
+                                <DefaultTextLabelContent>{t('timeline.annotations')}</DefaultTextLabelContent>
                             </TimelineLabel>
 
                             {visibility.physioTracksVisible && (filteredTracks.map((track, index) => {

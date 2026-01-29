@@ -1,12 +1,15 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileVideo, FolderOpen, AlertCircle } from 'lucide-react';
 import {SessionData} from "@/shared/types/session.ts";
+import {LanguageSwitcher} from "@/renderer/components/language-switcher.tsx";
 
 interface LoadingPanelProps {
   onSessionLoaded: (session: SessionData) => void;
 }
 
 export function LoadingPanel({ onSessionLoaded }: LoadingPanelProps) {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -99,15 +102,19 @@ export function LoadingPanel({ onSessionLoaded }: LoadingPanelProps) {
   };
 
   return (
-    <div className="size-full flex items-center justify-center bg-zinc-950">
+    <div className="size-full flex items-center justify-center bg-zinc-950 relative">
+      {/* Language switcher in top right corner */}
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
       <div className="w-full max-w-md space-y-8 p-8">
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-zinc-100">
-            Renforce Debriefing
+            {t('app.title')}
           </h1>
           <p className="text-zinc-400">
-            Annotation & Debriefing Tool
+            {t('app.subtitle')}
           </p>
         </div>
 
@@ -125,10 +132,10 @@ export function LoadingPanel({ onSessionLoaded }: LoadingPanelProps) {
               </div>
               <div className="flex-1 text-left">
                 <h2 className="text-lg font-semibold text-zinc-100 mb-1">
-                  Create New Session
+                  {t('loading.createNew')}
                 </h2>
                 <p className="text-sm text-zinc-400">
-                  Start a new debriefing session with PLM and video files
+                  {t('loading.createNewDescription')}
                 </p>
               </div>
             </div>
@@ -146,10 +153,10 @@ export function LoadingPanel({ onSessionLoaded }: LoadingPanelProps) {
               </div>
               <div className="flex-1 text-left">
                 <h2 className="text-lg font-semibold text-zinc-100 mb-1">
-                  Load Existing Session
+                  {t('loading.loadExisting')}
                 </h2>
                 <p className="text-sm text-zinc-400">
-                  Open a saved .plmd session file
+                  {t('loading.loadExistingDescription')}
                 </p>
               </div>
             </div>
@@ -163,7 +170,7 @@ export function LoadingPanel({ onSessionLoaded }: LoadingPanelProps) {
               <AlertCircle className="size-5 text-red-500 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="text-sm font-semibold text-red-400 mb-1">
-                  Error
+                  {t('loading.error')}
                 </h3>
                 <p className="text-sm text-red-300/90">{error}</p>
               </div>
@@ -175,7 +182,7 @@ export function LoadingPanel({ onSessionLoaded }: LoadingPanelProps) {
         {isLoading && (
           <div className="text-center">
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-zinc-600 border-t-blue-500"></div>
-            <p className="mt-2 text-sm text-zinc-400">Loading session...</p>
+            <p className="mt-2 text-sm text-zinc-400">{t('loading.loadingSession')}</p>
           </div>
         )}
       </div>

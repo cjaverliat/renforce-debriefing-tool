@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {Trash2, ChevronDown, ChevronUp} from 'lucide-react';
 import {Button} from '@/renderer/components/ui/button';
 import {Annotation} from "@/shared/types/session.ts";
@@ -14,6 +15,7 @@ export function AnnotationsPanel({
                                      onDeleteAnnotation,
                                      onSeekToAnnotation,
                                  }: ManualAnnotationsPanelProps) {
+    const {t} = useTranslation();
     const [isExpanded, setIsExpanded] = useState(true);
 
     const formatTime = (seconds: number) => {
@@ -37,7 +39,7 @@ export function AnnotationsPanel({
                         {isExpanded ? <ChevronUp className="size-4"/> : <ChevronDown className="size-4"/>}
                     </Button>
                     <h3 className="text-sm text-zinc-100">
-                        Annotations ({sortedAnnotations.length})
+                        {t('annotations.count', {count: sortedAnnotations.length})}
                     </h3>
                 </div>
             </div>
@@ -47,7 +49,7 @@ export function AnnotationsPanel({
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {sortedAnnotations.length === 0 ? (
                         <div className="p-4 text-center text-sm text-zinc-500">
-                            No annotations yet
+                            {t('annotations.noAnnotations')}
                         </div>
                     ) : (
                         <div className="p-2 space-y-2">

@@ -1,0 +1,87 @@
+{
+  "app": {
+    "title": "Renforce Debriefing",
+    "subtitle": "Annotation & Debriefing Tool"
+  },
+  "loading": {
+    "createNew": "Create New Session",
+    "createNewDescription": "Start a new debriefing session with PLM and video files",
+    "loadExisting": "Load Existing Session",
+    "loadExistingDescription": "Open a saved .plmd session file",
+    "error": "Error",
+    "loadingSession": "Loading session..."
+  },
+  "session": {
+    "title": "Debriefing Session",
+    "addAnnotation": "Add Annotation (M)"
+  },
+  "annotations": {
+    "title": "Annotations",
+    "count": "Annotations ({{count}})",
+    "noAnnotations": "No annotations yet",
+    "addAnnotation": "Add Annotation",
+    "saveAnnotation": "Save Annotation",
+    "deleteAnnotation": "Delete annotation"
+  },
+  "annotationDialog": {
+    "title": "Add Annotation",
+    "time": "Time",
+    "label": "Label",
+    "labelRequired": "Label *",
+    "labelPlaceholder": "Enter annotation label",
+    "color": "Color",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter detailed description (optional)",
+    "cancel": "Cancel",
+    "save": "Save Annotation",
+    "shortcutHint": "Press Ctrl+Enter to save, Esc to cancel"
+  },
+  "colors": {
+    "red": "Red",
+    "orange": "Orange",
+    "yellow": "Yellow",
+    "green": "Green",
+    "blue": "Blue",
+    "purple": "Purple",
+    "pink": "Pink"
+  },
+  "sessionInfo": {
+    "physioSignals": "Physiological Signals",
+    "procedures": "Procedures",
+    "incidentMarkers": "Incident Markers",
+    "systemMarkers": "System Markers",
+    "noActionMarkers": "No action markers"
+  },
+  "severity": {
+    "critical": "Critical",
+    "moderate": "Moderate"
+  },
+  "timeline": {
+    "procedures": "Procedures",
+    "incidents": "Incidents",
+    "systemMarkers": "System Markers",
+    "annotations": "Annotations"
+  },
+  "export": {
+    "exportReport": "Export Report (.txt)",
+    "reportTitle": "DEBRIEFING SESSION REPORT",
+    "sessionDate": "Session Date",
+    "video": "Video",
+    "duration": "Duration",
+    "totalAnnotations": "Total Annotations",
+    "summary": "SUMMARY",
+    "time": "Time",
+    "label": "Label",
+    "description": "Description"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "close": "Close"
+  },
+  "language": {
+    "en": "English",
+    "fr": "Français"
+  }
+}

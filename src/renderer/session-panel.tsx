@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {Annotation, SessionData} from "@/shared/types/session.ts";
 import {VisibilityState} from "@/shared/types/visibility.ts";
 import {ExportControls} from "@/renderer/components/export-controls.tsx";
@@ -10,6 +11,7 @@ import {AnnotationsPanel} from "@/renderer/components/annotations-panel.tsx";
 import {Timeline} from "@/renderer/components/timeline.tsx";
 import {AnnotationDialog} from "@/renderer/components/annotation-dialog.tsx";
 import {SessionInfoPanel} from "@/renderer/components/session-info-panel.tsx";
+import {LanguageSwitcher} from "@/renderer/components/language-switcher.tsx";
 import {computeCurrentTime, createInitialPlaybackState, PlaybackState} from "@/shared/types/playback.ts";
 import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
 
@@ -54,6 +56,7 @@ interface SessionPanelProps {
 }
 
 export function SessionPanel({sessionData}: SessionPanelProps) {
+    const {t} = useTranslation();
 
     const [isDirty, setIsDirty] = useState(false);
     const [annotations, setAnnotations] = useState<Annotation[]>(sessionData.manualAnnotations);
@@ -249,9 +252,11 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
             {/* Header with controls */}
             <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-b border-zinc-800">
                 <h1 className="text-lg text-zinc-100">
-                    Debriefing Session
+                    {t('session.title')}
                 </h1>
                 <div className="flex items-center gap-2">
+                    <LanguageSwitcher/>
+                    <div className="w-px h-6 bg-zinc-700"/>
                     <ExportControls sessionData={sessionData} annotations={annotations}/>
                     <div className="w-px h-6 bg-zinc-700"/>
                     <Button
@@ -260,7 +265,7 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                         size="sm"
                     >
                         <Plus className="size-4 mr-2"/>
-                        Add Annotation (M)
+                        {t('session.addAnnotation')}
                     </Button>
                 </div>
             </div>

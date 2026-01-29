@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
@@ -33,6 +34,7 @@ export function AnnotationDialog({
   onClose,
   onSave,
 }: AnnotationDialogProps) {
+  const { t } = useTranslation();
   const [label, setLabel] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState(ANNOTATION_COLORS[0].value);
@@ -74,7 +76,7 @@ export function AnnotationDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-zinc-900 rounded-lg shadow-xl w-full max-w-md border border-zinc-800">
         <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-          <h2 className="text-lg text-zinc-100">Add Annotation</h2>
+          <h2 className="text-lg text-zinc-100">{t('annotationDialog.title')}</h2>
           <Button
             variant="ghost"
             size="icon"
@@ -87,26 +89,26 @@ export function AnnotationDialog({
 
         <div className="p-4 space-y-4" onKeyDown={handleKeyDown}>
           <div>
-            <Label className="text-zinc-300">Time</Label>
+            <Label className="text-zinc-300">{t('annotationDialog.time')}</Label>
             <div className="text-xl font-mono text-zinc-100 mt-1">
               {formatTime(currentTime)}
             </div>
           </div>
 
           <div>
-            <Label htmlFor="label" className="text-zinc-300">Label *</Label>
+            <Label htmlFor="label" className="text-zinc-300">{t('annotationDialog.labelRequired')}</Label>
             <Input
               id="label"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="Enter annotation label"
+              placeholder={t('annotationDialog.labelPlaceholder')}
               className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500"
               autoFocus
             />
           </div>
 
           <div>
-            <Label className="text-zinc-300">Color</Label>
+            <Label className="text-zinc-300">{t('annotationDialog.color')}</Label>
             <div className="flex gap-2 mt-1">
               {ANNOTATION_COLORS.map((c) => (
                 <button
@@ -123,12 +125,12 @@ export function AnnotationDialog({
           </div>
 
           <div>
-            <Label htmlFor="description" className="text-zinc-300">Description</Label>
+            <Label htmlFor="description" className="text-zinc-300">{t('annotationDialog.description')}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter detailed description (optional)"
+              placeholder={t('annotationDialog.descriptionPlaceholder')}
               className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 min-h-25"
             />
           </div>
@@ -140,19 +142,19 @@ export function AnnotationDialog({
             onClick={onClose}
             className="text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
           >
-            Cancel
+            {t('annotationDialog.cancel')}
           </Button>
           <Button
             onClick={handleSave}
             disabled={!label.trim()}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            Save Annotation
+            {t('annotationDialog.save')}
           </Button>
         </div>
 
         <div className="px-4 pb-4 text-xs text-zinc-500">
-          Press Ctrl+Enter to save, Esc to cancel
+          {t('annotationDialog.shortcutHint')}
         </div>
       </div>
     </div>

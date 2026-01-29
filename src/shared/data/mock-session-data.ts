@@ -45,7 +45,7 @@ function createMockTracks(duration: number, sampleRate: number): PhysiologicalSi
     return [
         {
             id: 'heart-rate',
-            name: 'Heart Rate',
+            name: 'Fréquence cardiaque',
             unit: 'bpm',
             sampleRate,
             data: generatePhysiologicalData(duration, 0.033, 75, 15, sampleRate),
@@ -59,7 +59,7 @@ function createMockTracks(duration: number, sampleRate: number): PhysiologicalSi
         },
         {
             id: 'skin-conductance',
-            name: 'Skin Conductance',
+            name: 'Conductance cutanée',
             unit: 'μS',
             sampleRate,
             data: generatePhysiologicalData(duration, 0.005, 5, 3, sampleRate),

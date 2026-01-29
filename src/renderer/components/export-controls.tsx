@@ -1,3 +1,4 @@
+import {useTranslation} from 'react-i18next';
 import {FileText} from 'lucide-react';
 import {Button} from '@/renderer/components/ui/button';
 import {Annotation, SessionData} from "@/shared/types/session.ts";
@@ -8,6 +9,8 @@ interface ExportControlsProps {
 }
 
 export function ExportControls({sessionData, annotations}: ExportControlsProps) {
+    const {t} = useTranslation();
+
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
@@ -17,13 +20,13 @@ export function ExportControls({sessionData, annotations}: ExportControlsProps) 
     const generateTextReport = () => {
         const lines: string[] = [];
 
-        lines.push('DEBRIEFING SESSION REPORT');
+        lines.push(t('export.reportTitle'));
         lines.push('='.repeat(50));
         lines.push('');
-        lines.push(`Session Date: ${sessionData.sessionDate.toLocaleString()}`);
-        lines.push(`Video: ${sessionData.recordData.videoPath}`);
-        lines.push(`Duration: ${formatTime(sessionData.recordData.duration)}`);
-        lines.push(`Total Annotations: ${annotations.length}`);
+        lines.push(`${t('export.sessionDate')}: ${sessionData.sessionDate.toLocaleString()}`);
+        lines.push(`${t('export.video')}: ${sessionData.recordData.videoPath}`);
+        lines.push(`${t('export.duration')}: ${formatTime(sessionData.recordData.duration)}`);
+        lines.push(`${t('export.totalAnnotations')}: ${annotations.length}`);
         lines.push('');
         lines.push('='.repeat(50));
         lines.push('');
@@ -32,10 +35,10 @@ export function ExportControls({sessionData, annotations}: ExportControlsProps) 
 
         if (annotations.length > 0) {
             annotations.forEach(annotation => {
-                lines.push(`Time: ${formatTime(annotation.time)}`);
-                lines.push(`Label: ${annotation.label}`);
+                lines.push(`${t('export.time')}: ${formatTime(annotation.time)}`);
+                lines.push(`${t('export.label')}: ${annotation.label}`);
                 if (annotation.description) {
-                    lines.push(`Description: ${annotation.description}`);
+                    lines.push(`${t('export.description')}: ${annotation.description}`);
                 }
                 lines.push('');
             });
@@ -45,7 +48,7 @@ export function ExportControls({sessionData, annotations}: ExportControlsProps) 
 
         // Summary statistics
         lines.push('='.repeat(50));
-        lines.push('SUMMARY');
+        lines.push(t('export.summary'));
         lines.push('='.repeat(50));
         lines.push('');
 
@@ -80,7 +83,7 @@ export function ExportControls({sessionData, annotations}: ExportControlsProps) 
                 disabled={annotations.length === 0}
             >
                 <FileText className="size-4 mr-2"/>
-                Export Report (.txt)
+                {t('export.exportReport')}
             </Button>
         </div>
     );
