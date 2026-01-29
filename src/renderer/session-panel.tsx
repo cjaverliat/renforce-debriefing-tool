@@ -172,7 +172,6 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
         const newAnnotation: Annotation = {
             id: `annotation-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
             ...annotationData,
-            timestamp: new Date(),
         };
         sessionData.manualAnnotations.push(newAnnotation);
         setIsDirty(true);

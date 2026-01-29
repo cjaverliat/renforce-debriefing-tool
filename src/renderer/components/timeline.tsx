@@ -219,7 +219,7 @@ export function Timeline({
     }, [procedures, visibility.proceduresVisible, visibility.visibleProcedureIds, visibility.visibleActionMarkerIds]);
 
     return (
-        <div className="relative h-full bg-zinc-900">
+        <div className="flex flex-col h-full bg-zinc-900">
             <TimelineControls
                 isPlaying={isPlaying}
                 playbackState={playbackState}
