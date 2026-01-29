@@ -247,6 +247,11 @@ export function SessionInfoPanel({
                                             <div className="text-sm text-zinc-100">
                                                 {marker.label}
                                             </div>
+                                            {marker.description && (
+                                                <div className="text-xs text-zinc-400 line-clamp-2 mt-1">
+                                                    {marker.description}
+                                                </div>
+                                            )}
                                         </div>
                                         <VisibilityToggle
                                             visible={visibility.visibleSystemMarkerIds.has(markerId) && visibility.systemMarkersVisible}
