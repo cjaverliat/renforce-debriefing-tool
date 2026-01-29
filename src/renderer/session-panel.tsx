@@ -294,6 +294,7 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                                 onToggleSystemMarker={handleToggleSystemMarker}
                                 onToggleProcedure={handleToggleProcedure}
                                 onToggleActionMarker={handleToggleActionMarker}
+                                onSeek={handleSeek}
                             />
                         </Panel>
 
