@@ -52,6 +52,7 @@ interface SessionPanelProps {
 export function SessionPanel({sessionData}: SessionPanelProps) {
 
     const [isDirty, setIsDirty] = useState(false);
+    const [annotations, setAnnotations] = useState<Annotation[]>(sessionData.manualAnnotations);
 
     // Playback state
     const [playbackState, setPlaybackState] = useState<PlaybackState>(createInitialPlaybackState);
@@ -173,14 +174,12 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
             id: `annotation-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
             ...annotationData,
         };
-        sessionData.manualAnnotations.push(newAnnotation);
+        setAnnotations(prev => [...prev, newAnnotation]);
         setIsDirty(true);
     };
 
     const handleDeleteAnnotation = (id: string) => {
-        sessionData.manualAnnotations = sessionData.manualAnnotations.filter(
-            (annotation) => annotation.id !== id,
-        )
+        setAnnotations(prev => prev.filter(annotation => annotation.id !== id));
         setIsDirty(true);
     };
 
@@ -233,7 +232,7 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                     Debriefing Session
                 </h1>
                 <div className="flex items-center gap-2">
-                    <ExportControls sessionData={sessionData}/>
+                    <ExportControls sessionData={sessionData} annotations={annotations}/>
                     <div className="w-px h-6 bg-zinc-700"/>
                     <Button
                         onClick={handleAddAnnotation}
@@ -288,7 +287,7 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                         {/* Right side panel */}
                         <Panel minSize={200} defaultSize={210}>
                             <AnnotationsPanel
-                                annotations={sessionData.manualAnnotations}
+                                annotations={annotations}
                                 onDeleteAnnotation={handleDeleteAnnotation}
                                 onSeekToAnnotation={handleSeekToAnnotation}
                             />
@@ -303,7 +302,7 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                     <Timeline
                         playbackState={playbackState}
                         duration={sessionData.recordData.duration}
-                        annotations={sessionData.manualAnnotations}
+                        annotations={annotations}
                         tracks={sessionData.recordData.tracks}
                         systemMarkers={sessionData.recordData.systemMarkers}
                         procedures={sessionData.recordData.procedures}

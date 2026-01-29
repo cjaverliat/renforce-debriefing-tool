@@ -1,12 +1,13 @@
 import { FileText, FileJson } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
-import {SessionData} from "@/shared/types/session.ts";
+import {Annotation, SessionData} from "@/shared/types/session.ts";
 
 interface ExportControlsProps {
   sessionData: SessionData;
+  annotations: Annotation[];
 }
 
-export function ExportControls({ sessionData }: ExportControlsProps) {
+export function ExportControls({ sessionData, annotations }: ExportControlsProps) {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -22,16 +23,16 @@ export function ExportControls({ sessionData }: ExportControlsProps) {
     lines.push(`Session Date: ${sessionData.sessionDate.toLocaleString()}`);
     lines.push(`Video: ${sessionData.recordData.videoPath}`);
     lines.push(`Duration: ${formatTime(sessionData.recordData.duration)}`);
-    lines.push(`Total Annotations: ${sessionData.manualAnnotations.length}`);
+    lines.push(`Total Annotations: ${annotations.length}`);
     lines.push('');
     lines.push('='.repeat(50));
     lines.push('');
     
     // Group by category
-    const categories = Array.from(new Set(sessionData.manualAnnotations.map(a => a.category)));
+    const categories = Array.from(new Set(annotations.map(a => a.category)));
     
     categories.forEach(category => {
-      const categoryAnnotations = sessionData.manualAnnotations
+      const categoryAnnotations = annotations
         .filter(a => a.category === category)
         .sort((a, b) => a.time - b.time);
       
@@ -61,7 +62,7 @@ export function ExportControls({ sessionData }: ExportControlsProps) {
     lines.push('');
     
     categories.forEach(category => {
-      const count = sessionData.manualAnnotations.filter(a => a.category === category).length;
+      const count = annotations.filter(a => a.category === category).length;
       lines.push(`${category}: ${count}`);
     });
     
@@ -75,7 +76,7 @@ export function ExportControls({ sessionData }: ExportControlsProps) {
         video: sessionData.recordData.videoPath,
         duration: sessionData.recordData.duration,
       },
-      annotations: sessionData.manualAnnotations.map(a => ({
+      annotations: annotations.map(a => ({
         id: a.id,
         time: a.time,
         label: a.label,
@@ -85,10 +86,10 @@ export function ExportControls({ sessionData }: ExportControlsProps) {
         timestamp: a.timestamp.toISOString(),
       })),
       summary: {
-        totalAnnotations: sessionData.manualAnnotations.length,
-        categories: Array.from(new Set(sessionData.manualAnnotations.map(a => a.category))).map(cat => ({
+        totalAnnotations: annotations.length,
+        categories: Array.from(new Set(annotations.map(a => a.category))).map(cat => ({
           name: cat,
-          count: sessionData.manualAnnotations.filter(a => a.category === cat).length,
+          count: annotations.filter(a => a.category === cat).length,
         })),
       },
     };
@@ -125,7 +126,7 @@ export function ExportControls({ sessionData }: ExportControlsProps) {
         size="sm"
         onClick={handleExportText}
         className="text-zinc-300 hover:bg-zinc-800 hover:text-white"
-        disabled={sessionData.manualAnnotations.length === 0}
+        disabled={annotations.length === 0}
       >
         <FileText className="size-4 mr-2" />
         Export Report (.txt)
@@ -136,7 +137,7 @@ export function ExportControls({ sessionData }: ExportControlsProps) {
         size="sm"
         onClick={handleExportJSON}
         className="text-zinc-300 hover:bg-zinc-800 hover:text-white"
-        disabled={sessionData.manualAnnotations.length === 0}
+        disabled={annotations.length === 0}
       >
         <FileJson className="size-4 mr-2" />
         Export Data (.json)
