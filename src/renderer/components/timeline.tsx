@@ -11,8 +11,8 @@ import {Annotation} from "@/shared/types/session.ts";
 import {PhysiologicalTrack, Procedure, SystemMarker} from "@/shared/types/record.ts";
 import {SignalContent} from "@/renderer/components/timeline-track-physio.tsx";
 import {SystemContent} from "@/renderer/components/timeline-track-system.tsx";
-import {ProcedureLabel} from "@/renderer/components/procedure-label.tsx";
-import {ProcedureContent} from "@/renderer/components/timeline-track-procedure.tsx";
+import {ProceduresContent} from "@/renderer/components/timeline-track-procedures.tsx";
+import {AnnotationsContent} from "@/renderer/components/timeline-track-annotations.tsx";
 
 interface DefaultTextLabelContentProps {
     children: ReactNode;
@@ -36,8 +36,22 @@ interface TimelineProps {
     tracks: PhysiologicalTrack[];
     systemMarkers: SystemMarker[] | null;
     procedures: Procedure[];
+    proceduresVisible: boolean;
     onPlayPause: () => void;
     onSeek: (time: number) => void;
+}
+
+function getPhysioTrackColor(id: string) {
+    let hash = 0;
+    const saturation = 100;
+    const lightness = 50;
+
+    for (let i = 0; i < id.length; i++) {
+        hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.5, 2, 3, 5, 10];
@@ -49,6 +63,7 @@ export function Timeline({
                              tracks,
                              systemMarkers,
                              procedures,
+                             proceduresVisible,
                              onPlayPause,
                              onSeek
                          }: TimelineProps) {
@@ -209,19 +224,21 @@ export function Timeline({
                             className="absolute top-8 left-0 right-0 bottom-0 overflow-x-hidden overflow-y-auto scrollbar-hidden"
                             style={{paddingBottom: scrollbarHeight > 0 ? `${scrollbarHeight}px` : undefined}}
                         >
-                            {procedures.map((procedure, index) => {
-                                return (
-                                    <TimelineLabel key={index}>
-                                        <ProcedureLabel name={procedure.name}/>
-                                    </TimelineLabel>
-                                );
-                            })}
+                            {proceduresVisible && (
+                                <TimelineLabel>
+                                    <DefaultTextLabelContent>Procedures</DefaultTextLabelContent>
+                                </TimelineLabel>
+                            )}
 
                             {showSystemMarkers && (
                                 <TimelineLabel>
                                     <DefaultTextLabelContent>System Markers</DefaultTextLabelContent>
                                 </TimelineLabel>
                             )}
+
+                            <TimelineLabel>
+                                <DefaultTextLabelContent>Annotations</DefaultTextLabelContent>
+                            </TimelineLabel>
 
                             {tracks.map((track, index) => {
                                 return (
@@ -267,22 +284,19 @@ export function Timeline({
                     >
                         <div className="flex flex-col" style={{width: `${contentWidth}px`}}>
 
-                            {procedures.map((procedure, index) => {
-                                return (
-                                    <TimelineTrack
-                                        key={index}
+                            {proceduresVisible && (
+                                <TimelineTrack
+                                    duration={duration}
+                                    playbackState={playbackState}
+                                    pixelsPerSecond={pixelsPerSecond}
+                                >
+                                    <ProceduresContent
+                                        procedures={procedures}
                                         duration={duration}
-                                        playbackState={playbackState}
                                         pixelsPerSecond={pixelsPerSecond}
-                                    >
-                                        <ProcedureContent
-                                            procedure={procedure}
-                                            duration={duration}
-                                            pixelsPerSecond={pixelsPerSecond}
-                                        />
-                                    </TimelineTrack>
-                                );
-                            })}
+                                    />
+                                </TimelineTrack>
+                            )}
 
                             {showSystemMarkers && (
                                 <TimelineTrack
@@ -298,6 +312,18 @@ export function Timeline({
                                 </TimelineTrack>
                             )}
 
+                            <TimelineTrack
+                                duration={duration}
+                                playbackState={playbackState}
+                                pixelsPerSecond={pixelsPerSecond}
+                            >
+                                <AnnotationsContent
+                                    annotations={annotations}
+                                    duration={duration}
+                                    pixelsPerSecond={pixelsPerSecond}
+                                />
+                            </TimelineTrack>
+
                             {tracks.map((track, index) => {
                                 return (
                                     <TimelineTrack
@@ -310,7 +336,7 @@ export function Timeline({
                                             data={track.data}
                                             duration={duration}
                                             pixelsPerSecond={pixelsPerSecond}
-                                            color="red"
+                                            color={getPhysioTrackColor(track.id)}
                                         />
                                     </TimelineTrack>
                                 );

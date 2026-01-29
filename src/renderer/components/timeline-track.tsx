@@ -7,6 +7,8 @@ interface TimelineTrackProps {
     duration: number;
     playbackState: PlaybackState;
     pixelsPerSecond: number;
+    /** Optional height in pixels. If not provided, defaults to 64px (h-16) */
+    height?: number;
 }
 
 export function TimelineTrack({
@@ -14,6 +16,7 @@ export function TimelineTrack({
                                   duration,
                                   playbackState,
                                   pixelsPerSecond,
+                                  height,
                               }: TimelineTrackProps) {
     const playheadCanvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -75,7 +78,10 @@ export function TimelineTrack({
                 ref={playheadCanvasRef}
                 className="absolute w-full h-full pointer-events-none z-10"
             />
-            <div className="h-16 border-b border-zinc-800">
+            <div
+                className="border-b border-zinc-800 bg-zinc-900"
+                style={{height: height ? `${height}px` : '64px'}}
+            >
                 {children}
             </div>
         </div>

@@ -334,6 +334,7 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                         tracks={filteredTracks}
                         systemMarkers={filteredSystemMarkers}
                         procedures={filteredProcedures}
+                        proceduresVisible={visibility.proceduresVisible}
                         onPlayPause={handlePlayPause}
                         onSeek={handleSeek}
                     />

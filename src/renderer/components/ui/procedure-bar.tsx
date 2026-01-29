@@ -1,52 +1,38 @@
 import * as React from "react";
-import {cva, type VariantProps} from "class-variance-authority";
-import {cn} from "./utils";
+import {Tooltip, TooltipContent, TooltipTrigger} from "./tooltip";
+import {Procedure} from "@/shared/types/record.ts";
 
-const procedureBarVariants = cva(
-    "absolute rounded-md",
-    {
-        variants: {
-            variant: {
-                default: "bg-primary",
-                blue: "bg-[#3a51cd]",
-            },
-            size: {
-                default: "h-[30%]",
-                sm: "h-[20%]",
-                lg: "h-[40%]",
-            },
-        },
-        defaultVariants: {
-            variant: "blue",
-            size: "default",
-        },
-    }
-);
-
-interface ProcedureBarProps
-    extends React.HTMLAttributes<HTMLDivElement>,
-        VariantProps<typeof procedureBarVariants> {
-    /** Start position in pixels from the left edge */
-    startPosition: number;
-    /** Width of the bar in pixels */
-    width: number;
-    /** Vertical offset from top in pixels */
-    top?: number;
+interface ProcedureBarProps extends React.HTMLAttributes<HTMLDivElement> {
+    procedure: Procedure;
+    pixelsPerSecond: number;
+    duration: number;
+    /** Optional tooltip content (shown on hover) */
+    tooltip?: React.ReactNode;
 }
 
-const ProcedureBar = React.forwardRef<HTMLDivElement, ProcedureBarProps>(
-    ({className, variant, size, startPosition, width, top = 3, ...props}, ref) => {
+export function ProcedureBar({procedure, pixelsPerSecond, duration, tooltip}: ProcedureBarProps) {
+
+    const startPosition = procedure.startTime * pixelsPerSecond;
+    const endPosition = (procedure.endTime < 0 ? duration : procedure.endTime) * pixelsPerSecond;
+    const width = endPosition - startPosition;
+
+    const barContent = (
+        <div
+            className={"absolute rounded-md h-full bg-blue-400 cursor-pointer"}
+            style={{left: startPosition, width}}
+        />
+    );
+
+    if (tooltip) {
         return (
-            <div
-                ref={ref}
-                className={cn(procedureBarVariants({variant, size}), className)}
-                style={{left: startPosition, width, top}}
-                {...props}
-            />
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    {barContent}
+                </TooltipTrigger>
+                <TooltipContent>{tooltip}</TooltipContent>
+            </Tooltip>
         );
     }
-);
 
-ProcedureBar.displayName = "ProcedureBar";
-
-export {ProcedureBar, procedureBarVariants};
+    return barContent;
+}

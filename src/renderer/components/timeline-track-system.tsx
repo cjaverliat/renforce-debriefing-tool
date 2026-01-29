@@ -9,15 +9,11 @@ interface SystemContentProps {
 
 export function SystemContent({markers, pixelsPerSecond}: SystemContentProps) {
     return (
-        <div className="relative w-full h-full bg-zinc-900">
-            {/* System markers */}
+        <div className="relative w-full h-full">
             {markers.map((marker, index) => (
                 <TimelineMarker
-                    key={`${marker.time}-${marker.label}-${index}`}
-                    variant="system"
+                    key={index}
                     position={marker.time * pixelsPerSecond}
-                    label={marker.label}
-                    labelPosition="top"
                     tooltip={marker.label}
                 />
             ))}
