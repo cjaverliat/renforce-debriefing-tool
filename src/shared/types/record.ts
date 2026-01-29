@@ -25,6 +25,7 @@ export interface PhysiologicalSignal {
     sampleRate: number;
     /** The actual time-series data points */
     data: PhysiologicalDataPoint[];
+    description?: string;
 }
 
 /**
@@ -41,11 +42,14 @@ export interface Procedure {
     endTime: number;
     /** Action markers within this procedure */
     actionMarkers: ProcedureActionMarker[];
+    description?: string;
 }
 
 export interface ProcedureActionMarker {
     time: number;  // Time in seconds
     label: string;
+    category: 'correct_action' | 'incorrect_action' | 'timeout_exceeded';
+    description?: string;
 }
 
 /**
@@ -55,6 +59,7 @@ export interface SystemMarker {
     time: number;  // Time in seconds
     label: string;
     category: 'automatic' | 'manual';
+    description?: string;
 }
 
 /**
@@ -64,10 +69,10 @@ export interface SystemMarker {
  * - Moderate Incident: Non-critical anomaly, e.g., handling error without major risk.
  */
 export interface IncidentMarker {
-    severity: 'critical' | 'moderate';
-    label: string;
-    description?: string;
     time: number;  // Time in seconds
+    label: string;
+    severity: 'critical' | 'moderate';
+    description?: string;
 }
 
 /**
@@ -77,7 +82,7 @@ export interface IncidentMarker {
 export interface RecordData {
     /** Path to the .plm file (relative or absolute) **/
     recordPath: string;
-    /** Duration of the session in seconds */
+    /** Duration of the record in seconds */
     duration: number;
     /** Path to the video file (relative or absolute) */
     videoPath: string;

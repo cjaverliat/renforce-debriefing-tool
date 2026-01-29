@@ -8,10 +8,9 @@ export interface Annotation {
     id: string;
     time: number;
     label: string;
-    description: string;
+    description?: string;
     color: string;
     category: string;
-    timestamp: Date;
 }
 
 export interface SessionData {

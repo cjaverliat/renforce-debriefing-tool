@@ -3,7 +3,7 @@
  * This module generates mock PLM session data for development and testing.
  * It will be replaced by actual PLM file parsing when implemented.
  */
-import {PhysiologicalDataPoint, PhysiologicalSignal, Procedure, SystemMarker} from "@/shared/types/record.ts";
+import {PhysiologicalDataPoint, PhysiologicalSignal, Procedure, SystemMarker, IncidentMarker} from "@/shared/types/record.ts";
 import {SessionData} from "@/shared/types/session.ts";
 
 /**
@@ -72,50 +72,78 @@ function createMockTracks(duration: number, sampleRate: number): PhysiologicalSi
  */
 function createMockSystemMarkers(): SystemMarker[] {
     return [
-        {time: 15, label: 'Start'},
-        {time: 45, label: 'Phase 2'},
-        {time: 90, label: 'Phase 3'},
-        {time: 120, label: 'End'},
+        {time: 0, label: 'Début session', category: 'automatic'},
+        {time: 28, label: 'Vérification EPI validée', category: 'automatic'},
+        {time: 65, label: 'Observation formateur: hésitation sur le choix de la verrerie', category: 'manual'},
+        {time: 95, label: 'Point de sauvegarde', category: 'automatic'},
+        {time: 118, label: 'Fin session', category: 'automatic'},
     ];
 }
 
 /**
  * Creates mock procedures with action markers.
  */
-function createMockProcedures(duration: number): Procedure[] {
+function createMockProcedures(_duration: number): Procedure[] {
     return [
         {
-            id: 'baseline',
-            name: 'Baseline',
+            id: 'preparation',
+            name: 'Préparation & EPI',
             startTime: 0,
             endTime: 30,
             actionMarkers: [
-                {time: 5, label: 'Eyes closed'},
-                {time: 20, label: 'Eyes open'},
+                {time: 5, label: 'Blouse enfilée', category: 'correct_action'},
+                {time: 12, label: 'Lunettes de protection manquantes', category: 'incorrect_action'},
+                {time: 18, label: 'Gants nitrile enfilés', category: 'correct_action'},
+                {time: 25, label: 'Lunettes mises après rappel', category: 'correct_action'},
             ],
         },
         {
-            id: 'stress-test',
-            name: 'Stress Test',
+            id: 'dilution-acide',
+            name: 'Dilution acide',
             startTime: 30,
-            endTime: 90,
+            endTime: 75,
             actionMarkers: [
-                {time: 35, label: 'Task started'},
-                {time: 50, label: 'Difficulty increased'},
-                {time: 70, label: 'Peak stress'},
-                {time: 85, label: 'Task completed'},
+                {time: 33, label: 'Eau versée en premier', category: 'correct_action'},
+                {time: 42, label: 'Ajout acide lent et progressif', category: 'correct_action'},
+                {time: 50, label: 'Temps de mélange dépassé', category: 'timeout_exceeded'},
+                {time: 58, label: 'Mauvaise verrerie utilisée', category: 'incorrect_action'},
+                {time: 68, label: 'Bouchon refermé', category: 'correct_action'},
             ],
         },
         {
-            id: 'recovery',
-            name: 'Recovery',
-            startTime: 90,
+            id: 'etiquetage',
+            name: 'Étiquetage & stockage',
+            startTime: 75,
+            endTime: 100,
+            actionMarkers: [
+                {time: 78, label: 'Étiquette rédigée correctement', category: 'correct_action'},
+                {time: 85, label: 'Pictogrammes de danger apposés', category: 'correct_action'},
+                {time: 92, label: 'Rangement dans armoire ventilée', category: 'correct_action'},
+            ],
+        },
+        {
+            id: 'nettoyage',
+            name: 'Nettoyage & fin',
+            startTime: 100,
             endTime: -1,
             actionMarkers: [
-                {time: 95, label: 'Relaxation started'},
-                {time: 110, label: 'Breathing exercise'},
+                {time: 103, label: 'Rinçage verrerie', category: 'correct_action'},
+                {time: 108, label: 'Oubli de neutralisation des résidus', category: 'incorrect_action'},
+                {time: 115, label: 'Plan de travail nettoyé', category: 'correct_action'},
             ],
         },
+    ];
+}
+
+/**
+ * Creates mock incident markers.
+ */
+function createMockIncidentMarkers(): IncidentMarker[] {
+    return [
+        {time: 12, label: 'Erreur EPI: lunettes manquantes', severity: 'moderate', description: 'Manipulation commencée sans protection oculaire'},
+        {time: 58, label: 'Mauvaise verrerie pour acide concentré', severity: 'moderate', description: 'Utilisation d\'un bécher au lieu d\'une fiole jaugée'},
+        {time: 63, label: 'Projection acide sur paillasse', severity: 'critical', description: 'Éclaboussure lors du mélange, risque de contamination'},
+        {time: 108, label: 'Résidus non neutralisés dans évier', severity: 'critical', description: 'Rejet direct sans neutralisation préalable'},
     ];
 }
 
@@ -141,6 +169,7 @@ export async function createMockSessionData(): Promise<SessionData> {
             tracks: createMockTracks(duration, MOCK_SAMPLING_RATE),
             procedures: createMockProcedures(duration),
             systemMarkers: createMockSystemMarkers(),
+            incidentMarkers: createMockIncidentMarkers(),
         }
     };
 }
