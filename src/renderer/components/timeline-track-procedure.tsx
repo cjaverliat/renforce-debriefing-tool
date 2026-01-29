@@ -47,10 +47,20 @@ export function ProcedureContent({procedure, duration, pixelsPerSecond}: Procedu
         ctx.fillStyle = '#18181b';
         ctx.fillRect(0, 0, rect.width, rect.height);
 
+        const startTimeX = procedure.startTime * pixelsPerSecond;
+        const endTimeX = (procedure.endTime < 0 ? duration : procedure.endTime) * pixelsPerSecond;
+
+        const procedureBarHeight = canvas.height * 0.3;
+
+        const color = "#3a51cd";
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(startTimeX, 3, endTimeX - startTimeX, procedureBarHeight, 5); // x, y, width, height, radius
+        ctx.fill();
+
         // Draw markers
         procedure.actionMarkers.forEach((marker) => {
-
-            const color = "#3a51cd";
 
             const x = marker.time * pixelsPerSecond;
 
@@ -66,7 +76,7 @@ export function ProcedureContent({procedure, duration, pixelsPerSecond}: Procedu
                 // Draw marker label
                 ctx.fillStyle = color;
                 ctx.font = '10px sans-serif';
-                ctx.fillText(marker.label, x + 4, 14);
+                ctx.fillText(marker.label, x + 4, canvas.height - 10);
             }
         });
     }, [procedure, duration, pixelsPerSecond, containerSize]);
