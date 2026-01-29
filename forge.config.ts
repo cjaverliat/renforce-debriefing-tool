@@ -6,10 +6,24 @@ import { MakerRpm } from '@electron-forge/maker-rpm';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+  },
+  hooks: {
+    postPackage: async (_config, options) => {
+      const binSource = path.join(__dirname, 'bin');
+      const mockDataSource = path.join(__dirname, 'data');
+      for (const outputPath of options.outputPaths) {
+        fs.cpSync(binSource, outputPath, { recursive: true });
+      }
+      for (const outputPath of options.outputPaths) {
+        fs.cpSync(mockDataSource, path.join(outputPath, "data"), { recursive: true });
+      }
+    },
   },
   rebuildConfig: {},
   makers: [
