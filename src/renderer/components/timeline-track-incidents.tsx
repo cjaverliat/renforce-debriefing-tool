@@ -9,9 +9,10 @@ const INCIDENT_SEVERITY_COLORS: Record<IncidentMarker['severity'], string> = {
 interface IncidentsContentProps {
     incidentMarkers: IncidentMarker[];
     pixelsPerSecond: number;
+    onSeek?: (time: number) => void;
 }
 
-export function IncidentsContent({incidentMarkers, pixelsPerSecond}: IncidentsContentProps) {
+export function IncidentsContent({incidentMarkers, pixelsPerSecond, onSeek}: IncidentsContentProps) {
     return (
         <div className="relative w-full h-full">
             {incidentMarkers.map((marker, index) => (
@@ -20,6 +21,7 @@ export function IncidentsContent({incidentMarkers, pixelsPerSecond}: IncidentsCo
                     position={marker.time * pixelsPerSecond}
                     tooltip={`${marker.label} (${marker.severity})`}
                     color={INCIDENT_SEVERITY_COLORS[marker.severity]}
+                    onClick={() => onSeek?.(marker.time)}
                 />
             ))}
         </div>

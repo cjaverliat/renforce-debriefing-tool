@@ -5,9 +5,10 @@ interface AnnotationsContentProps {
     annotations: Annotation[];
     duration: number;
     pixelsPerSecond: number;
+    onSeek?: (time: number) => void;
 }
 
-export function AnnotationsContent({annotations, pixelsPerSecond}: AnnotationsContentProps) {
+export function AnnotationsContent({annotations, pixelsPerSecond, onSeek}: AnnotationsContentProps) {
     return (
         <div className="relative w-full h-full">
             {annotations.map((annotation, index) => (
@@ -16,6 +17,7 @@ export function AnnotationsContent({annotations, pixelsPerSecond}: AnnotationsCo
                     position={annotation.time * pixelsPerSecond}
                     tooltip={annotation.label}
                     color={annotation.color}
+                    onClick={() => onSeek?.(annotation.time)}
                 />
             ))}
         </div>

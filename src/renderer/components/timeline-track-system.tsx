@@ -5,9 +5,10 @@ interface SystemContentProps {
     markers: SystemMarker[];
     duration: number;
     pixelsPerSecond: number;
+    onSeek?: (time: number) => void;
 }
 
-export function SystemContent({markers, pixelsPerSecond}: SystemContentProps) {
+export function SystemContent({markers, pixelsPerSecond, onSeek}: SystemContentProps) {
     return (
         <div className="relative w-full h-full">
             {markers.map((marker, index) => (
@@ -15,6 +16,7 @@ export function SystemContent({markers, pixelsPerSecond}: SystemContentProps) {
                     key={index}
                     position={marker.time * pixelsPerSecond}
                     tooltip={marker.label}
+                    onClick={() => onSeek?.(marker.time)}
                 />
             ))}
         </div>

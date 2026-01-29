@@ -7,13 +7,16 @@ interface TimelineMarkerProps extends React.HTMLAttributes<HTMLDivElement> {
     /** Optional tooltip content (shown on hover) */
     tooltip?: React.ReactNode;
     color?: string;
+    /** Optional click handler */
+    onClick?: () => void;
 }
 
-export function TimelineMarker({position, tooltip, color = "#f8ba33"}: TimelineMarkerProps) {
+export function TimelineMarker({position, tooltip, color = "#f8ba33", onClick}: TimelineMarkerProps) {
     const markerContent = (
         <div
             className={"absolute h-full cursor-pointer w-0.5"}
             style={{left: position, backgroundColor: color}}
+            onClick={onClick}
         >
         </div>
     );

@@ -333,6 +333,7 @@ export function Timeline({
                                         procedures={filteredProcedures}
                                         duration={duration}
                                         pixelsPerSecond={pixelsPerSecond}
+                                        onSeek={onSeek}
                                     />
                                 </TimelineTrack>
                             )}
@@ -346,6 +347,7 @@ export function Timeline({
                                     <IncidentsContent
                                         incidentMarkers={filteredIncidentMarkers}
                                         pixelsPerSecond={pixelsPerSecond}
+                                        onSeek={onSeek}
                                     />
                                 </TimelineTrack>
                             )}
@@ -360,6 +362,7 @@ export function Timeline({
                                         markers={filteredSystemMarkers}
                                         duration={duration}
                                         pixelsPerSecond={pixelsPerSecond}
+                                        onSeek={onSeek}
                                     />
                                 </TimelineTrack>
                             )}
@@ -373,6 +376,7 @@ export function Timeline({
                                     annotations={annotations}
                                     duration={duration}
                                     pixelsPerSecond={pixelsPerSecond}
+                                    onSeek={onSeek}
                                 />
                             </TimelineTrack>
 

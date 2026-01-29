@@ -12,6 +12,7 @@ interface ProceduresContentProps {
     procedures: Procedure[];
     duration: number;
     pixelsPerSecond: number;
+    onSeek?: (time: number) => void;
 }
 
 interface ProcedureRowProps {
@@ -19,9 +20,10 @@ interface ProcedureRowProps {
     duration: number;
     pixelsPerSecond: number;
     index: number;
+    onSeek?: (time: number) => void;
 }
 
-function ProcedureRow({procedure, duration, pixelsPerSecond}: ProcedureRowProps) {
+function ProcedureRow({procedure, duration, pixelsPerSecond, onSeek}: ProcedureRowProps) {
     return (
         <div
             className="relative flex-1 w-full"
@@ -41,13 +43,14 @@ function ProcedureRow({procedure, duration, pixelsPerSecond}: ProcedureRowProps)
                     position={marker.time * pixelsPerSecond}
                     tooltip={marker.label}
                     color={ACTION_MARKER_COLORS[marker.category]}
+                    onClick={() => onSeek?.(marker.time)}
                 />
             ))}
         </div>
     );
 }
 
-export function ProceduresContent({procedures, duration, pixelsPerSecond}: ProceduresContentProps) {
+export function ProceduresContent({procedures, duration, pixelsPerSecond, onSeek}: ProceduresContentProps) {
     return (
         <div className="flex flex-col w-full h-full py-2">
             {procedures.map((procedure, index) => (
@@ -57,6 +60,7 @@ export function ProceduresContent({procedures, duration, pixelsPerSecond}: Proce
                     duration={duration}
                     pixelsPerSecond={pixelsPerSecond}
                     index={index}
+                    onSeek={onSeek}
                 />
             ))}
         </div>
