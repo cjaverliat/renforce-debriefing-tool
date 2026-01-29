@@ -73,7 +73,7 @@ export function TimelineTrack({
         <div ref={containerRef} className="relative">
             <canvas
                 ref={playheadCanvasRef}
-                className="absolute w-full h-full pointer-events-none"
+                className="absolute w-full h-full pointer-events-none z-10"
             />
             <div className="h-16 border-b border-zinc-800">
                 {children}
