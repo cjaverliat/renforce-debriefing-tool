@@ -72,11 +72,9 @@ function createMockTracks(duration: number, sampleRate: number): PhysiologicalSi
  */
 function createMockSystemMarkers(): SystemMarker[] {
     return [
-        {time: 0, label: 'Début session', category: 'automatic'},
-        {time: 28, label: 'Vérification EPI validée', category: 'automatic'},
-        {time: 65, label: 'Observation formateur: hésitation sur le choix de la verrerie', category: 'manual'},
+        {time: 28, label: 'Point de sauvegarde', category: 'automatic'},
+        {time: 65, label: 'Observation formateur', description: "Hésitation sur le choix de la verrerie", category: 'manual'},
         {time: 95, label: 'Point de sauvegarde', category: 'automatic'},
-        {time: 118, label: 'Fin session', category: 'automatic'},
     ];
 }
 
