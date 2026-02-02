@@ -1,14 +1,8 @@
 import {app, BrowserWindow, Menu, protocol} from 'electron';
-import started from 'electron-squirrel-startup';
 import path from 'node:path';
 import {registerIPCHandlers} from './ipc';
 import * as fs from "node:fs";
 import mime from 'mime-types';
-
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (started) {
-    app.quit();
-}
 
 const createWindow = () => {
     // Create the browser window.

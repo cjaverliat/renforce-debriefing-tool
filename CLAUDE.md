@@ -130,7 +130,7 @@ Built with `@electron-forge/plugin-vite`:
 - Renderer config: `vite.renderer.config.ts`
 - Forge config: `forge.config.ts`
 
-Makers configured for: Windows (Squirrel), macOS (ZIP), Linux (DEB, RPM)
+Makers configured for: Windows (ZIP), macOS (DMG), Linux (DEB, RPM)
 
 ### Security
 
