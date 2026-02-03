@@ -5,6 +5,7 @@
  */
 import {PhysiologicalDataPoint, PhysiologicalSignal, Procedure, SystemMarker, IncidentMarker} from "@/shared/types/record.ts";
 import {SessionData} from "@/shared/types/session.ts";
+import {getVideoDuration} from "@/renderer/utils/get-video-duration.ts";
 
 /**
  * Generate mock physiological data with realistic values.
@@ -153,8 +154,8 @@ export async function createMockSessionData(): Promise<SessionData> {
 
     const videoPath = await window.electronAPI.getResourcePath(MOCK_VIDEO_RESOURCE_PATH);
 
-    // Read the video duration
-    const duration = await window.electronAPI.getVideoDuration(videoPath);
+    // Read the video duration using a temporary <video> element
+    const duration = await getVideoDuration(videoPath);
 
     return {
         sessionDate: new Date(),

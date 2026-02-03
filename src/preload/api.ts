@@ -43,10 +43,6 @@ export const electronAPI = {
 
     resourceExists: (resourcePath: string): Promise<boolean> => {
         return ipcRenderer.invoke('resource:exists', resourcePath);
-    },
-
-    getVideoDuration(videoPath: string): Promise<number> {
-        return ipcRenderer.invoke('video:get-duration', videoPath);
     }
 };
 
