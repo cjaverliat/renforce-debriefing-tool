@@ -14,8 +14,9 @@
     "jsx": "react-jsx",
     "allowImportingTsExtensions": true,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@proto/*": ["generated/typescript/*"]
     }
   },
-  "include": ["src", "*.ts"],
+  "include": ["src", "generated/typescript", "*.ts"],
 }
