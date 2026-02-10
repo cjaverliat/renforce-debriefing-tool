@@ -4,7 +4,6 @@ import {registerSessionHandlers} from './session-handlers';
 import {registerResourceHandlers} from './resource-handlers';
 
 export function registerIPCHandlers() {
-    registerFileHandlers();
     registerSessionHandlers();
     registerResourceHandlers();
 }

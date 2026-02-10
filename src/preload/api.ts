@@ -1,14 +1,10 @@
 // Preload API exposed to renderer via contextBridge
 import {ipcRenderer} from 'electron';
-import {RecordData} from "@/shared/types/record.ts";
+import {Session, SessionData} from "@/shared/types/session.ts";
 
 export const electronAPI = {
     openFileDialog: (): Promise<string | null> => {
         return ipcRenderer.invoke('file:open-dialog');
-    },
-
-    loadPLMFile: (filePath: string): Promise<RecordData> => {
-        return ipcRenderer.invoke('file:load-plm', filePath);
     },
 
     onError: (callback: (error: string) => void) => {
@@ -18,6 +14,14 @@ export const electronAPI = {
     // Session management methods
     openSessionDialog: (): Promise<string | null> => {
         return ipcRenderer.invoke('session:open-dialog');
+    },
+
+    loadPlmd: (plmdPath: string): Promise<Session> => {
+        return ipcRenderer.invoke('session:load-plmd', plmdPath);
+    },
+
+    savePlmdAs: (data: SessionData): Promise<string | null> => {
+        return ipcRenderer.invoke('session:save-plmd-as', data);
     },
 
     selectPlm: (): Promise<string | null> => {

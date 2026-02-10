@@ -13,8 +13,15 @@ export interface Annotation {
 }
 
 export interface SessionData {
-    plmdPath: string;
     sessionDate: Date;
     manualAnnotations: Annotation[];
+    /** Path to the record file (relative or absolute) */
+    recordPath: string;
+    /** Path to the video file (relative or absolute) */
+    videoPath: string;
+}
+
+export interface Session {
+    sessionData: SessionData;
     recordData: RecordData;
 }

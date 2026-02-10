@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Annotation, SessionData} from "@/shared/types/session.ts";
+import {Annotation, Session} from "@/shared/types/session.ts";
 import {VisibilityState} from "@/shared/types/visibility.ts";
 import {ExportControls} from "@/renderer/components/export-controls.tsx";
 import {Button} from "@/renderer/components/ui/button.tsx";
@@ -15,8 +15,8 @@ import {LanguageSwitcher} from "@/renderer/components/language-switcher.tsx";
 import {computeCurrentTime, createInitialPlaybackState, PlaybackState} from "@/shared/types/playback.ts";
 import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
 
-function createInitialVisibilityState(sessionData: SessionData): VisibilityState {
-    const {tracks, systemMarkers, incidentMarkers, procedures} = sessionData.recordData;
+function createInitialVisibilityState(session: Session): VisibilityState {
+    const {tracks, systemMarkers, incidentMarkers, procedures} = session.recordData;
 
     return {
         physioTracksVisible: true,
@@ -52,24 +52,24 @@ function toVideoSrc(videoPath: string): string {
 }
 
 interface SessionPanelProps {
-    sessionData: SessionData;
+    session: Session;
 }
 
-export function SessionPanel({sessionData}: SessionPanelProps) {
+export function SessionPanel({session}: SessionPanelProps) {
     const {t} = useTranslation();
 
     const [isDirty, setIsDirty] = useState(false);
-    const [annotations, setAnnotations] = useState<Annotation[]>(sessionData.manualAnnotations);
+    const [annotations, setAnnotations] = useState<Annotation[]>(session.sessionData.manualAnnotations);
 
     // Playback state
     const [playbackState, setPlaybackState] = useState<PlaybackState>(createInitialPlaybackState);
     const [isAnnotationDialogOpen, setIsAnnotationDialogOpen] = useState(false);
 
-    const playbackTime = usePlaybackTime(playbackState, {maxTime: sessionData.recordData.duration});
+    const playbackTime = usePlaybackTime(playbackState, {maxTime: session.recordData.duration});
 
     // Visibility state
     const [visibility, setVisibility] = useState<VisibilityState>(() =>
-        createInitialVisibilityState(sessionData)
+        createInitialVisibilityState(session)
     );
 
     // Category-level toggle handlers
@@ -257,7 +257,7 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                 <div className="flex items-center gap-2">
                     <LanguageSwitcher/>
                     <div className="w-px h-6 bg-zinc-700"/>
-                    <ExportControls sessionData={sessionData} annotations={annotations}/>
+                    <ExportControls session={session} annotations={annotations}/>
                     <div className="w-px h-6 bg-zinc-700"/>
                     <Button
                         onClick={handleAddAnnotation}
@@ -279,10 +279,10 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                         {/* Left side panel */}
                         <Panel minSize={200} defaultSize={210} className="w-full">
                             <SessionInfoPanel
-                                tracks={sessionData.recordData.tracks}
-                                systemMarkers={sessionData.recordData.systemMarkers}
-                                incidentMarkers={sessionData.recordData.incidentMarkers}
-                                procedures={sessionData.recordData.procedures}
+                                tracks={session.recordData.tracks}
+                                systemMarkers={session.recordData.systemMarkers}
+                                incidentMarkers={session.recordData.incidentMarkers}
+                                procedures={session.recordData.procedures}
                                 visibility={visibility}
                                 onTogglePhysioTracks={handleTogglePhysioTracks}
                                 onToggleSystemMarkers={handleToggleSystemMarkers}
@@ -302,10 +302,11 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                         {/* Player panel */}
                         <Panel minSize={300}>
                             <div className="h-full p-4 overflow-hidden">
+                                {/*TODO: split video duration and record duration*/}
                                 <VideoPlayer
-                                    videoSrc={toVideoSrc(sessionData.recordData.videoPath)}
+                                    videoSrc={toVideoSrc(session.sessionData.videoPath)}
                                     playbackState={playbackState}
-                                    duration={sessionData.recordData.duration}
+                                    duration={session.recordData.duration}
                                 />
                             </div>
                         </Panel>
@@ -329,12 +330,12 @@ export function SessionPanel({sessionData}: SessionPanelProps) {
                 <Panel minSize={300}>
                     <Timeline
                         playbackState={playbackState}
-                        duration={sessionData.recordData.duration}
+                        duration={session.recordData.duration}
                         annotations={annotations}
-                        tracks={sessionData.recordData.tracks}
-                        systemMarkers={sessionData.recordData.systemMarkers}
-                        incidentMarkers={sessionData.recordData.incidentMarkers}
-                        procedures={sessionData.recordData.procedures}
+                        tracks={session.recordData.tracks}
+                        systemMarkers={session.recordData.systemMarkers}
+                        incidentMarkers={session.recordData.incidentMarkers}
+                        procedures={session.recordData.procedures}
                         visibility={visibility}
                         onPlayPause={handlePlayPause}
                         onSeek={handleSeek}

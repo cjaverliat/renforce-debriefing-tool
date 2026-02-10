@@ -80,12 +80,8 @@ export interface IncidentMarker {
  * Includes video reference, physiological tracks, and markers.
  */
 export interface RecordData {
-    /** Path to the .plm file (relative or absolute) **/
-    recordPath: string;
     /** Duration of the record in seconds */
     duration: number;
-    /** Path to the video file (relative or absolute) */
-    videoPath: string;
     /** Physiological signal tracks */
     tracks: PhysiologicalSignal[];
     /** Procedures (phases/activities within the session) */

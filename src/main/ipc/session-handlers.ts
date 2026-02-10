@@ -1,6 +1,9 @@
 // IPC handlers for session management operations
 import {dialog, ipcMain} from 'electron';
+import {readFile, writeFile, access} from 'fs/promises';
 import path from 'path';
+import {Session, SessionData} from "@/shared/types/session.ts";
+import {parsePLMFile} from "@/main/parsers/plm-parser.ts";
 
 export function registerSessionHandlers() {
     // Open .plmd file dialog
@@ -15,6 +18,122 @@ export function registerSessionHandlers() {
 
         return result.canceled ? null : result.filePaths[0];
     });
+
+
+    // Load .plmd file and resolve paths
+    ipcMain.handle(
+        'session:load-plmd',
+        async (_event, plmdPath: string): Promise<Session> => {
+
+            // Read and parse .plmd file
+            const fileContent = await readFile(plmdPath, 'utf-8');
+            const plmdData: SessionData = JSON.parse(fileContent);
+
+            // Resolve relative paths
+            const plmdDir = path.dirname(plmdPath);
+            const recordPath = path.resolve(plmdDir, plmdData.recordPath);
+            const videoPath = path.resolve(plmdDir, plmdData.videoPath);
+
+            // Validate files exist
+            try {
+                await access(recordPath);
+            } catch {
+                throw new Error(`PLM file not found: ${recordPath}`);
+            }
+
+            try {
+                await access(videoPath);
+            } catch {
+                throw new Error(`Video file not found: ${videoPath}`);
+            }
+
+            try {
+                const buffer = await readFile(recordPath);
+                const recordData = parsePLMFile(buffer);
+
+                return {
+                    sessionData: plmdData,
+                    recordData: recordData,
+                };
+
+            } catch (error) {
+                throw new Error(`Failed to parse PLM file: ${(error as Error).message}`);
+            }
+        }
+    );
+
+    // Save .plmd file (auto-save)
+    ipcMain.handle(
+        'session:save-plmd',
+        async (_event, plmdPath: string, data: SessionData): Promise<void> => {
+            try {
+                const plmdDir = path.dirname(plmdPath);
+
+                // Calculate relative paths
+                const relativePlmPath = path.relative(plmdDir, data.recordPath);
+                const relativeVideoPath = path.relative(plmdDir, data.videoPath);
+
+                // Normalize to forward slashes for cross-platform compatibility
+                const normalizedPlmPath = relativePlmPath.replace(/\\/g, '/');
+                const normalizedVideoPath = relativeVideoPath.replace(/\\/g, '/');
+
+                data.recordPath = normalizedPlmPath;
+                data.videoPath = normalizedVideoPath;
+
+                // Pretty print JSON for readability
+                const jsonContent = JSON.stringify(data, null, 2);
+                await writeFile(plmdPath, jsonContent, 'utf-8');
+            } catch (error) {
+                throw new Error(`Failed to save session: ${(error as Error).message}`);
+            }
+        }
+    );
+
+    // Save .plmd file as (new session creation)
+    ipcMain.handle(
+        'session:save-plmd-as',
+        async (
+            _event,
+            data: SessionData
+        ): Promise<string | null> => {
+            const result = await dialog.showSaveDialog({
+                defaultPath: `session_${Date.now()}.plmd`,
+                filters: [
+                    {name: 'Debriefing Sessions', extensions: ['plmd']},
+                    {name: 'All Files', extensions: ['*']},
+                ],
+            });
+
+            if (result.canceled || !result.filePath) {
+                return null;
+            }
+
+            try {
+                const plmdPath = result.filePath;
+                const plmdDir = path.dirname(plmdPath);
+
+                // Calculate relative paths
+                const relativePlmPath = path.relative(plmdDir, data.recordPath);
+                const relativeVideoPath = path.relative(plmdDir, data.videoPath);
+
+                // Normalize to forward slashes for cross-platform compatibility
+                const normalizedPlmPath = relativePlmPath.replace(/\\/g, '/');
+                const normalizedVideoPath = relativeVideoPath.replace(/\\/g, '/');
+
+                data.recordPath = normalizedPlmPath;
+                data.videoPath = normalizedVideoPath;
+
+                const jsonContent = JSON.stringify(data, null, 2);
+                await writeFile(plmdPath, jsonContent, 'utf-8');
+
+                return plmdPath;
+            } catch (error) {
+                throw new Error(
+                    `Failed to create session: ${(error as Error).message}`
+                );
+            }
+        }
+    );
 
     // Select PLM file (for new session)
     ipcMain.handle('session:select-plm', async (): Promise<string | null> => {

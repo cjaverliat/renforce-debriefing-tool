@@ -1,26 +1,26 @@
 import {useEffect, useState} from 'react';
 import {LoadingPanel} from '@/renderer/loading-panel.tsx';
-import {SessionData} from "@/shared/types/session.ts";
+import {Session} from "@/shared/types/session.ts";
 import {SessionPanel} from "@/renderer/session-panel.tsx";
-import {createMockSessionData} from "@/shared/data/mock-session-data.ts";
+import {createMockSession} from "@/shared/data/mock-session.ts";
 
 export function App() {
-    const [sessionData, setSessionData] = useState<SessionData | null>(null);
+    const [session, setSession] = useState<Session | null>(null);
 
-    const handleSessionLoaded = (session: SessionData) => {
-        setSessionData(session);
+    const handleSessionLoaded = (session: Session) => {
+        setSession(session);
     };
 
     // TODO: remove - load mock session data for development
-    useEffect(() => {
-        createMockSessionData().then((data) => setSessionData(data));
-    }, []);
+    // useEffect(() => {
+    //     createMockSession().then((data) => setSession(data));
+    // }, []);
 
     // Show loading panel if in loading mode
-    if (!sessionData) {
+    if (!session) {
         return <LoadingPanel onSessionLoaded={handleSessionLoaded}/>;
     }
 
     // Show main debriefing UI
-    return <SessionPanel sessionData={sessionData}/>
+    return <SessionPanel session={session}/>
 }

@@ -1,14 +1,14 @@
 import {useTranslation} from 'react-i18next';
 import {FileText} from 'lucide-react';
 import {Button} from '@/renderer/components/ui/button';
-import {Annotation, SessionData} from "@/shared/types/session.ts";
+import {Annotation, Session} from "@/shared/types/session.ts";
 
 interface ExportControlsProps {
-    sessionData: SessionData;
+    session: Session;
     annotations: Annotation[];
 }
 
-export function ExportControls({sessionData, annotations}: ExportControlsProps) {
+export function ExportControls({session, annotations}: ExportControlsProps) {
     const {t} = useTranslation();
 
     const formatTime = (seconds: number) => {
@@ -23,9 +23,9 @@ export function ExportControls({sessionData, annotations}: ExportControlsProps) 
         lines.push(t('export.reportTitle'));
         lines.push('='.repeat(50));
         lines.push('');
-        lines.push(`${t('export.sessionDate')}: ${sessionData.sessionDate.toLocaleString()}`);
-        lines.push(`${t('export.video')}: ${sessionData.recordData.videoPath}`);
-        lines.push(`${t('export.duration')}: ${formatTime(sessionData.recordData.duration)}`);
+        lines.push(`${t('export.sessionDate')}: ${session.sessionData.sessionDate.toLocaleString()}`);
+        lines.push(`${t('export.video')}: ${session.sessionData.videoPath}`);
+        lines.push(`${t('export.duration')}: ${formatTime(session.recordData.duration)}`);
         lines.push(`${t('export.totalAnnotations')}: ${annotations.length}`);
         lines.push('');
         lines.push('='.repeat(50));
