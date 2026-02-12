@@ -1,13 +1,9 @@
-// PLM file parser using protobuf
+import {Readable} from 'stream';
 import {fromBinary} from '@bufbuild/protobuf';
 import {PackedSampleSchema, type PackedSample} from '@proto/plume/sample/packed_sample_pb.js';
 import {RecordData} from "@/shared/types/record.ts";
 
-/**
- * Read a varint from a buffer at the given offset.
- * Returns the value and the number of bytes consumed.
- */
-function readVarint(buffer: Uint8Array, offset: number): { value: number; bytesRead: number } {
+function tryReadVarint(buffer: Uint8Array, offset: number): { value: number; bytesRead: number } | null {
     let value = 0;
     let shift = 0;
     let bytesRead = 0;
@@ -27,61 +23,33 @@ function readVarint(buffer: Uint8Array, offset: number): { value: number; bytesR
         }
     }
 
-    throw new Error('Unexpected end of buffer while reading varint');
+    return null;
 }
 
-/**
- * Parse size-delimited PackedSample messages from a buffer.
- * Each message is prefixed with a varint indicating its size.
- */
-function parsePackedSamples(buffer: Uint8Array): PackedSample[] {
-    const samples: PackedSample[] = [];
+function* parsePackedSamplesFromBuffer(buffer: Uint8Array): Generator<PackedSample> {
     let offset = 0;
 
     while (offset < buffer.length) {
-        // Read the size prefix (varint)
-        const {value: messageSize, bytesRead} = readVarint(buffer, offset);
+        const varintResult = tryReadVarint(buffer, offset);
+        if (varintResult === null) {
+            throw new Error('Unexpected end of buffer while reading varint');
+        }
+
+        const {value: messageSize, bytesRead} = varintResult;
         offset += bytesRead;
 
         if (offset + messageSize > buffer.length) {
             throw new Error(`Message size ${messageSize} exceeds remaining buffer at offset ${offset}`);
         }
 
-        // Extract the message bytes and parse
-        const messageBytes = buffer.slice(offset, offset + messageSize);
-        const sample = fromBinary(PackedSampleSchema, messageBytes);
-        samples.push(sample);
+        const messageBytes = buffer.subarray(offset, offset + messageSize);
+        yield fromBinary(PackedSampleSchema, messageBytes);
 
         offset += messageSize;
     }
-
-    return samples;
 }
 
-/**
- * Process parsed PackedSamples into PLMData structure.
- * TODO: Implement unpacking of payload based on type_url
- */
 function processPackedSamples(_samples: PackedSample[]): RecordData {
-    // TODO: Unpack each sample's payload based on its type_url
-    // Example payload types might include:
-    // - plume.sample.RecordMetadata
-    // - plume.sample.RecordMetrics
-    // - plume.sample.unity.Frame
-    // - plume.sample.lsl.LslStream
-    // etc.
-
-    // Placeholder: return empty RecordData structure
-    // return {
-    //     metadata: {
-    //         version: '1.0',
-    //         duration: 0,
-    //         sampleRate: 0,
-    //         recordingDate: new Date(),
-    //     },
-    //     tracks: [],
-    //     media: [],
-    // };
     return {
         procedures: [],
         systemMarkers: [],
@@ -91,17 +59,43 @@ function processPackedSamples(_samples: PackedSample[]): RecordData {
     };
 }
 
-/**
- * Parse a .plm file buffer into PLMData structure.
- * PLM files contain size-delimited PackedSample protobuf messages.
- */
-export function parsePLMFile(buffer: Buffer): RecordData {
-    const bytes = new Uint8Array(buffer);
-    const samples = parsePackedSamples(bytes);
+export async function parsePLMFile(stream: Readable): Promise<RecordData> {
+    const samples: PackedSample[] = [];
+    let leftover = new Uint8Array(0);
+
+    for await (const chunk of stream) {
+        const value = chunk instanceof Uint8Array ? chunk : Buffer.from(chunk);
+
+        const buffer = new Uint8Array(leftover.length + value.length);
+        buffer.set(leftover);
+        buffer.set(value, leftover.length);
+
+        let offset = 0;
+
+        while (offset < buffer.length) {
+            const varintResult = tryReadVarint(buffer, offset);
+            if (varintResult === null) break;
+
+            const {value: messageSize, bytesRead} = varintResult;
+            if (offset + bytesRead + messageSize > buffer.length) break;
+
+            const messageBytes = buffer.subarray(offset + bytesRead, offset + bytesRead + messageSize);
+            samples.push(fromBinary(PackedSampleSchema, messageBytes));
+
+            offset += bytesRead + messageSize;
+        }
+
+        leftover = buffer.subarray(offset);
+    }
+
+    if (leftover.length > 0) {
+        for (const sample of parsePackedSamplesFromBuffer(leftover)) {
+            samples.push(sample);
+        }
+    }
 
     console.log(`Parsed ${samples.length} PackedSample messages`);
 
-    // Log sample info for debugging
     for (const sample of samples.slice(0, 5)) {
         console.log(`  - timestamp: ${sample.timestamp}, payload type: ${sample.payload?.typeUrl}`);
     }

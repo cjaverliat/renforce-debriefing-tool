@@ -3,6 +3,10 @@ import {dialog, ipcMain} from 'electron';
 import {readFile, writeFile, access} from 'fs/promises';
 import path from 'path';
 import {Session, SessionData} from "@/shared/types/session.ts";
+
+import * as fs from "fs";
+import * as lz4 from 'lz4';
+import * as lz4js from "lz4js";
 import {parsePLMFile} from "@/main/parsers/plm-parser.ts";
 
 export function registerSessionHandlers() {
@@ -48,8 +52,16 @@ export function registerSessionHandlers() {
             }
 
             try {
-                const buffer = await readFile(recordPath);
-                const recordData = parsePLMFile(buffer);
+
+                const compressed = fs.readFileSync(recordPath);
+                const uncompressed = lz4js.decompress(compressed);
+
+                // TODO: check for LZ4 header first
+                fs.writeFileSync(recordPath + ".uncompressed", uncompressed);
+
+                const stream = fs.createReadStream(recordPath + ".uncompressed");
+
+                const recordData = await parsePLMFile(stream);
 
                 return {
                     sessionData: plmdData,
