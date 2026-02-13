@@ -5,8 +5,8 @@ import path from 'path';
 import {Session, SessionData} from "@/shared/types/session.ts";
 
 import * as fs from "fs";
-import * as lz4 from 'lz4';
-import * as lz4js from "lz4js";
+import lz4js from "lz4js";
+
 import {parsePLMFile} from "@/main/parsers/plm-parser.ts";
 
 export function registerSessionHandlers() {
@@ -53,13 +53,20 @@ export function registerSessionHandlers() {
 
             try {
 
-                const compressed = fs.readFileSync(recordPath);
-                const uncompressed = lz4js.decompress(compressed);
+                const rawStream = await fs.promises.readFile(recordPath);
 
-                // TODO: check for LZ4 header first
-                fs.writeFileSync(recordPath + ".uncompressed", uncompressed);
+                const LZ4_FRAME_MAGIC = 0x184D2204;
 
-                const stream = fs.createReadStream(recordPath + ".uncompressed");
+                let uncompressedStream = recordPath;
+
+                if (rawStream.readUInt32LE(0) === LZ4_FRAME_MAGIC) {
+                    console.log("LZ4 compression detected");
+                    const uncompressed = lz4js.decompress(rawStream);
+                    fs.writeFileSync(uncompressedStream, uncompressed);
+                    uncompressedStream = recordPath + ".uncompressed";
+                }
+
+                const stream = fs.createReadStream(uncompressedStream);
 
                 const recordData = await parsePLMFile(stream);
 
