@@ -1,7 +1,8 @@
 import {Readable} from 'stream';
 import {fromBinary} from '@bufbuild/protobuf';
-import {PackedSampleSchema, type PackedSample} from '@proto/plume/sample/packed_sample_pb.js';
+import {PackedSampleSchema, type PackedSample} from '@proto/plume/sample/packed_sample_pb';
 import {RecordData} from "@/shared/types/record.ts";
+import {TrackingSampleSchema, type TrackingSample} from "@proto/plume/sample/tracking/tracking_sample_pb";
 
 function tryReadVarint(buffer: Uint8Array, offset: number): { value: number; bytesRead: number } | null {
     let value = 0;
@@ -49,6 +50,20 @@ function* parsePackedSamplesFromBuffer(buffer: Uint8Array): Generator<PackedSamp
     }
 }
 
+function parseTrackingSamples(_samples: PackedSample[]): TrackingSample[] {
+
+    const packedTrackingSamples = _samples.filter(s => s.payload.typeUrl === "type.googleapis.com/plume.sample.tracking.TrackingSample");
+
+    for (const packedTrackingSample of packedTrackingSamples) {
+        const payloadBytes = packedTrackingSample.payload.value;
+        const trackingSample = fromBinary(TrackingSampleSchema, payloadBytes);
+        console.log("==============")
+        console.log(trackingSample.csvData);
+    }
+
+    return [];
+}
+
 function processPackedSamples(_samples: PackedSample[]): RecordData {
 
     const maxTimestampNs = _samples.reduce<bigint>(
@@ -60,6 +75,8 @@ function processPackedSamples(_samples: PackedSample[]): RecordData {
     const remainderNs = maxTimestampNs % 1_000_000_000n;
 
     const duration = Number(seconds) + Number(remainderNs / 1_000_000_000n);
+
+    const trackingSamples = parseTrackingSamples(_samples);
 
     return {
         procedures: [],

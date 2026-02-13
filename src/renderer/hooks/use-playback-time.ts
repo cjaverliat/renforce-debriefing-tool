@@ -25,22 +25,31 @@ export function usePlaybackTime(
     computeCurrentTime(playbackState)
   );
   const animationFrameRef = useRef<number>(null);
+  const playbackStateRef = useRef(playbackState);
+  const maxTimeRef = useRef(maxTime);
+
+  // Keep refs updated
+  playbackStateRef.current = playbackState;
+  maxTimeRef.current = maxTime;
 
   const updateTime = useCallback(() => {
-    let time = computeCurrentTime(playbackState);
+    let time = computeCurrentTime(playbackStateRef.current);
 
     // Clamp to max time if provided
-    if (maxTime !== undefined && time > maxTime) {
-      time = maxTime;
+    if (maxTimeRef.current !== undefined && time > maxTimeRef.current) {
+      time = maxTimeRef.current;
     }
 
     setCurrentTime(time);
-  }, [playbackState, maxTime]);
+  }, []);
 
+  // Update immediately when anchor values change (seek events)
   useEffect(() => {
-    // Immediately compute when state changes
     updateTime();
+  }, [playbackState.anchorTime, playbackState.anchorTimestamp, updateTime]);
 
+  // Handle animation frame for playback
+  useEffect(() => {
     if (!playbackState.isPlaying) {
       return;
     }
@@ -64,7 +73,7 @@ export function usePlaybackTime(
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [playbackState, updateInterval, updateTime]);
+  }, [playbackState.isPlaying, updateInterval, updateTime]);
 
   return currentTime;
 }
