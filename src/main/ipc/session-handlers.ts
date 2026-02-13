@@ -35,8 +35,12 @@ export function registerSessionHandlers() {
 
             // Resolve relative paths
             const plmdDir = path.dirname(plmdPath);
+
             const recordPath = path.resolve(plmdDir, plmdData.recordPath);
             const videoPath = path.resolve(plmdDir, plmdData.videoPath);
+
+            plmdData.recordPath = recordPath;
+            plmdData.videoPath = videoPath;
 
             // Validate files exist
             try {
