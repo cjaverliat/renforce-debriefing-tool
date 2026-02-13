@@ -9,6 +9,9 @@ import * as path from 'path';
 const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
+        osxUniversal: {
+            mergeASARs: true,
+        },
     },
     hooks: {},
     rebuildConfig: {},

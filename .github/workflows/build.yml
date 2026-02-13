@@ -14,12 +14,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Windows
           - os: windows-latest
             platform: win32
+            arch: x64
+
+          # Linux
           - os: ubuntu-latest
             platform: linux
+            arch: x64
+
+          # macOS Universal
           - os: macos-latest
             platform: darwin
+            arch: universal
 
     runs-on: ${{ matrix.os }}
 
@@ -40,7 +48,7 @@ jobs:
         run: npm run lint
 
       - name: Build and package
-        run: npm run make
+        run: npx electron-forge make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
