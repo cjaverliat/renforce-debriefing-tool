@@ -53,8 +53,9 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.platform }}
-          path: out/make/**/*
+          # Upload only the generated ZIPs, do NOT include .app folders
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}
+          path: out/make/**/*.zip
           if-no-files-found: error
 
   release:
@@ -73,6 +74,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*
+          files: artifacts/**/*.zip
           draft: true
           generate_release_notes: true
