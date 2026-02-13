@@ -3,15 +3,11 @@ import {MakerZIP} from '@electron-forge/maker-zip';
 import {VitePlugin} from '@electron-forge/plugin-vite';
 import {FusesPlugin} from '@electron-forge/plugin-fuses';
 import {FuseV1Options, FuseVersion} from '@electron/fuses';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
-        osxUniversal: {
-            mergeASARs: true,
-        },
+        appBundleId: 'com.liris.renforce-debriefing',
     },
     hooks: {},
     rebuildConfig: {},

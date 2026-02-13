@@ -24,10 +24,15 @@ jobs:
             platform: linux
             arch: x64
 
-          # macOS Universal
+          # macOS x64 (Intel)
           - os: macos-latest
             platform: darwin
-            arch: universal
+            arch: x64
+
+          # macOS arm64 (Apple Silicon)
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
 
     runs-on: ${{ matrix.os }}
 
@@ -53,7 +58,6 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          # Upload only the generated ZIPs, do NOT include .app folders
           name: build-${{ matrix.platform }}-${{ matrix.arch }}
           path: out/make/**/*.zip
           if-no-files-found: error
