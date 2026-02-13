@@ -15,6 +15,29 @@ const createWindow = () => {
         },
     });
 
+    mainWindow.webContents.on("before-input-event", (event, input) => {
+        const isDevToolsShortcut =
+            input.key.toLowerCase() === "i" &&
+            input.shift &&
+            (input.control || input.meta); // Ctrl (Win/Linux) or Cmd (macOS)
+
+        if (isDevToolsShortcut) {
+            mainWindow.webContents.toggleDevTools();
+            event.preventDefault();
+        }
+
+        // Optional: F12 support
+        if (input.key === "F12") {
+            mainWindow.webContents.toggleDevTools();
+            event.preventDefault();
+        }
+    });
+
+    // Open the DevTools.
+    if (process.env.NODE_ENV === 'development') {
+        mainWindow.webContents.openDevTools();
+    }
+
     // and load the index.html of the app.
     if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
         mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -22,11 +45,6 @@ const createWindow = () => {
         mainWindow.loadFile(
             path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
         );
-    }
-
-    // Open the DevTools.
-    if (process.env.NODE_ENV === 'development') {
-        mainWindow.webContents.openDevTools();
     }
 };
 

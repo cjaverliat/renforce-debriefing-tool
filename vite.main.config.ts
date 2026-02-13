@@ -8,10 +8,5 @@ export default defineConfig({
             '@': path.resolve(__dirname, './src'),
             '@proto': path.resolve(__dirname, './generated/typescript'),
         },
-    },
-    build: {
-        rollupOptions: {
-            external: ["lz4", "xxhash"]
-        }
     }
 });

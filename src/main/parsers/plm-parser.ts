@@ -57,8 +57,18 @@ function parseTrackingSamples(_samples: PackedSample[]): TrackingSample[] {
     for (const packedTrackingSample of packedTrackingSamples) {
         const payloadBytes = packedTrackingSample.payload.value;
         const trackingSample = fromBinary(TrackingSampleSchema, payloadBytes);
-        console.log("==============")
-        console.log(trackingSample.csvData);
+        const csvData = trackingSample.csvData.split(",");
+
+        // timestamp,ticksSince1970(100ns),ActionName,ActionType,NbParam,Param1,Param2,Param3,Param4,Param5,Param6,Param7,Param8,Param9,Param10,Description
+        const timestamp = Number(csvData[0]);
+        const ticks = BigInt(csvData[1]);
+        const actionName = csvData[2];
+        const actionType = csvData[3];
+        const nbParams = Number(csvData[4]);
+        const params = csvData.slice(5, 5 + nbParams);
+        const description = csvData[5 + nbParams];
+
+        // console.log(actionName, actionType);
     }
 
     return [];
