@@ -65,9 +65,12 @@ export function registerSessionHandlers() {
 
                 if (rawStream.readUInt32LE(0) === LZ4_FRAME_MAGIC) {
                     console.log("LZ4 compression detected");
-                    const uncompressed = lz4js.decompress(rawStream);
-                    fs.writeFileSync(uncompressedStream, uncompressed);
                     uncompressedStream = recordPath + ".uncompressed";
+
+                    if (!fs.existsSync(uncompressedStream)) {
+                        const uncompressed = lz4js.decompress(rawStream);
+                        fs.writeFileSync(uncompressedStream, uncompressed);
+                    }
                 }
 
                 const stream = fs.createReadStream(uncompressedStream);
