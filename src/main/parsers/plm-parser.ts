@@ -50,12 +50,23 @@ function* parsePackedSamplesFromBuffer(buffer: Uint8Array): Generator<PackedSamp
 }
 
 function processPackedSamples(_samples: PackedSample[]): RecordData {
+
+    const maxTimestampNs = _samples.reduce<bigint>(
+        (max, s) => (s.timestamp > max ? s.timestamp : max),
+        0n
+    );
+
+    const seconds = maxTimestampNs / 1_000_000_000n;
+    const remainderNs = maxTimestampNs % 1_000_000_000n;
+
+    const duration = Number(seconds) + Number(remainderNs / 1_000_000_000n);
+
     return {
         procedures: [],
         systemMarkers: [],
         tracks: [],
         incidentMarkers: [],
-        duration: 0
+        duration: duration
     };
 }
 
@@ -95,13 +106,5 @@ export async function parsePLMFile(stream: Readable): Promise<RecordData> {
     }
 
     console.log(`Parsed ${samples.length} PackedSample messages`);
-
-    for (const sample of samples.slice(0, 5)) {
-        console.log(`  - timestamp: ${sample.timestamp}, payload type: ${sample.payload?.typeUrl}`);
-    }
-    if (samples.length > 5) {
-        console.log(`  ... and ${samples.length - 5} more`);
-    }
-
     return processPackedSamples(samples);
 }
