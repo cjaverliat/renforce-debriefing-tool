@@ -38,7 +38,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies
@@ -50,71 +50,24 @@ jobs:
       - name: Build and package
         run: npx electron-forge package --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
 
+      - name: Run e2e tests
+        run: npx playwright test
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            playwright-report/
+            test-results/
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.platform }}-${{ matrix.arch }}
           path: out/**/*
           if-no-files-found: error
-
-  e2e:
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest
-            platform: darwin
-            arch: x64
-          - os: windows-latest
-            platform: win32
-            arch: x64
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-${{ matrix.platform }}-${{ matrix.arch }}
-          path: out
-
-      - name: Make executable (macOS)
-        if: runner.os == 'macOS'
-        run: chmod +x out/**/*
-
-      - name: Run e2e tests (macOS)
-        if: runner.os == 'macOS'
-        run: npx playwright test
-        env:
-          ELECTRON_EXECUTABLE_PATH: ${{ github.workspace }}/out
-
-      - name: Run e2e tests (Windows)
-        if: runner.os == 'Windows'
-        run: npx playwright test
-        env:
-          ELECTRON_EXECUTABLE_PATH: ${{ github.workspace }}\out
-
-      - name: Upload test results
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-test-results-${{ matrix.os }}
-          path: |
-            playwright-report/
-            test-results/
 
   release:
     needs: build
