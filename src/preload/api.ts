@@ -47,6 +47,10 @@ export const electronAPI = {
 
     resourceExists: (resourcePath: string): Promise<boolean> => {
         return ipcRenderer.invoke('resource:exists', resourcePath);
+    },
+
+    getMockSession: (): Promise<boolean> => {
+        return ipcRenderer.invoke('app:get-mock-session');
     }
 };
 

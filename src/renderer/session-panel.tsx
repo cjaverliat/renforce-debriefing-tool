@@ -304,7 +304,7 @@ export function SessionPanel({session}: SessionPanelProps) {
                             <div className="h-full p-4 overflow-hidden">
                                 {/*TODO: split video duration and record duration*/}
                                 <VideoPlayer
-                                    videoSrc={toVideoSrc(session.sessionData.videoPath)}
+                                    videoSrc={session.sessionData.videoPath ? toVideoSrc(session.sessionData.videoPath) : undefined}
                                     playbackState={playbackState}
                                     duration={session.recordData.duration}
                                 />

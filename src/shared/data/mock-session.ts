@@ -10,8 +10,7 @@ import {
     Procedure, RecordData,
     SystemMarker
 } from "@/shared/types/record.ts";
-import {Session, SessionData} from "@/shared/types/session.ts";
-import {getVideoDuration} from "@/renderer/utils/get-video-duration.ts";
+import {Session} from "@/shared/types/session.ts";
 
 /**
  * Generate mock physiological data with realistic values.
@@ -173,5 +172,24 @@ export function createMockRecordData(duration: number): RecordData {
         procedures: createMockProcedures(duration),
         systemMarkers: createMockSystemMarkers(),
         incidentMarkers: createMockIncidentMarkers(),
+    };
+}
+
+const MOCK_DURATION = 150; // 2:30
+
+export function createMockSession(): Session {
+    return {
+        sessionData: {
+            sessionDate: new Date('2025-06-15T09:30:00'),
+            manualAnnotations: [
+                {id: 'a1', time: 12, label: 'Erreur EPI détectée', color: '#ef4444'},
+                {id: 'a2', time: 42, label: 'Bonne technique de dilution', color: '#22c55e'},
+                {id: 'a3', time: 58, label: 'Verrerie inadaptée', description: 'Bécher utilisé au lieu de fiole jaugée', color: '#f97316'},
+                {id: 'a4', time: 85, label: 'Étiquetage conforme', color: '#22c55e'},
+            ],
+            recordPath: '',
+            videoPath: '',
+        },
+        recordData: createMockRecordData(MOCK_DURATION),
     };
 }

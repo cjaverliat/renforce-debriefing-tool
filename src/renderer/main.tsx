@@ -3,4 +3,6 @@ import './styles/index.css';
 import '@/renderer/i18n';
 import { App } from '@/renderer/app.tsx';
 
-createRoot(document.getElementById('root')!).render(<App />);
+window.electronAPI.getMockSession().then((mockSession) => {
+    createRoot(document.getElementById('root')!).render(<App mockSession={mockSession} />);
+});

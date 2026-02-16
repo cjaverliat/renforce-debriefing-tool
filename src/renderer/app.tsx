@@ -1,17 +1,21 @@
-import {useState} from 'react';
+import {JSX, useState} from 'react';
 import {LoadingPanel} from '@/renderer/loading-panel.tsx';
 import {Session} from "@/shared/types/session.ts";
 import {SessionPanel} from "@/renderer/session-panel.tsx";
-import {createMockRecordData} from "@/shared/data/mock-session.ts";
+import {createMockRecordData, createMockSession} from "@/shared/data/mock-session.ts";
 
-export function App() {
-    const [session, setSession] = useState<Session | null>(null);
+interface AppProps {
+    mockSession: boolean;
+}
+
+export function App({mockSession}: AppProps): JSX.Element {
+    const [session, setSession] = useState<Session | null>(() =>
+        mockSession ? createMockSession() : null
+    );
 
     const handleSessionLoaded = (session: Session) => {
-
         // TODO: remove - Replace record data with mock data
         session.recordData = createMockRecordData(2 * 60 + 30);
-
         setSession(session);
     };
 

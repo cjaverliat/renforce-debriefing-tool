@@ -9,7 +9,8 @@
       "Bash(timeout:*)",
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

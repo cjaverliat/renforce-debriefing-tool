@@ -1,6 +1,7 @@
 import {app, BrowserWindow, Menu, protocol} from 'electron';
 import path from 'node:path';
 import {registerIPCHandlers} from './ipc';
+import {registerAppHandlers} from './ipc/app-handlers';
 import * as fs from "node:fs";
 import mime from 'mime-types';
 
@@ -125,6 +126,7 @@ app.whenReady().then(() => {
     )
 
     registerIPCHandlers();
+    registerAppHandlers();
     createWindow();
 });
 
