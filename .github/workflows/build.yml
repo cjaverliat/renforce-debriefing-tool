@@ -14,12 +14,25 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Windows
           - os: windows-latest
             platform: win32
+            arch: x64
+
+          # Linux
           - os: ubuntu-latest
             platform: linux
+            arch: x64
+
+          # macOS x64 (Intel)
           - os: macos-latest
             platform: darwin
+            arch: x64
+
+          # macOS arm64 (Apple Silicon)
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
 
     runs-on: ${{ matrix.os }}
 
@@ -40,13 +53,13 @@ jobs:
         run: npm run lint
 
       - name: Build and package
-        run: npm run make
+        run: npx electron-forge make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.platform }}
-          path: out/make/**/*
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}
+          path: out/make/**/*.zip
           if-no-files-found: error
 
   release:
@@ -65,6 +78,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*
+          files: artifacts/**/*.zip
           draft: true
           generate_release_notes: true
