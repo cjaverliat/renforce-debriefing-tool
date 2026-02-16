@@ -62,6 +62,45 @@ jobs:
           path: out/make/**/*.zip
           if-no-files-found: error
 
+  e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npx electron-forge package
+
+      - name: Run e2e tests (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum npx playwright test
+
+      - name: Run e2e tests (macOS/Windows)
+        if: runner.os != 'Linux'
+        run: npx playwright test
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results-${{ matrix.os }}
+          path: |
+            playwright-report/
+            test-results/
+
   release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')

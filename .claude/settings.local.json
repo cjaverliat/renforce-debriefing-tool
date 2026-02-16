@@ -10,7 +10,11 @@
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
       "Bash(echo:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(dir:*)",
+      "Bash(npx playwright test)",
+      "Bash(npx playwright test:*)",
+      "Bash(npm run package:*)"
     ]
   }
 }
