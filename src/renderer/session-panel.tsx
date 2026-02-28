@@ -49,7 +49,8 @@ function toVideoSrc(videoPath: string): string {
     if (videoPath.startsWith('http://') || videoPath.startsWith('https://')) {
         return videoPath;
     }
-    return `media://${videoPath}`;
+    const normalized = videoPath.replace(/\\/g, '/');
+    return `media://${normalized.startsWith('/') ? normalized : '/' + normalized}`;
 }
 
 interface SessionPanelProps {
