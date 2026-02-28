@@ -37,37 +37,37 @@ export function TimelineControls({
   const playbackTime = usePlaybackTime(playbackState, { maxTime: duration });
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border-b border-zinc-800">
+    <div className="flex items-center gap-2 px-4 py-2 bg-card border-b border-border">
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon"
           onClick={onSkipBackward}
-          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          className="size-8 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <SkipBack className="size-4" />
         </Button>
-        
+
         <Button
           variant="ghost"
           size="icon"
           onClick={onPlayPause}
-          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          className="size-8 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
         </Button>
-        
+
         <Button
           variant="ghost"
           size="icon"
           onClick={onSkipForward}
-          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          className="size-8 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <SkipForward className="size-4" />
         </Button>
       </div>
 
-      <div className="text-sm text-zinc-400 font-mono">
+      <div className="text-sm text-muted-foreground font-mono">
         {formatTime(playbackTime)} / {formatTime(duration)}
       </div>
 
@@ -78,23 +78,23 @@ export function TimelineControls({
           variant="ghost"
           size="icon"
           onClick={onZoomOut}
-          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          className="size-8 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <ZoomOut className="size-4" />
         </Button>
-        
+
         <button
           onClick={onZoomReset}
-          className="text-xs text-zinc-400 hover:text-white font-mono w-12 text-center"
+          className="text-xs text-muted-foreground hover:text-foreground font-mono w-12 text-center"
         >
           {Math.round(zoom * 100)}%
         </button>
-        
+
         <Button
           variant="ghost"
           size="icon"
           onClick={onZoomIn}
-          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          className="size-8 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <ZoomIn className="size-4" />
         </Button>

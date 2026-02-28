@@ -1,6 +1,7 @@
 import {useRef, useEffect} from 'react';
 import {PlaybackState} from "@/shared/types/playback.ts";
 import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
+import {useTheme} from "@/renderer/hooks/use-theme.tsx";
 
 interface TimelineRulerProps {
     duration: number;
@@ -9,12 +10,42 @@ interface TimelineRulerProps {
     onSeek: (time: number) => void;
 }
 
+interface RulerColors {
+    background: string;
+    recordArea: string;
+    tickOutside: string;
+    tickMajor: string;
+    tickMinor: string;
+    labelOutside: string;
+    labelInside: string;
+    playhead: string;
+}
+
+function getThemeColors(): RulerColors {
+    const styles = getComputedStyle(document.documentElement);
+    const isDark = document.documentElement.classList.contains('dark');
+
+    return {
+        // Use more contrasted colors: outside area is dimmer, record area is prominent
+        background: isDark ? '#1a1a24' : '#d4d4d8',
+        recordArea: isDark ? '#252532' : '#f4f4f5',
+        tickOutside: isDark ? '#26262b' : '#d4d4d4',
+        tickMajor: isDark ? '#71717a' : '#71717a',
+        tickMinor: isDark ? '#3f3f46' : '#a1a1aa',
+        labelOutside: isDark ? '#464650' : '#a1a1aa',
+        labelInside: isDark ? '#a1a1aa' : '#52525b',
+        playhead: '#ef4444',
+    };
+}
+
 function drawRuler(canvasRef: React.RefObject<HTMLCanvasElement>, pixelsPerSecond: number, duration: number, playbackTime: number) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    const colors = getThemeColors();
 
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
@@ -43,9 +74,9 @@ function drawRuler(canvasRef: React.RefObject<HTMLCanvasElement>, pixelsPerSecon
     const endTime = rect.width / pixelsPerSecond;
 
     // Clear canvas
-    ctx.fillStyle = '#18181b';
+    ctx.fillStyle = colors.background;
     ctx.fillRect(0, 0, rect.width, rect.height);
-    ctx.fillStyle = '#27272a';
+    ctx.fillStyle = colors.recordArea;
     ctx.fillRect(0, 0, recordWidth, rect.height);
 
     // Draw ticks
@@ -57,9 +88,9 @@ function drawRuler(canvasRef: React.RefObject<HTMLCanvasElement>, pixelsPerSecon
         const outsideTimeRange = time > duration;
 
         if (outsideTimeRange) {
-            ctx.strokeStyle = '#26262b';
+            ctx.strokeStyle = colors.tickOutside;
         } else {
-            ctx.strokeStyle = isMajor ? '#71717a' : '#3f3f46';
+            ctx.strokeStyle = isMajor ? colors.tickMajor : colors.tickMinor;
         }
 
         ctx.lineWidth = 1;
@@ -75,9 +106,9 @@ function drawRuler(canvasRef: React.RefObject<HTMLCanvasElement>, pixelsPerSecon
             const label = `${mins}:${secs.toString().padStart(2, '0')}`;
 
             if (outsideTimeRange) {
-                ctx.fillStyle = '#464650';
+                ctx.fillStyle = colors.labelOutside;
             } else {
-                ctx.fillStyle = '#a1a1aa';
+                ctx.fillStyle = colors.labelInside;
             }
 
             ctx.font = '10px sans-serif';
@@ -88,7 +119,7 @@ function drawRuler(canvasRef: React.RefObject<HTMLCanvasElement>, pixelsPerSecon
     // Draw playhead
     const playheadX = playbackTime * pixelsPerSecond;
     if (playheadX >= 0 && playheadX <= rect.width) {
-        ctx.fillStyle = '#ef4444';
+        ctx.fillStyle = colors.playhead;
         ctx.beginPath();
         ctx.moveTo(playheadX, rect.height);
         ctx.lineTo(playheadX - 5, rect.height - 8);
@@ -106,12 +137,13 @@ export function TimelineRuler({
 }: TimelineRulerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isDragging = useRef(false);
+    const {resolvedTheme} = useTheme();
 
     const playbackTime = usePlaybackTime(playbackState, { maxTime: duration });
 
     useEffect(() => {
         drawRuler(canvasRef, pixelsPerSecond, duration, playbackTime);
-    }, [duration, playbackTime, pixelsPerSecond]);
+    }, [duration, playbackTime, pixelsPerSecond, resolvedTheme]);
 
     useEffect(() => {
         const container = canvasRef.current;
@@ -125,7 +157,7 @@ export function TimelineRuler({
         resizeObserver.observe(container);
 
         return () => resizeObserver.disconnect();
-    }, [duration, playbackTime, pixelsPerSecond]);
+    }, [duration, playbackTime, pixelsPerSecond, resolvedTheme]);
 
     const seekToMouse = (e: React.MouseEvent<HTMLCanvasElement>) => {
         const canvas = canvasRef.current;
@@ -153,7 +185,7 @@ export function TimelineRuler({
     };
 
     return (
-        <div className="h-8 border-b shrink-0 border-zinc-800 bg-zinc-800">
+        <div className="h-8 border-b shrink-0 border-border bg-accent">
             <canvas
                 ref={canvasRef}
                 onPointerDown={handlePointerDown}

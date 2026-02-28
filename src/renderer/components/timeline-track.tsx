@@ -79,7 +79,7 @@ export function TimelineTrack({
                 className="absolute w-full h-full pointer-events-none z-10"
             />
             <div
-                className="relative border-b border-zinc-800 bg-zinc-900"
+                className="relative border-b border-border bg-card"
                 style={{height: height ? `${height}px` : '64px'}}
             >
                 {children}

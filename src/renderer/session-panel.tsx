@@ -12,6 +12,7 @@ import {Timeline} from "@/renderer/components/timeline.tsx";
 import {AnnotationDialog} from "@/renderer/components/annotation-dialog.tsx";
 import {SessionInfoPanel} from "@/renderer/components/session-info-panel.tsx";
 import {LanguageSwitcher} from "@/renderer/components/language-switcher.tsx";
+import {ThemeSwitcher} from "@/renderer/components/theme-switcher.tsx";
 import {computeCurrentTime, createInitialPlaybackState, PlaybackState} from "@/shared/types/playback.ts";
 import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
 
@@ -248,17 +249,18 @@ export function SessionPanel({session}: SessionPanelProps) {
     }, [isAnnotationDialogOpen]);
 
     return (
-        <div className="size-full flex flex-col bg-zinc-950">
+        <div className="size-full flex flex-col bg-background">
             {/* Header with controls */}
-            <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-b border-zinc-800">
-                <h1 className="text-lg text-zinc-100">
+            <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border">
+                <h1 className="text-lg text-foreground">
                     {t('session.title')}
                 </h1>
                 <div className="flex items-center gap-2">
+                    <ThemeSwitcher/>
                     <LanguageSwitcher/>
-                    <div className="w-px h-6 bg-zinc-700"/>
+                    <div className="w-px h-6 bg-border"/>
                     <ExportControls session={session} annotations={annotations}/>
-                    <div className="w-px h-6 bg-zinc-700"/>
+                    <div className="w-px h-6 bg-border"/>
                     <Button
                         onClick={handleAddAnnotation}
                         className="bg-blue-600 hover:bg-blue-700 text-white"

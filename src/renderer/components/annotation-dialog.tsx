@@ -74,14 +74,14 @@ export function AnnotationDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-zinc-900 rounded-lg shadow-xl w-full max-w-md border border-zinc-800">
-        <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-          <h2 className="text-lg text-zinc-100">{t('annotationDialog.title')}</h2>
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-md border border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-lg text-foreground">{t('annotationDialog.title')}</h2>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+            className="text-muted-foreground hover:text-foreground hover:bg-accent"
           >
             <X className="size-4" />
           </Button>
@@ -89,33 +89,33 @@ export function AnnotationDialog({
 
         <div className="p-4 space-y-4" onKeyDown={handleKeyDown}>
           <div>
-            <Label className="text-zinc-300">{t('annotationDialog.time')}</Label>
-            <div className="text-xl font-mono text-zinc-100 mt-1">
+            <Label className="text-muted-foreground">{t('annotationDialog.time')}</Label>
+            <div className="text-xl font-mono text-foreground mt-1">
               {formatTime(currentTime)}
             </div>
           </div>
 
           <div>
-            <Label htmlFor="label" className="text-zinc-300">{t('annotationDialog.labelRequired')}</Label>
+            <Label htmlFor="label" className="text-muted-foreground">{t('annotationDialog.labelRequired')}</Label>
             <Input
               id="label"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder={t('annotationDialog.labelPlaceholder')}
-              className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500"
+              className="mt-1 bg-accent border-border text-foreground placeholder:text-muted-foreground"
               autoFocus
             />
           </div>
 
           <div>
-            <Label className="text-zinc-300">{t('annotationDialog.color')}</Label>
+            <Label className="text-muted-foreground">{t('annotationDialog.color')}</Label>
             <div className="flex gap-2 mt-1">
               {ANNOTATION_COLORS.map((c) => (
                 <button
                   key={c.value}
                   onClick={() => setColor(c.value)}
                   className={`size-8 rounded-full transition-transform ${
-                    color === c.value ? 'ring-2 ring-white ring-offset-2 ring-offset-zinc-900 scale-110' : ''
+                    color === c.value ? 'ring-2 ring-white ring-offset-2 ring-offset-card scale-110' : ''
                   }`}
                   style={{ backgroundColor: c.value }}
                   title={c.name}
@@ -125,22 +125,22 @@ export function AnnotationDialog({
           </div>
 
           <div>
-            <Label htmlFor="description" className="text-zinc-300">{t('annotationDialog.description')}</Label>
+            <Label htmlFor="description" className="text-muted-foreground">{t('annotationDialog.description')}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('annotationDialog.descriptionPlaceholder')}
-              className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 min-h-25"
+              className="mt-1 bg-accent border-border text-foreground placeholder:text-muted-foreground min-h-25"
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 p-4 border-t border-zinc-800">
+        <div className="flex justify-end gap-2 p-4 border-t border-border">
           <Button
             variant="ghost"
             onClick={onClose}
-            className="text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+            className="text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             {t('annotationDialog.cancel')}
           </Button>
@@ -153,7 +153,7 @@ export function AnnotationDialog({
           </Button>
         </div>
 
-        <div className="px-4 pb-4 text-xs text-zinc-500">
+        <div className="px-4 pb-4 text-xs text-muted-foreground">
           {t('annotationDialog.shortcutHint')}
         </div>
       </div>

@@ -9,7 +9,7 @@ interface TimelineLabelProps {
 export function TimelineLabel({children, height}: TimelineLabelProps) {
     return (
         <div
-            className="border-b border-zinc-800"
+            className="border-b border-border"
             style={{height: height ? `${height}px` : '64px'}}
         >
             {children}

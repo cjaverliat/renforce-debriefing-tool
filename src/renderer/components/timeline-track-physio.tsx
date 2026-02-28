@@ -1,4 +1,10 @@
 import {useEffect, useMemo, useRef, useState} from "react";
+import {useTheme} from "@/renderer/hooks/use-theme.tsx";
+
+function getTrackBackgroundColor(): string {
+    // Use the --card CSS variable to match the timeline-track bg-card background
+    return getComputedStyle(document.documentElement).getPropertyValue('--card').trim();
+}
 
 // Signal track content component
 interface SignalContentProps {
@@ -12,6 +18,7 @@ export function SignalContent({data, duration, pixelsPerSecond, color}: SignalCo
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerSize, setContainerSize] = useState({width: 0, height: 0});
+    const {resolvedTheme} = useTheme();
 
     // Calculate min/max for normalization
     const {minValue, maxValue} = useMemo(() => {
@@ -58,7 +65,7 @@ export function SignalContent({data, duration, pixelsPerSecond, color}: SignalCo
         ctx.scale(dpr, dpr);
 
         // Clear canvas
-        ctx.fillStyle = '#18181b';
+        ctx.fillStyle = getTrackBackgroundColor();
         ctx.fillRect(0, 0, rect.width, rect.height);
 
         // Draw signal waveform
@@ -90,7 +97,7 @@ export function SignalContent({data, duration, pixelsPerSecond, color}: SignalCo
         }
 
         ctx.stroke();
-    }, [data, duration, pixelsPerSecond, color, containerSize, minValue, maxValue]);
+    }, [data, duration, pixelsPerSecond, color, containerSize, minValue, maxValue, resolvedTheme]);
 
     return (
         <div ref={containerRef} className="w-full h-full">

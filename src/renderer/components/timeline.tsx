@@ -24,7 +24,7 @@ interface DefaultTextLabelContentProps {
 function DefaultTextLabelContent({children}: DefaultTextLabelContentProps) {
     return (
         <div className="w-full h-full flex flex-col justify-center px-4 py-1">
-            <span className="text-xs font-medium text-zinc-300 truncate">
+            <span className="text-xs font-medium text-muted-foreground truncate">
                 {children}
             </span>
         </div>
@@ -229,7 +229,7 @@ export function Timeline({
     }, [incidentMarkers, visibility.incidentMarkersVisible, visibility.visibleIncidentMarkerIds]);
 
     return (
-        <div className="flex flex-col h-full bg-zinc-900">
+        <div className="flex flex-col h-full bg-card">
             <TimelineControls
                 isPlaying={isPlaying}
                 playbackState={playbackState}
@@ -248,9 +248,9 @@ export function Timeline({
 
                 {/* Labels */}
                 <Panel minSize={50} maxSize={200} defaultSize={100}>
-                    <div className="relative h-full w-full flex flex-col bg-zinc-900">
+                    <div className="relative h-full w-full flex flex-col bg-card">
                         {/* Ruler label placeholder */}
-                        <div className="absolute top-0 left-0 right-0 h-8 shrink-0 grow-0 border-b bg-zinc-900"/>
+                        <div className="absolute top-0 left-0 right-0 h-8 shrink-0 grow-0 border-b bg-card"/>
 
                         <div
                             ref={labelsScrollRef}

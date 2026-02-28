@@ -79,7 +79,7 @@ export function ExportControls({session, annotations}: ExportControlsProps) {
                 variant="ghost"
                 size="sm"
                 onClick={handleExportText}
-                className="text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                className="text-muted-foreground hover:bg-accent hover:text-foreground"
                 disabled={annotations.length === 0}
             >
                 <FileText className="size-4 mr-2"/>

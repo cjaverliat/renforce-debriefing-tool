@@ -88,13 +88,13 @@ export function PhysiologicalSignalLabel({
 
     return (
         <div className="w-full h-full flex flex-col justify-center px-4 py-1">
-            <span className="text-xs font-medium text-zinc-300 truncate">
+            <span className="text-xs font-medium text-muted-foreground truncate">
                 {name}
             </span>
-            <div className="flex items-center gap-2 text-[10px] text-zinc-500">
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground/70">
                 <span>{formattedSamplingRate}</span>
-                <span className="text-zinc-600">|</span>
-                <span className="text-zinc-400 font-mono">
+                <span className="text-muted-foreground/50">|</span>
+                <span className="text-muted-foreground font-mono">
                     {formattedValue} {unit}
                 </span>
             </div>

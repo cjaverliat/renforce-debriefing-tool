@@ -3,6 +3,7 @@ import {useTranslation} from 'react-i18next';
 import {FileVideo, FolderOpen, AlertCircle} from 'lucide-react';
 import {Session} from "@/shared/types/session.ts";
 import {LanguageSwitcher} from "@/renderer/components/language-switcher.tsx";
+import {ThemeSwitcher} from "@/renderer/components/theme-switcher.tsx";
 
 interface LoadingPanelProps {
     onSessionLoaded: (session: Session) => void;
@@ -91,18 +92,19 @@ export function LoadingPanel({onSessionLoaded}: LoadingPanelProps) {
     };
 
     return (
-        <div className="size-full flex items-center justify-center bg-zinc-950 relative">
-            {/* Language switcher in top right corner */}
-            <div className="absolute top-4 right-4">
+        <div className="size-full flex items-center justify-center bg-background relative">
+            {/* Theme and language switcher in top right corner */}
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+                <ThemeSwitcher/>
                 <LanguageSwitcher/>
             </div>
             <div className="w-full max-w-md space-y-8 p-8">
                 {/* Header */}
                 <div className="text-center space-y-2">
-                    <h1 className="text-3xl font-bold text-zinc-100">
+                    <h1 className="text-3xl font-bold text-foreground">
                         {t('app.title')}
                     </h1>
-                    <p className="text-zinc-400">
+                    <p className="text-muted-foreground">
                         {t('app.subtitle')}
                     </p>
                 </div>
@@ -113,17 +115,17 @@ export function LoadingPanel({onSessionLoaded}: LoadingPanelProps) {
                     <button
                         onClick={handleCreateNew}
                         disabled={isLoading}
-                        className="w-full p-6 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
+                        className="w-full p-6 bg-card hover:bg-accent border border-border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
                     >
                         <div className="flex items-start gap-4">
                             <div className="p-3 bg-blue-600/10 rounded-lg group-hover:bg-blue-600/20 transition-colors">
                                 <FileVideo className="size-6 text-blue-500"/>
                             </div>
                             <div className="flex-1 text-left">
-                                <h2 className="text-lg font-semibold text-zinc-100 mb-1">
+                                <h2 className="text-lg font-semibold text-foreground mb-1">
                                     {t('loading.createNew')}
                                 </h2>
-                                <p className="text-sm text-zinc-400">
+                                <p className="text-sm text-muted-foreground">
                                     {t('loading.createNewDescription')}
                                 </p>
                             </div>
@@ -134,7 +136,7 @@ export function LoadingPanel({onSessionLoaded}: LoadingPanelProps) {
                     <button
                         onClick={handleLoadExisting}
                         disabled={isLoading}
-                        className="w-full p-6 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
+                        className="w-full p-6 bg-card hover:bg-accent border border-border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
                     >
                         <div className="flex items-start gap-4">
                             <div
@@ -142,10 +144,10 @@ export function LoadingPanel({onSessionLoaded}: LoadingPanelProps) {
                                 <FolderOpen className="size-6 text-green-500"/>
                             </div>
                             <div className="flex-1 text-left">
-                                <h2 className="text-lg font-semibold text-zinc-100 mb-1">
+                                <h2 className="text-lg font-semibold text-foreground mb-1">
                                     {t('loading.loadExisting')}
                                 </h2>
-                                <p className="text-sm text-zinc-400">
+                                <p className="text-sm text-muted-foreground">
                                     {t('loading.loadExistingDescription')}
                                 </p>
                             </div>
@@ -172,8 +174,8 @@ export function LoadingPanel({onSessionLoaded}: LoadingPanelProps) {
                 {isLoading && (
                     <div className="text-center">
                         <div
-                            className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-zinc-600 border-t-blue-500"></div>
-                        <p className="mt-2 text-sm text-zinc-400">{t('loading.loadingSession')}</p>
+                            className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-blue-500"></div>
+                        <p className="mt-2 text-sm text-muted-foreground">{t('loading.loadingSession')}</p>
                     </div>
                 )}
             </div>

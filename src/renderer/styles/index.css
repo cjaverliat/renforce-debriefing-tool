@@ -24,7 +24,7 @@ body {
 }
 
 .separator {
-    @apply bg-zinc-800 hover:bg-blue-500/50 active:bg-blue-500 transition-colors;
+    @apply bg-border hover:bg-blue-500/50 active:bg-blue-500 transition-colors;
     border-radius: 0.25rem;
 }
 

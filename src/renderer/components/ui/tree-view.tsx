@@ -64,9 +64,9 @@ function TreeViewItemTrigger({className, children, ...props}: TreeViewItemTrigge
         >
             <CollapsibleTrigger className="shrink-0 cursor-pointer">
                 {isExpanded ? (
-                    <ChevronDown className="size-4 text-zinc-500"/>
+                    <ChevronDown className="size-4 text-muted-foreground"/>
                 ) : (
-                    <ChevronRight className="size-4 text-zinc-500"/>
+                    <ChevronRight className="size-4 text-muted-foreground"/>
                 )}
             </CollapsibleTrigger>
             {children}

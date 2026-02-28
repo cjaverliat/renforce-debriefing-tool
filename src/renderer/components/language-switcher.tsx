@@ -28,19 +28,19 @@ export function LanguageSwitcher() {
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="text-zinc-300 hover:bg-zinc-800 hover:text-white gap-2"
+                    className="text-muted-foreground hover:bg-accent hover:text-foreground gap-2"
                 >
                     <Globe className="size-4"/>
                     <span className="text-xs">{currentLanguage.label}</span>
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800">
+            <DropdownMenuContent align="end" className="bg-card border-border">
                 {languages.map((language) => (
                     <DropdownMenuItem
                         key={language.code}
                         onClick={() => handleLanguageChange(language.code)}
-                        className={`text-zinc-300 hover:bg-zinc-800 hover:text-white cursor-pointer ${
-                            i18n.language === language.code ? 'bg-zinc-800' : ''
+                        className={`text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer ${
+                            i18n.language === language.code ? 'bg-accent' : ''
                         }`}
                     >
                         {language.label}
