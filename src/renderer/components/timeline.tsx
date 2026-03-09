@@ -1,5 +1,6 @@
 import {ReactNode, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
+import {Activity, AlertTriangle, Flag, ListChecks, MessageSquare} from 'lucide-react';
 import {TimelineControls} from '@/renderer/components/timeline-controls';
 import {TimelineRuler} from '@/renderer/components/timeline-ruler';
 import {TimelineTrack} from '@/renderer/components/timeline-track';
@@ -19,14 +20,18 @@ import {VisibilityState} from "@/shared/types/visibility.ts";
 
 interface DefaultTextLabelContentProps {
     children: ReactNode;
+    icon?: ReactNode;
 }
 
-function DefaultTextLabelContent({children}: DefaultTextLabelContentProps) {
+function DefaultTextLabelContent({children, icon}: DefaultTextLabelContentProps) {
     return (
         <div className="w-full h-full flex flex-col justify-center px-4 py-1">
-            <span className="text-xs font-medium text-muted-foreground truncate">
-                {children}
-            </span>
+            <div className="flex items-center gap-2">
+                {icon}
+                <span className="text-xs font-medium text-muted-foreground truncate">
+                    {children}
+                </span>
+            </div>
         </div>
     );
 }
@@ -266,24 +271,24 @@ export function Timeline({
                         >
                             {visibility.proceduresVisible && (
                                 <TimelineLabel>
-                                    <DefaultTextLabelContent>{t('timeline.procedures')}</DefaultTextLabelContent>
+                                    <DefaultTextLabelContent icon={<ListChecks className="size-3.5 text-blue-500 shrink-0"/>}>{t('timeline.procedures')}</DefaultTextLabelContent>
                                 </TimelineLabel>
                             )}
 
                             {visibility.incidentMarkersVisible && (
                                 <TimelineLabel>
-                                    <DefaultTextLabelContent>{t('timeline.incidents')}</DefaultTextLabelContent>
+                                    <DefaultTextLabelContent icon={<AlertTriangle className="size-3.5 text-red-500 shrink-0"/>}>{t('timeline.incidents')}</DefaultTextLabelContent>
                                 </TimelineLabel>
                             )}
 
                             {visibility.systemMarkersVisible && (
                                 <TimelineLabel>
-                                    <DefaultTextLabelContent>{t('timeline.systemMarkers')}</DefaultTextLabelContent>
+                                    <DefaultTextLabelContent icon={<Flag className="size-3.5 text-amber-500 shrink-0"/>}>{t('timeline.systemMarkers')}</DefaultTextLabelContent>
                                 </TimelineLabel>
                             )}
 
                             <TimelineLabel>
-                                <DefaultTextLabelContent>{t('timeline.annotations')}</DefaultTextLabelContent>
+                                <DefaultTextLabelContent icon={<MessageSquare className="size-3.5 text-muted-foreground shrink-0"/>}>{t('timeline.annotations')}</DefaultTextLabelContent>
                             </TimelineLabel>
 
                             {visibility.physioTracksVisible && (filteredTracks.map((track, index) => {

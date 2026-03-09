@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Trash2, ChevronDown, ChevronUp} from 'lucide-react';
+import {Trash2, ChevronDown, ChevronUp, MessageSquare} from 'lucide-react';
 import {Button} from '@/renderer/components/ui/button';
 import {Annotation} from "@/shared/types/session.ts";
 
@@ -38,6 +38,7 @@ export function AnnotationsPanel({
                     >
                         {isExpanded ? <ChevronUp className="size-4"/> : <ChevronDown className="size-4"/>}
                     </Button>
+                    <MessageSquare className="size-4 text-muted-foreground"/>
                     <h3 className="text-sm text-foreground">
                         {t('annotations.count', {count: sortedAnnotations.length})}
                     </h3>

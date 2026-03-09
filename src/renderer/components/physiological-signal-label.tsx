@@ -1,4 +1,5 @@
 import {useMemo} from 'react';
+import {Activity} from 'lucide-react';
 import type {PlaybackState} from '@/shared/types/playback';
 import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
 
@@ -88,10 +89,13 @@ export function PhysiologicalSignalLabel({
 
     return (
         <div className="w-full h-full flex flex-col justify-center px-4 py-1">
-            <span className="text-xs font-medium text-muted-foreground truncate">
-                {name}
-            </span>
-            <div className="flex items-center gap-2 text-[10px] text-muted-foreground/70">
+            <div className="flex items-center gap-2">
+                <Activity className="size-3.5 text-emerald-500 shrink-0"/>
+                <span className="text-xs font-medium text-muted-foreground truncate">
+                    {name}
+                </span>
+            </div>
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground/70 pl-[22px]">
                 <span>{formattedSamplingRate}</span>
                 <span className="text-muted-foreground/50">|</span>
                 <span className="text-muted-foreground font-mono">
