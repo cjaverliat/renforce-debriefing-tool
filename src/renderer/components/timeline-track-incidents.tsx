@@ -10,9 +10,11 @@ interface IncidentsContentProps {
     incidentMarkers: IncidentMarker[];
     pixelsPerSecond: number;
     onSeek?: (time: number) => void;
+    selectedIncidentMarker?: IncidentMarker;
+    onSelectIncidentMarker?: (marker: IncidentMarker) => void;
 }
 
-export function IncidentsContent({incidentMarkers, pixelsPerSecond, onSeek}: IncidentsContentProps) {
+export function IncidentsContent({incidentMarkers, pixelsPerSecond, onSeek, selectedIncidentMarker, onSelectIncidentMarker}: IncidentsContentProps) {
     return (
         <div className="relative w-full h-full">
             {incidentMarkers.map((marker, index) => (
@@ -21,7 +23,11 @@ export function IncidentsContent({incidentMarkers, pixelsPerSecond, onSeek}: Inc
                     position={marker.time * pixelsPerSecond}
                     tooltip={`${marker.label} (${marker.severity})`}
                     color={INCIDENT_SEVERITY_COLORS[marker.severity]}
-                    onClick={() => onSeek?.(marker.time)}
+                    isSelected={marker === selectedIncidentMarker}
+                    onClick={() => {
+                        onSeek?.(marker.time);
+                        onSelectIncidentMarker?.(marker);
+                    }}
                 />
             ))}
         </div>

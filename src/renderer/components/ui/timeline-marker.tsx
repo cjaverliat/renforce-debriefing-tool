@@ -9,13 +9,19 @@ interface TimelineMarkerProps extends React.HTMLAttributes<HTMLDivElement> {
     color?: string;
     /** Optional click handler */
     onClick?: () => void;
+    /** Whether this marker is currently selected */
+    isSelected?: boolean;
 }
 
-export function TimelineMarker({position, tooltip, color = "#f8ba33", onClick}: TimelineMarkerProps) {
+export function TimelineMarker({position, tooltip, color = "#f8ba33", onClick, isSelected}: TimelineMarkerProps) {
     const markerContent = (
         <div
-            className={"absolute h-full cursor-pointer w-0.5"}
-            style={{left: position, backgroundColor: color}}
+            className={`absolute h-full cursor-pointer transition-all ${isSelected ? 'w-1' : 'w-0.5'}`}
+            style={{
+                left: position,
+                backgroundColor: color,
+                boxShadow: isSelected ? `0 0 6px 3px ${color}80` : undefined,
+            }}
             onClick={onClick}
         >
         </div>

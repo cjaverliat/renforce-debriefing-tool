@@ -2,7 +2,7 @@
  * Physiological data types for data loaded from PLM files.
  * These types represent raw data only - display configuration is separate.
  */
-import {RecordData} from "@/shared/types/record.ts";
+import {RecordData, IncidentMarker, ProcedureActionMarker, SystemMarker} from "@/shared/types/record.ts";
 
 export interface Annotation {
     id: string;
@@ -25,3 +25,10 @@ export interface Session {
     sessionData: SessionData;
     recordData: RecordData;
 }
+
+export type SelectedItem =
+    | { type: 'annotation'; id: string }
+    | { type: 'systemMarker'; marker: SystemMarker }
+    | { type: 'incidentMarker'; marker: IncidentMarker }
+    | { type: 'procedure'; id: string }
+    | { type: 'actionMarker'; procedureId: string; marker: ProcedureActionMarker };

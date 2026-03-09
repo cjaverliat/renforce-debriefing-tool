@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Trash2, ChevronDown, ChevronUp, MessageSquare} from 'lucide-react';
 import {Button} from '@/renderer/components/ui/button';
@@ -8,15 +8,25 @@ interface ManualAnnotationsPanelProps {
     annotations: Annotation[];
     onDeleteAnnotation: (id: string) => void;
     onSeekToAnnotation: (time: number) => void;
+    selectedAnnotationId?: string;
+    selectionVersion?: number;
 }
 
 export function AnnotationsPanel({
                                      annotations,
                                      onDeleteAnnotation,
                                      onSeekToAnnotation,
+                                     selectedAnnotationId,
+                                     selectionVersion,
                                  }: ManualAnnotationsPanelProps) {
     const {t} = useTranslation();
     const [isExpanded, setIsExpanded] = useState(true);
+    const itemRefs = useRef<Record<string, Element | null>>({});
+
+    useEffect(() => {
+        if (!selectedAnnotationId) return;
+        itemRefs.current[selectedAnnotationId]?.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    }, [selectedAnnotationId, selectionVersion]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -54,10 +64,13 @@ export function AnnotationsPanel({
                         </div>
                     ) : (
                         <div className="p-2 space-y-2">
-                            {sortedAnnotations.map((annotation) => (
+                            {sortedAnnotations.map((annotation) => {
+                                const isSelected = annotation.id === selectedAnnotationId;
+                                return (
                                 <div
-                                    key={annotation.id}
-                                    className="bg-accent rounded p-2 hover:bg-accent/80 transition-colors group"
+                                    key={isSelected ? `${annotation.id}-${selectionVersion}` : annotation.id}
+                                    ref={el => { itemRefs.current[annotation.id] = el; }}
+                                    className={`bg-accent rounded p-2 hover:bg-accent/80 transition-colors group ${isSelected ? 'animate-select-pulse' : ''}`}
                                 >
                                     <div className="flex items-start justify-between gap-2">
                                         <button
@@ -93,7 +106,8 @@ export function AnnotationsPanel({
                                         </Button>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

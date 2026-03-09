@@ -9,7 +9,7 @@ import {usePlaybackTime} from '@/renderer/hooks/use-playback-time';
 import {Group, Panel, Separator} from "react-resizable-panels";
 import {TimelineLabel} from "@/renderer/components/timeline-label.tsx";
 import {PhysiologicalSignalLabel} from "@/renderer/components/physiological-signal-label.tsx";
-import {Annotation} from "@/shared/types/session.ts";
+import {Annotation, SelectedItem} from "@/shared/types/session.ts";
 import {IncidentMarker, PhysiologicalSignal, Procedure, SystemMarker} from "@/shared/types/record.ts";
 import {SignalContent} from "@/renderer/components/timeline-track-physio.tsx";
 import {SystemContent} from "@/renderer/components/timeline-track-system.tsx";
@@ -48,6 +48,8 @@ interface TimelineProps {
     visibility: VisibilityState;
     onPlayPause: () => void;
     onSeek: (time: number) => void;
+    selectedItem?: SelectedItem;
+    onSelectItem?: (item: SelectedItem) => void;
 }
 
 function getPhysioTrackColor(id: string) {
@@ -75,7 +77,9 @@ export function Timeline({
                              procedures,
                              visibility,
                              onPlayPause,
-                             onSeek
+                             onSeek,
+                             selectedItem,
+                             onSelectItem,
                          }: TimelineProps) {
     const {t} = useTranslation();
     const {isPlaying} = playbackState;
@@ -347,6 +351,10 @@ export function Timeline({
                                         duration={duration}
                                         pixelsPerSecond={pixelsPerSecond}
                                         onSeek={onSeek}
+                                        selectedProcedureId={selectedItem?.type === 'procedure' ? selectedItem.id : undefined}
+                                        selectedActionMarker={selectedItem?.type === 'actionMarker' ? selectedItem.marker : undefined}
+                                        onSelectProcedure={(id) => onSelectItem?.({type: 'procedure', id})}
+                                        onSelectActionMarker={(procedureId, marker) => onSelectItem?.({type: 'actionMarker', procedureId, marker})}
                                     />
                                 </TimelineTrack>
                             )}
@@ -361,6 +369,8 @@ export function Timeline({
                                         incidentMarkers={filteredIncidentMarkers}
                                         pixelsPerSecond={pixelsPerSecond}
                                         onSeek={onSeek}
+                                        selectedIncidentMarker={selectedItem?.type === 'incidentMarker' ? selectedItem.marker : undefined}
+                                        onSelectIncidentMarker={(marker) => onSelectItem?.({type: 'incidentMarker', marker})}
                                     />
                                 </TimelineTrack>
                             )}
@@ -376,6 +386,8 @@ export function Timeline({
                                         duration={duration}
                                         pixelsPerSecond={pixelsPerSecond}
                                         onSeek={onSeek}
+                                        selectedMarker={selectedItem?.type === 'systemMarker' ? selectedItem.marker : undefined}
+                                        onSelectMarker={(marker) => onSelectItem?.({type: 'systemMarker', marker})}
                                     />
                                 </TimelineTrack>
                             )}
@@ -390,6 +402,8 @@ export function Timeline({
                                     duration={duration}
                                     pixelsPerSecond={pixelsPerSecond}
                                     onSeek={onSeek}
+                                    selectedAnnotationId={selectedItem?.type === 'annotation' ? selectedItem.id : undefined}
+                                    onSelectAnnotation={(a) => onSelectItem?.({type: 'annotation', id: a.id})}
                                 />
                             </TimelineTrack>
 

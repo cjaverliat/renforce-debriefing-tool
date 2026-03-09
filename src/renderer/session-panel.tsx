@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Annotation, Session} from "@/shared/types/session.ts";
+import {Annotation, SelectedItem, Session} from "@/shared/types/session.ts";
 import {VisibilityState} from "@/shared/types/visibility.ts";
 import {ExportControls} from "@/renderer/components/export-controls.tsx";
 import {Button} from "@/renderer/components/ui/button.tsx";
@@ -73,6 +73,23 @@ export function SessionPanel({session}: SessionPanelProps) {
     const [visibility, setVisibility] = useState<VisibilityState>(() =>
         createInitialVisibilityState(session)
     );
+
+    // Selection state for timeline → panel navigation
+    const [selectedItem, setSelectedItem] = useState<SelectedItem | null>(null);
+    const [selectionVersion, setSelectionVersion] = useState(0);
+    const [activeLeftPanelTab, setActiveLeftPanelTab] = useState<string>('physio');
+
+    const handleSelectItem = (item: SelectedItem) => {
+        setSelectedItem(item);
+        setSelectionVersion(prev => prev + 1);
+        switch (item.type) {
+            case 'systemMarker':   setActiveLeftPanelTab('markers'); break;
+            case 'incidentMarker': setActiveLeftPanelTab('incidents'); break;
+            case 'procedure':
+            case 'actionMarker':   setActiveLeftPanelTab('procedures'); break;
+            // 'annotation' → right panel, no left tab change
+        }
+    };
 
     // Category-level toggle handlers
     const handleTogglePhysioTracks = (checked: boolean) => {
@@ -297,6 +314,10 @@ export function SessionPanel({session}: SessionPanelProps) {
                                 onToggleProcedure={handleToggleProcedure}
                                 onToggleActionMarker={handleToggleActionMarker}
                                 onSeek={handleSeek}
+                                selectedItem={selectedItem ?? undefined}
+                                selectionVersion={selectionVersion}
+                                activeTab={activeLeftPanelTab}
+                                onTabChange={setActiveLeftPanelTab}
                             />
                         </Panel>
 
@@ -322,6 +343,8 @@ export function SessionPanel({session}: SessionPanelProps) {
                                 annotations={annotations}
                                 onDeleteAnnotation={handleDeleteAnnotation}
                                 onSeekToAnnotation={handleSeekToAnnotation}
+                                selectedAnnotationId={selectedItem?.type === 'annotation' ? selectedItem.id : undefined}
+                                selectionVersion={selectionVersion}
                             />
                         </Panel>
                     </Group>
@@ -342,6 +365,8 @@ export function SessionPanel({session}: SessionPanelProps) {
                         visibility={visibility}
                         onPlayPause={handlePlayPause}
                         onSeek={handleSeek}
+                        selectedItem={selectedItem ?? undefined}
+                        onSelectItem={handleSelectItem}
                     />
                 </Panel>
             </Group>

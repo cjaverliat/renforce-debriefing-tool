@@ -9,9 +9,13 @@ interface ProcedureBarProps extends React.HTMLAttributes<HTMLDivElement> {
     /** Optional tooltip content (shown on hover) */
     tooltip?: React.ReactNode;
     color: string;
+    /** Whether this bar is currently selected */
+    isSelected?: boolean;
+    /** Optional click handler */
+    onClick?: () => void;
 }
 
-export function ProcedureBar({procedure, pixelsPerSecond, duration, tooltip, color = "#516db1"}: ProcedureBarProps) {
+export function ProcedureBar({procedure, pixelsPerSecond, duration, tooltip, color = "#516db1", isSelected, onClick}: ProcedureBarProps) {
 
     const startPosition = procedure.startTime * pixelsPerSecond;
     const endPosition = (procedure.endTime < 0 ? duration : procedure.endTime) * pixelsPerSecond;
@@ -19,8 +23,9 @@ export function ProcedureBar({procedure, pixelsPerSecond, duration, tooltip, col
 
     const barContent = (
         <div
-            className="absolute rounded-sm h-full cursor-pointer"
+            className={`absolute rounded-sm h-full cursor-pointer transition-all ${isSelected ? 'brightness-125 outline outline-2 outline-white/50' : ''}`}
             style={{left: startPosition, width: width, backgroundColor: color}}
+            onClick={onClick}
         />
     );
 

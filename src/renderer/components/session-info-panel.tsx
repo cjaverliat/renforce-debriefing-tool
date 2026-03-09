@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ChevronDown, ChevronUp, Activity, Flag, ListChecks, Eye, EyeOff, AlertTriangle} from 'lucide-react';
 import {Toggle} from '@/renderer/components/ui/toggle';
@@ -6,6 +6,7 @@ import {Button} from '@/renderer/components/ui/button';
 import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/renderer/components/ui/tabs';
 import {IncidentMarker, PhysiologicalSignal, Procedure, ProcedureActionMarker, SystemMarker} from '@/shared/types/record';
 import {VisibilityState} from '@/shared/types/visibility';
+import {SelectedItem} from '@/shared/types/session';
 
 const ACTION_MARKER_COLORS: Record<ProcedureActionMarker['category'], string> = {
     correct_action: '#22c55e',     // Green
@@ -63,6 +64,10 @@ interface SessionInfoPanelProps {
     onToggleProcedure: (procedureId: string, visible: boolean) => void;
     onToggleActionMarker: (actionMarkerId: string, visible: boolean) => void;
     onSeek: (time: number) => void;
+    selectedItem?: SelectedItem;
+    selectionVersion?: number;
+    activeTab?: string;
+    onTabChange?: (tab: string) => void;
 }
 
 export function SessionInfoPanel({
@@ -81,12 +86,40 @@ export function SessionInfoPanel({
     onToggleProcedure,
     onToggleActionMarker,
     onSeek,
+    selectedItem,
+    selectionVersion,
+    activeTab,
+    onTabChange,
 }: SessionInfoPanelProps) {
     const {t} = useTranslation();
+    const itemRefs = useRef<Record<string, Element | null>>({});
+
+    useEffect(() => {
+        if (!selectedItem) return;
+        let key: string | undefined;
+        if (selectedItem.type === 'systemMarker') {
+            const idx = systemMarkers.indexOf(selectedItem.marker);
+            if (idx >= 0) key = `systemMarker:${idx}`;
+        } else if (selectedItem.type === 'incidentMarker') {
+            const idx = incidentMarkers.indexOf(selectedItem.marker);
+            if (idx >= 0) key = `incidentMarker:${idx}`;
+        } else if (selectedItem.type === 'procedure') {
+            key = `procedure:${selectedItem.id}`;
+        } else if (selectedItem.type === 'actionMarker') {
+            const proc = procedures.find(p => p.id === selectedItem.procedureId);
+            if (proc) {
+                const idx = proc.actionMarkers.indexOf(selectedItem.marker);
+                if (idx >= 0) key = `actionMarker:${selectedItem.procedureId}:${idx}`;
+            }
+        }
+        if (key) {
+            itemRefs.current[key]?.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+        }
+    }, [selectedItem, selectionVersion]);
 
     return (
         <div className="flex flex-col h-full bg-card border-r border-border">
-            <Tabs defaultValue="physio" className="flex flex-col h-full">
+            <Tabs value={activeTab ?? 'physio'} onValueChange={onTabChange} className="flex flex-col h-full">
                 <TabsList className="w-full shrink-0 bg-accent rounded-none border-b border-border">
                     <TabsTrigger value="physio" className="flex-1 gap-1 data-[state=active]:bg-card!">
                         <Activity className="size-4 text-emerald-500"/>
@@ -153,16 +186,25 @@ export function SessionInfoPanel({
                         />
                     </div>
                     <div className="p-2 space-y-2">
-                        {procedures.map((procedure) => (
-                            <ProcedureCard
-                                key={procedure.id}
-                                procedure={procedure}
-                                visibility={visibility}
-                                onToggleProcedure={onToggleProcedure}
-                                onToggleActionMarker={onToggleActionMarker}
-                                onSeek={onSeek}
-                            />
-                        ))}
+                        {procedures.map((procedure) => {
+                            const isProcedureSelected = selectedItem?.type === 'procedure' && selectedItem.id === procedure.id;
+                            const hasSelectedActionMarker = selectedItem?.type === 'actionMarker' && selectedItem.procedureId === procedure.id;
+                            return (
+                                <ProcedureCard
+                                    key={isProcedureSelected ? `${procedure.id}-${selectionVersion}` : procedure.id}
+                                    procedure={procedure}
+                                    visibility={visibility}
+                                    onToggleProcedure={onToggleProcedure}
+                                    onToggleActionMarker={onToggleActionMarker}
+                                    onSeek={onSeek}
+                                    isSelected={isProcedureSelected}
+                                    forceExpand={hasSelectedActionMarker}
+                                    selectedItem={selectedItem}
+                                    selectionVersion={selectionVersion}
+                                    itemRefs={itemRefs}
+                                />
+                            );
+                        })}
                     </div>
                 </TabsContent>
 
@@ -179,10 +221,13 @@ export function SessionInfoPanel({
                         {incidentMarkers.map((marker, index) => {
                             const markerId = `${marker.time}:${marker.label}:${index}`;
                             const severityColor = marker.severity === 'critical' ? 'bg-red-500' : 'bg-orange-500';
+                            const refKey = `incidentMarker:${index}`;
+                            const isSelected = selectedItem?.type === 'incidentMarker' && selectedItem.marker === marker;
                             return (
                                 <div
-                                    key={markerId}
-                                    className="bg-accent rounded p-2 hover:bg-accent/80 transition-colors cursor-pointer"
+                                    key={isSelected ? `${markerId}-${selectionVersion}` : markerId}
+                                    ref={el => { itemRefs.current[refKey] = el; }}
+                                    className={`bg-accent rounded p-2 hover:bg-accent/80 transition-colors cursor-pointer ${isSelected ? 'animate-select-pulse' : ''}`}
                                     onClick={() => onSeek(marker.time)}
                                 >
                                     <div className="flex items-center justify-between gap-2">
@@ -230,10 +275,13 @@ export function SessionInfoPanel({
                     <div className="p-2 space-y-2">
                         {systemMarkers.map((marker, index) => {
                             const markerId = `${marker.time}:${marker.label}:${index}`;
+                            const refKey = `systemMarker:${index}`;
+                            const isSelected = selectedItem?.type === 'systemMarker' && selectedItem.marker === marker;
                             return (
                                 <div
-                                    key={markerId}
-                                    className="bg-accent rounded p-2 hover:bg-accent/80 transition-colors cursor-pointer"
+                                    key={isSelected ? `${markerId}-${selectionVersion}` : markerId}
+                                    ref={el => { itemRefs.current[refKey] = el; }}
+                                    className={`bg-accent rounded p-2 hover:bg-accent/80 transition-colors cursor-pointer ${isSelected ? 'animate-select-pulse' : ''}`}
                                     onClick={() => onSeek(marker.time)}
                                 >
                                     <div className="flex items-center justify-between gap-2">
@@ -276,6 +324,11 @@ interface ProcedureCardProps {
     onToggleProcedure: (procedureId: string, visible: boolean) => void;
     onToggleActionMarker: (actionMarkerId: string, visible: boolean) => void;
     onSeek: (time: number) => void;
+    isSelected?: boolean;
+    forceExpand?: boolean;
+    selectedItem?: SelectedItem;
+    selectionVersion?: number;
+    itemRefs?: React.MutableRefObject<Record<string, Element | null>>;
 }
 
 function ProcedureCard({
@@ -284,20 +337,29 @@ function ProcedureCard({
     onToggleProcedure,
     onToggleActionMarker,
     onSeek,
+    isSelected,
+    forceExpand,
+    selectedItem,
+    selectionVersion,
+    itemRefs,
 }: ProcedureCardProps) {
     const {t} = useTranslation();
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [localExpanded, setLocalExpanded] = useState(false);
+    const isExpanded = forceExpand || localExpanded;
     const procedureVisible = visibility.visibleProcedureIds.has(procedure.id) && visibility.proceduresVisible;
 
     return (
-        <div className="flex flex-col bg-accent rounded">
+        <div
+            ref={el => { if (itemRefs) itemRefs.current[`procedure:${procedure.id}`] = el; }}
+            className={`flex flex-col bg-accent rounded ${isSelected ? 'animate-select-pulse' : ''}`}
+        >
             {/* Procedure Header - Accordion style matching annotations */}
             <div className="flex items-center justify-between p-2 border-b border-border">
                 <div className="flex items-center gap-2">
                     <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setIsExpanded(!isExpanded)}
+                        onClick={() => setLocalExpanded(!localExpanded)}
                         className="size-6 text-muted-foreground hover:text-foreground hover:bg-accent/80"
                     >
                         {isExpanded ? <ChevronUp className="size-4"/> : <ChevronDown className="size-4"/>}
@@ -323,10 +385,13 @@ function ProcedureCard({
                     ) : (
                         procedure.actionMarkers.map((marker, index) => {
                             const actionMarkerId = `${procedure.id}:${index}`;
+                            const amRefKey = `actionMarker:${procedure.id}:${index}`;
+                            const isAmSelected = selectedItem?.type === 'actionMarker' && selectedItem.procedureId === procedure.id && selectedItem.marker === marker;
                             return (
                                 <div
-                                    key={actionMarkerId}
-                                    className="bg-card rounded p-2 hover:bg-card/80 transition-colors group"
+                                    key={isAmSelected ? `${actionMarkerId}-${selectionVersion}` : actionMarkerId}
+                                    ref={el => { if (itemRefs) itemRefs.current[amRefKey] = el; }}
+                                    className={`bg-card rounded p-2 hover:bg-card/80 transition-colors group ${isAmSelected ? 'animate-select-pulse' : ''}`}
                                 >
                                     <div className="flex items-start justify-between gap-2">
                                         <button

@@ -13,6 +13,10 @@ interface ProceduresContentProps {
     duration: number;
     pixelsPerSecond: number;
     onSeek?: (time: number) => void;
+    selectedProcedureId?: string;
+    selectedActionMarker?: ProcedureActionMarker;
+    onSelectProcedure?: (procedureId: string) => void;
+    onSelectActionMarker?: (procedureId: string, marker: ProcedureActionMarker) => void;
 }
 
 interface ProcedureRowProps {
@@ -21,9 +25,13 @@ interface ProcedureRowProps {
     pixelsPerSecond: number;
     index: number;
     onSeek?: (time: number) => void;
+    selectedProcedureId?: string;
+    selectedActionMarker?: ProcedureActionMarker;
+    onSelectProcedure?: (procedureId: string) => void;
+    onSelectActionMarker?: (procedureId: string, marker: ProcedureActionMarker) => void;
 }
 
-function ProcedureRow({procedure, duration, pixelsPerSecond, onSeek}: ProcedureRowProps) {
+function ProcedureRow({procedure, duration, pixelsPerSecond, onSeek, selectedProcedureId, selectedActionMarker, onSelectProcedure, onSelectActionMarker}: ProcedureRowProps) {
     return (
         <div
             className="relative flex-1 w-full"
@@ -34,6 +42,8 @@ function ProcedureRow({procedure, duration, pixelsPerSecond, onSeek}: ProcedureR
                 duration={duration}
                 pixelsPerSecond={pixelsPerSecond}
                 tooltip={procedure.name}
+                isSelected={procedure.id === selectedProcedureId}
+                onClick={() => onSelectProcedure?.(procedure.id)}
             />
 
             {/* Action markers */}
@@ -43,14 +53,18 @@ function ProcedureRow({procedure, duration, pixelsPerSecond, onSeek}: ProcedureR
                     position={marker.time * pixelsPerSecond}
                     tooltip={marker.label}
                     color={ACTION_MARKER_COLORS[marker.category]}
-                    onClick={() => onSeek?.(marker.time)}
+                    isSelected={marker === selectedActionMarker}
+                    onClick={() => {
+                        onSeek?.(marker.time);
+                        onSelectActionMarker?.(procedure.id, marker);
+                    }}
                 />
             ))}
         </div>
     );
 }
 
-export function ProceduresContent({procedures, duration, pixelsPerSecond, onSeek}: ProceduresContentProps) {
+export function ProceduresContent({procedures, duration, pixelsPerSecond, onSeek, selectedProcedureId, selectedActionMarker, onSelectProcedure, onSelectActionMarker}: ProceduresContentProps) {
     return (
         <div className="flex flex-col w-full h-full py-2">
             {procedures.map((procedure, index) => (
@@ -61,6 +75,10 @@ export function ProceduresContent({procedures, duration, pixelsPerSecond, onSeek
                     pixelsPerSecond={pixelsPerSecond}
                     index={index}
                     onSeek={onSeek}
+                    selectedProcedureId={selectedProcedureId}
+                    selectedActionMarker={selectedActionMarker}
+                    onSelectProcedure={onSelectProcedure}
+                    onSelectActionMarker={onSelectActionMarker}
                 />
             ))}
         </div>

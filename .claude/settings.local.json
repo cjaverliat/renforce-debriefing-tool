@@ -14,7 +14,8 @@
       "Bash(dir:*)",
       "Bash(npx playwright test)",
       "Bash(npx playwright test:*)",
-      "Bash(npm run package:*)"
+      "Bash(npm run package:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }
