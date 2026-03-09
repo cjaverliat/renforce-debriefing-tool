@@ -77,7 +77,7 @@ export function AnnotationsPanel({
                                     <div className="flex items-start justify-between gap-2">
                                         <button
                                             onClick={() => onSeekToAnnotation(annotation.time)}
-                                            className="flex-1 text-left"
+                                            className="flex-1 text-left cursor-pointer"
                                         >
                                             <div className="flex items-center gap-2 mb-1">
                                                 <div

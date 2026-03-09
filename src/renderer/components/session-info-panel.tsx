@@ -2,7 +2,6 @@ import React, {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ChevronDown, ChevronUp, Activity, Flag, ListChecks, Eye, EyeOff, AlertTriangle} from 'lucide-react';
 import {Toggle} from '@/renderer/components/ui/toggle';
-import {Button} from '@/renderer/components/ui/button';
 import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/renderer/components/ui/tabs';
 import {IncidentMarker, PhysiologicalSignal, Procedure, ProcedureActionMarker, SystemMarker} from '@/shared/types/record';
 import {VisibilityState} from '@/shared/types/visibility';
@@ -355,19 +354,18 @@ function ProcedureCard({
         >
             {/* Procedure Header - Accordion style matching annotations */}
             <div className="flex items-center justify-between p-2 border-b border-border">
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setLocalExpanded(!localExpanded)}
-                        className="size-6 text-muted-foreground hover:text-foreground hover:bg-accent/80"
-                    >
-                        {isExpanded ? <ChevronUp className="size-4"/> : <ChevronDown className="size-4"/>}
-                    </Button>
+                <button
+                    className="flex items-center gap-2 flex-1 text-left cursor-pointer"
+                    onClick={() => setLocalExpanded(!localExpanded)}
+                >
+                    {isExpanded
+                        ? <ChevronUp className="size-4 text-muted-foreground shrink-0"/>
+                        : <ChevronDown className="size-4 text-muted-foreground shrink-0"/>
+                    }
                     <span className="text-sm text-foreground">
                         {procedure.name} ({procedure.actionMarkers.length})
                     </span>
-                </div>
+                </button>
                 <VisibilityToggle
                     visible={procedureVisible}
                     onVisibilityChange={(visible) => onToggleProcedure(procedure.id, visible)}
@@ -391,12 +389,12 @@ function ProcedureCard({
                                 <div
                                     key={isAmSelected ? `${actionMarkerId}-${selectionVersion}` : actionMarkerId}
                                     ref={el => { if (itemRefs) itemRefs.current[amRefKey] = el; }}
-                                    className={`bg-card rounded p-2 hover:bg-card/80 transition-colors group ${isAmSelected ? 'animate-select-pulse' : ''}`}
+                                    className={`bg-card rounded p-2 hover:bg-card/80 transition-colors cursor-pointer group ${isAmSelected ? 'animate-select-pulse' : ''}`}
                                 >
                                     <div className="flex items-start justify-between gap-2">
                                         <button
                                             onClick={() => onSeek(marker.time)}
-                                            className="flex-1 text-left"
+                                            className="flex-1 text-left cursor-pointer"
                                         >
                                             <div className="flex items-center gap-2 mb-1">
                                                 <div
