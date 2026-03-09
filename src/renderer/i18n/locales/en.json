@@ -25,6 +25,7 @@
   },
   "annotationDialog": {
     "title": "Add Annotation",
+    "editTitle": "Edit Annotation",
     "time": "Time",
     "label": "Label",
     "labelRequired": "Label *",
@@ -34,6 +35,7 @@
     "descriptionPlaceholder": "Enter detailed description (optional)",
     "cancel": "Cancel",
     "save": "Save Annotation",
+    "update": "Update Annotation",
     "shortcutHint": "Press Ctrl+Enter to save, Esc to cancel"
   },
   "colors": {

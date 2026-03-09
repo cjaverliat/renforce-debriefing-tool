@@ -66,6 +66,7 @@ export function SessionPanel({session}: SessionPanelProps) {
     // Playback state
     const [playbackState, setPlaybackState] = useState<PlaybackState>(createInitialPlaybackState);
     const [isAnnotationDialogOpen, setIsAnnotationDialogOpen] = useState(false);
+    const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
 
     const playbackTime = usePlaybackTime(playbackState, {maxTime: session.recordData.duration});
 
@@ -205,18 +206,31 @@ export function SessionPanel({session}: SessionPanelProps) {
         setIsAnnotationDialogOpen(true);
     };
 
+    const handleEditAnnotation = (id: string) => {
+        const annotation = annotations.find(a => a.id === id);
+        if (!annotation) return;
+        setEditingAnnotation(annotation);
+        setIsAnnotationDialogOpen(true);
+    };
+
     const handleSaveAnnotation = (annotationData: {
         time: number;
         label: string;
         description: string;
         color: string;
-        category: string;
     }) => {
-        const newAnnotation: Annotation = {
-            id: `annotation-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
-            ...annotationData,
-        };
-        setAnnotations(prev => [...prev, newAnnotation]);
+        if (editingAnnotation) {
+            setAnnotations(prev => prev.map(a =>
+                a.id === editingAnnotation.id ? { ...a, ...annotationData } : a
+            ));
+            setEditingAnnotation(null);
+        } else {
+            const newAnnotation: Annotation = {
+                id: `annotation-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+                ...annotationData,
+            };
+            setAnnotations(prev => [...prev, newAnnotation]);
+        }
         setIsDirty(true);
     };
 
@@ -342,6 +356,7 @@ export function SessionPanel({session}: SessionPanelProps) {
                             <AnnotationsPanel
                                 annotations={annotations}
                                 onDeleteAnnotation={handleDeleteAnnotation}
+                                onEditAnnotation={handleEditAnnotation}
                                 onSeekToAnnotation={handleSeekToAnnotation}
                                 selectedAnnotationId={selectedItem?.type === 'annotation' ? selectedItem.id : undefined}
                                 selectionVersion={selectionVersion}
@@ -375,7 +390,11 @@ export function SessionPanel({session}: SessionPanelProps) {
             <AnnotationDialog
                 isOpen={isAnnotationDialogOpen}
                 currentTime={playbackTime}
-                onClose={() => setIsAnnotationDialogOpen(false)}
+                annotationToEdit={editingAnnotation ?? undefined}
+                onClose={() => {
+                    setIsAnnotationDialogOpen(false);
+                    setEditingAnnotation(null);
+                }}
                 onSave={handleSaveAnnotation}
             />
         </div>

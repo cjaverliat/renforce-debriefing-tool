@@ -1,12 +1,13 @@
 import {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Trash2, ChevronDown, ChevronUp, MessageSquare} from 'lucide-react';
+import {Trash2, Pencil, ChevronDown, ChevronUp, MessageSquare} from 'lucide-react';
 import {Button} from '@/renderer/components/ui/button';
 import {Annotation} from "@/shared/types/session.ts";
 
 interface ManualAnnotationsPanelProps {
     annotations: Annotation[];
     onDeleteAnnotation: (id: string) => void;
+    onEditAnnotation: (id: string) => void;
     onSeekToAnnotation: (time: number) => void;
     selectedAnnotationId?: string;
     selectionVersion?: number;
@@ -15,6 +16,7 @@ interface ManualAnnotationsPanelProps {
 export function AnnotationsPanel({
                                      annotations,
                                      onDeleteAnnotation,
+                                     onEditAnnotation,
                                      onSeekToAnnotation,
                                      selectedAnnotationId,
                                      selectionVersion,
@@ -96,14 +98,24 @@ export function AnnotationsPanel({
                                             )}
                                         </button>
 
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => onDeleteAnnotation(annotation.id)}
-                                            className="size-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 hover:bg-accent"
-                                        >
-                                            <Trash2 className="size-3"/>
-                                        </Button>
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => onEditAnnotation(annotation.id)}
+                                                className="size-6 text-muted-foreground hover:text-foreground hover:bg-accent"
+                                            >
+                                                <Pencil className="size-3"/>
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => onDeleteAnnotation(annotation.id)}
+                                                className="size-6 text-muted-foreground hover:text-red-400 hover:bg-accent"
+                                            >
+                                                <Trash2 className="size-3"/>
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                                 );

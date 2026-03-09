@@ -25,6 +25,7 @@
   },
   "annotationDialog": {
     "title": "Ajouter une annotation",
+    "editTitle": "Modifier l'annotation",
     "time": "Temps",
     "label": "Libellé",
     "labelRequired": "Libellé *",
@@ -34,6 +35,7 @@
     "descriptionPlaceholder": "Entrez une description détaillée (optionnel)",
     "cancel": "Annuler",
     "save": "Enregistrer l'annotation",
+    "update": "Mettre à jour l'annotation",
     "shortcutHint": "Appuyez sur Ctrl+Entrée pour enregistrer, Échap pour annuler"
   },
   "colors": {

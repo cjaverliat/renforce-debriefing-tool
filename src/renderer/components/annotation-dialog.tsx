@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
 import { Textarea } from '@/renderer/components/ui/textarea';
 import { Label } from '@/renderer/components/ui/label';
+import { Annotation } from '@/shared/types/session';
 
 interface AnnotationDialogProps {
   isOpen: boolean;
   currentTime: number;
+  annotationToEdit?: Annotation;
   onClose: () => void;
   onSave: (annotation: {
     time: number;
@@ -31,6 +33,7 @@ const ANNOTATION_COLORS = [
 export function AnnotationDialog({
   isOpen,
   currentTime,
+  annotationToEdit,
   onClose,
   onSave,
 }: AnnotationDialogProps) {
@@ -39,7 +42,24 @@ export function AnnotationDialog({
   const [description, setDescription] = useState('');
   const [color, setColor] = useState(ANNOTATION_COLORS[0].value);
 
+  useEffect(() => {
+    if (isOpen) {
+      if (annotationToEdit) {
+        setLabel(annotationToEdit.label);
+        setDescription(annotationToEdit.description ?? '');
+        setColor(annotationToEdit.color);
+      } else {
+        setLabel('');
+        setDescription('');
+        setColor(ANNOTATION_COLORS[0].value);
+      }
+    }
+  }, [isOpen, annotationToEdit]);
+
   if (!isOpen) return null;
+
+  const isEditing = !!annotationToEdit;
+  const displayTime = isEditing ? annotationToEdit.time : currentTime;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -49,18 +69,12 @@ export function AnnotationDialog({
 
   const handleSave = () => {
     if (!label.trim()) return;
-    
     onSave({
-      time: currentTime,
+      time: displayTime,
       label: label.trim(),
       description: description.trim(),
       color,
     });
-
-    // Reset form
-    setLabel('');
-    setDescription('');
-    setColor(ANNOTATION_COLORS[0].value);
     onClose();
   };
 
@@ -76,7 +90,7 @@ export function AnnotationDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-card rounded-lg shadow-xl w-full max-w-md border border-border">
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg text-foreground">{t('annotationDialog.title')}</h2>
+          <h2 className="text-lg text-foreground">{isEditing ? t('annotationDialog.editTitle') : t('annotationDialog.title')}</h2>
           <Button
             variant="ghost"
             size="icon"
@@ -91,7 +105,7 @@ export function AnnotationDialog({
           <div>
             <Label className="text-muted-foreground">{t('annotationDialog.time')}</Label>
             <div className="text-xl font-mono text-foreground mt-1">
-              {formatTime(currentTime)}
+              {formatTime(displayTime)}
             </div>
           </div>
 
@@ -149,7 +163,7 @@ export function AnnotationDialog({
             disabled={!label.trim()}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            {t('annotationDialog.save')}
+            {isEditing ? t('annotationDialog.update') : t('annotationDialog.save')}
           </Button>
         </div>
 
