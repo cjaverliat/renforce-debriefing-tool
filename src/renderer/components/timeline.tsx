@@ -100,6 +100,10 @@ export function Timeline({
         setZoomIndex(ZOOM_LEVELS.indexOf(1));
     };
 
+    const handleZoomChange = (index: number) => {
+        setZoomIndex(index);
+    };
+
     const handleSkipBackward = () => {
         onSeek(Math.max(0, playbackTime - 5));
     };
@@ -235,12 +239,15 @@ export function Timeline({
                 playbackState={playbackState}
                 duration={duration}
                 zoom={zoom}
+                zoomIndex={zoomIndex}
+                zoomLevelsCount={ZOOM_LEVELS.length}
                 onPlayPause={onPlayPause}
                 onSkipBackward={handleSkipBackward}
                 onSkipForward={handleSkipForward}
                 onZoomIn={handleZoomIn}
                 onZoomOut={handleZoomOut}
                 onZoomReset={handleZoomReset}
+                onZoomChange={handleZoomChange}
             />
 
             {/* Main timeline area with labels on left and content on right */}

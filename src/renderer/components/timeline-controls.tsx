@@ -8,12 +8,15 @@ interface TimelineControlsProps {
   playbackState: PlaybackState;
   duration: number;
   zoom: number;
+  zoomIndex: number;
+  zoomLevelsCount: number;
   onPlayPause: () => void;
   onSkipBackward: () => void;
   onSkipForward: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onZoomReset: () => void;
+  onZoomChange: (index: number) => void;
 }
 
 export function TimelineControls({
@@ -21,12 +24,15 @@ export function TimelineControls({
   playbackState,
   duration,
   zoom,
+  zoomIndex,
+  zoomLevelsCount,
   onPlayPause,
   onSkipBackward,
   onSkipForward,
   onZoomIn,
   onZoomOut,
   onZoomReset,
+  onZoomChange,
 }: TimelineControlsProps) {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -78,26 +84,46 @@ export function TimelineControls({
           variant="ghost"
           size="icon"
           onClick={onZoomOut}
+          disabled={zoomIndex === 0}
           className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
         >
           <ZoomOut className="size-4" />
         </Button>
-        
+
+        <input
+          type="range"
+          min={0}
+          max={zoomLevelsCount - 1}
+          step={1}
+          value={zoomIndex}
+          onChange={(e) => onZoomChange(Number(e.target.value))}
+          className="w-24 cursor-pointer appearance-none
+            [&::-webkit-slider-runnable-track]:h-[2px]
+            [&::-webkit-slider-runnable-track]:rounded-full
+            [&::-webkit-slider-runnable-track]:bg-zinc-600
+            [&::-webkit-slider-thumb]:appearance-none
+            [&::-webkit-slider-thumb]:size-2.5
+            [&::-webkit-slider-thumb]:rounded-full
+            [&::-webkit-slider-thumb]:bg-white
+            [&::-webkit-slider-thumb]:mt-[-4px]"
+        />
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onZoomIn}
+          disabled={zoomIndex === zoomLevelsCount - 1}
+          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+        >
+          <ZoomIn className="size-4" />
+        </Button>
+
         <button
           onClick={onZoomReset}
           className="text-xs text-zinc-400 hover:text-white font-mono w-12 text-center"
         >
           {Math.round(zoom * 100)}%
         </button>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onZoomIn}
-          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
-        >
-          <ZoomIn className="size-4" />
-        </Button>
       </div>
     </div>
   );
