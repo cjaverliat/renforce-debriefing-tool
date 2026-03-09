@@ -29,9 +29,9 @@ function getThemeColors(): RulerColors {
         // Use more contrasted colors: outside area is dimmer, record area is prominent
         background: isDark ? '#1a1a24' : '#d4d4d8',
         recordArea: isDark ? '#252532' : '#f4f4f5',
-        tickOutside: isDark ? '#26262b' : '#d4d4d4',
-        tickMajor: isDark ? '#71717a' : '#71717a',
-        tickMinor: isDark ? '#3f3f46' : '#a1a1aa',
+        tickOutside: isDark ? '#464650' : '#a1a1aa',
+        tickMajor: isDark ? '#a1a1aa' : '#52525b',
+        tickMinor: isDark ? '#71717a' : '#71717a',
         labelOutside: isDark ? '#464650' : '#a1a1aa',
         labelInside: isDark ? '#a1a1aa' : '#52525b',
         playhead: '#ef4444',
