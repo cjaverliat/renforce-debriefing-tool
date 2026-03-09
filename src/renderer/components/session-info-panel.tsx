@@ -63,6 +63,7 @@ interface SessionInfoPanelProps {
     onToggleProcedure: (procedureId: string, visible: boolean) => void;
     onToggleActionMarker: (actionMarkerId: string, visible: boolean) => void;
     onSeek: (time: number) => void;
+    onSelectItem: (item: SelectedItem) => void;
     selectedItem?: SelectedItem;
     selectionVersion?: number;
     activeTab?: string;
@@ -85,6 +86,7 @@ export function SessionInfoPanel({
     onToggleProcedure,
     onToggleActionMarker,
     onSeek,
+    onSelectItem,
     selectedItem,
     selectionVersion,
     activeTab,
@@ -190,12 +192,13 @@ export function SessionInfoPanel({
                             const hasSelectedActionMarker = selectedItem?.type === 'actionMarker' && selectedItem.procedureId === procedure.id;
                             return (
                                 <ProcedureCard
-                                    key={isProcedureSelected ? `${procedure.id}-${selectionVersion}` : procedure.id}
+                                    key={procedure.id}
                                     procedure={procedure}
                                     visibility={visibility}
                                     onToggleProcedure={onToggleProcedure}
                                     onToggleActionMarker={onToggleActionMarker}
                                     onSeek={onSeek}
+                                    onSelectItem={onSelectItem}
                                     isSelected={isProcedureSelected}
                                     forceExpand={hasSelectedActionMarker}
                                     selectedItem={selectedItem}
@@ -227,7 +230,7 @@ export function SessionInfoPanel({
                                     key={isSelected ? `${markerId}-${selectionVersion}` : markerId}
                                     ref={el => { itemRefs.current[refKey] = el; }}
                                     className={`bg-accent rounded p-2 hover:bg-accent/80 transition-colors cursor-pointer ${isSelected ? 'animate-select-pulse' : ''}`}
-                                    onClick={() => onSeek(marker.time)}
+                                    onClick={() => { onSeek(marker.time); onSelectItem({type: 'incidentMarker', marker}); }}
                                 >
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex-1 min-w-0">
@@ -281,7 +284,7 @@ export function SessionInfoPanel({
                                     key={isSelected ? `${markerId}-${selectionVersion}` : markerId}
                                     ref={el => { itemRefs.current[refKey] = el; }}
                                     className={`bg-accent rounded p-2 hover:bg-accent/80 transition-colors cursor-pointer ${isSelected ? 'animate-select-pulse' : ''}`}
-                                    onClick={() => onSeek(marker.time)}
+                                    onClick={() => { onSeek(marker.time); onSelectItem({type: 'systemMarker', marker}); }}
                                 >
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex-1 min-w-0">
@@ -323,6 +326,7 @@ interface ProcedureCardProps {
     onToggleProcedure: (procedureId: string, visible: boolean) => void;
     onToggleActionMarker: (actionMarkerId: string, visible: boolean) => void;
     onSeek: (time: number) => void;
+    onSelectItem: (item: SelectedItem) => void;
     isSelected?: boolean;
     forceExpand?: boolean;
     selectedItem?: SelectedItem;
@@ -336,6 +340,7 @@ function ProcedureCard({
     onToggleProcedure,
     onToggleActionMarker,
     onSeek,
+    onSelectItem,
     isSelected,
     forceExpand,
     selectedItem,
@@ -344,19 +349,31 @@ function ProcedureCard({
 }: ProcedureCardProps) {
     const {t} = useTranslation();
     const [localExpanded, setLocalExpanded] = useState(false);
+    const [animating, setAnimating] = useState(false);
     const isExpanded = forceExpand || localExpanded;
     const procedureVisible = visibility.visibleProcedureIds.has(procedure.id) && visibility.proceduresVisible;
+
+    useEffect(() => {
+        if (!isSelected) return;
+        setAnimating(false);
+        const raf = requestAnimationFrame(() => {
+            setAnimating(true);
+            const timer = setTimeout(() => setAnimating(false), 900);
+            return () => clearTimeout(timer);
+        });
+        return () => cancelAnimationFrame(raf);
+    }, [isSelected, selectionVersion]);
 
     return (
         <div
             ref={el => { if (itemRefs) itemRefs.current[`procedure:${procedure.id}`] = el; }}
-            className={`flex flex-col bg-accent rounded ${isSelected ? 'animate-select-pulse' : ''}`}
+            className={`flex flex-col bg-accent rounded ${animating ? 'animate-select-pulse' : ''}`}
         >
             {/* Procedure Header - Accordion style matching annotations */}
             <div className="flex items-center justify-between p-2 border-b border-border">
                 <button
                     className="flex items-center gap-2 flex-1 text-left cursor-pointer"
-                    onClick={() => setLocalExpanded(!localExpanded)}
+                    onClick={() => { setLocalExpanded(!localExpanded); onSeek(procedure.startTime); onSelectItem({type: 'procedure', id: procedure.id}); }}
                 >
                     {isExpanded
                         ? <ChevronUp className="size-4 text-muted-foreground shrink-0"/>
@@ -393,7 +410,7 @@ function ProcedureCard({
                                 >
                                     <div className="flex items-start justify-between gap-2">
                                         <button
-                                            onClick={() => onSeek(marker.time)}
+                                            onClick={() => { onSeek(marker.time); onSelectItem({type: 'actionMarker', procedureId: procedure.id, marker}); }}
                                             className="flex-1 text-left cursor-pointer"
                                         >
                                             <div className="flex items-center gap-2 mb-1">

@@ -9,6 +9,7 @@ interface ManualAnnotationsPanelProps {
     onDeleteAnnotation: (id: string) => void;
     onEditAnnotation: (id: string) => void;
     onSeekToAnnotation: (time: number) => void;
+    onSelectAnnotation: (id: string) => void;
     selectedAnnotationId?: string;
     selectionVersion?: number;
 }
@@ -18,6 +19,7 @@ export function AnnotationsPanel({
                                      onDeleteAnnotation,
                                      onEditAnnotation,
                                      onSeekToAnnotation,
+                                     onSelectAnnotation,
                                      selectedAnnotationId,
                                      selectionVersion,
                                  }: ManualAnnotationsPanelProps) {
@@ -76,7 +78,7 @@ export function AnnotationsPanel({
                                 >
                                     <div className="flex items-start justify-between gap-2">
                                         <button
-                                            onClick={() => onSeekToAnnotation(annotation.time)}
+                                            onClick={() => { onSeekToAnnotation(annotation.time); onSelectAnnotation(annotation.id); }}
                                             className="flex-1 text-left cursor-pointer"
                                         >
                                             <div className="flex items-center gap-2 mb-1">

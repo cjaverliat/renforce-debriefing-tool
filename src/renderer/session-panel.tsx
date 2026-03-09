@@ -328,6 +328,7 @@ export function SessionPanel({session}: SessionPanelProps) {
                                 onToggleProcedure={handleToggleProcedure}
                                 onToggleActionMarker={handleToggleActionMarker}
                                 onSeek={handleSeek}
+                                onSelectItem={handleSelectItem}
                                 selectedItem={selectedItem ?? undefined}
                                 selectionVersion={selectionVersion}
                                 activeTab={activeLeftPanelTab}
@@ -358,6 +359,7 @@ export function SessionPanel({session}: SessionPanelProps) {
                                 onDeleteAnnotation={handleDeleteAnnotation}
                                 onEditAnnotation={handleEditAnnotation}
                                 onSeekToAnnotation={handleSeekToAnnotation}
+                                onSelectAnnotation={(id) => handleSelectItem({type: 'annotation', id})}
                                 selectedAnnotationId={selectedItem?.type === 'annotation' ? selectedItem.id : undefined}
                                 selectionVersion={selectionVersion}
                             />
