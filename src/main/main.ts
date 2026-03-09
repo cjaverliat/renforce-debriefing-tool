@@ -1,3 +1,17 @@
+/**
+ * Electron main process entry point.
+ *
+ * Responsibilities:
+ *   - Creates the BrowserWindow and loads the renderer
+ *   - Registers the custom `media://` protocol for serving local video files
+ *   - Registers all IPC handlers (session management, resource paths, app flags)
+ *   - Manages the application lifecycle (quit on all windows closed, re-create on activate)
+ *
+ * Security:
+ *   - Node integration is disabled in the renderer; the preload script bridges APIs
+ *   - The `media://` protocol is registered as privileged so it can serve streaming
+ *     video with Range request support, which the HTML <video> element requires
+ */
 import {app, BrowserWindow, Menu, protocol} from 'electron';
 import path from 'node:path';
 import {registerIPCHandlers} from './ipc';
@@ -5,6 +19,13 @@ import {registerAppHandlers} from './ipc/app-handlers';
 import * as fs from "node:fs";
 import mime from 'mime-types';
 
+/**
+ * Creates and configures the main BrowserWindow.
+ *
+ * In development the Vite dev server URL is loaded; in production the built
+ * renderer HTML file is loaded from the ASAR archive.
+ * DevTools can be toggled with Ctrl+Shift+I (or Cmd+Shift+I) and F12.
+ */
 const createWindow = () => {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
@@ -49,9 +70,22 @@ const createWindow = () => {
     }
 };
 
+/**
+ * Custom protocol name used for serving local media files to the renderer.
+ * The renderer constructs URLs like `media:///C:/path/to/video.mp4` (Windows)
+ * or `media:///home/user/video.mp4` (Unix) to load videos via the <video> element.
+ */
 export const MediaFileProtocolName = 'media';
+
+/**
+ * The base URL prefix for the media protocol, adjusted for platform path conventions.
+ * Windows uses three slashes (media:///) so the drive letter becomes the hostname;
+ * Unix uses two slashes (media://) for an absolute path.
+ */
 export const MediaFileProtocol = process.platform === 'win32' ? `${MediaFileProtocolName}:///` : `${MediaFileProtocolName}:/`
 
+// Register the media:// scheme as privileged before app.whenReady so that the
+// HTML <video> element can fetch content from it and use HTTP Range requests for seeking.
 protocol.registerSchemesAsPrivileged([
     {
         scheme: MediaFileProtocolName,
@@ -70,12 +104,17 @@ protocol.registerSchemesAsPrivileged([
 app.whenReady().then(() => {
     Menu.setApplicationMenu(null);
 
+    // Handle media:// requests — resolve URL to a local file path and stream it.
+    // Supports HTTP Range requests so the <video> element can seek efficiently.
     protocol.handle(MediaFileProtocolName, function (request) {
             try {
                 const urlObj = new URL(request.url)
                 const hostname = urlObj.hostname
                 const pathname = decodeURIComponent(urlObj.pathname)
 
+                // Chromium normalizes Windows drive letters differently depending on slash count:
+                //   media://C:/path  → hostname='c', pathname='/path'  (two-slash form)
+                //   media:///C:/path → hostname='',  pathname='/C:/path' (three-slash form)
                 let filePath: string
                 if (process.platform === 'win32' && /^[a-z]$/i.test(hostname)) {
                     // Chromium normalizes 'media://C:/path' → hostname='c', pathname='/path'

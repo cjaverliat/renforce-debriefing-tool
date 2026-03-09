@@ -1,3 +1,25 @@
+/**
+ * Timeline ruler component.
+ *
+ * Renders a canvas-based time ruler with:
+ *   - Major ticks with `M:SS` labels at regular intervals
+ *   - Minor ticks between major ticks
+ *   - A triangular playhead marker that updates at ~60fps during playback
+ *   - Visual distinction between the record region (normal colors) and
+ *     the post-record region (dimmed colors)
+ *
+ * Tick intervals adapt to zoom level:
+ *   - High zoom (>10 px/s): 5 s major / 1 s minor
+ *   - Medium zoom (>15 px/s): 10 s major / 2 s minor  [threshold order in code]
+ *   - Low zoom: 60 s major / 10 s minor
+ *
+ * Seeking:
+ *   Click or drag on the ruler to seek to that time position (pointer events).
+ *
+ * Theme:
+ *   Colors are re-read from CSS custom properties on every redraw so the ruler
+ *   automatically reflects light/dark mode changes without a remount.
+ */
 import {useRef, useEffect} from 'react';
 import {PlaybackState} from "@/shared/types/playback.ts";
 import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
@@ -21,6 +43,11 @@ interface RulerColors {
     playhead: string;
 }
 
+/**
+ * Reads ruler colors from the current document theme.
+ * Colors differ between the record region (inside duration) and the
+ * post-record region (beyond the session end) to visually delimit the session.
+ */
 function getThemeColors(): RulerColors {
     const styles = getComputedStyle(document.documentElement);
     const isDark = document.documentElement.classList.contains('dark');
@@ -38,6 +65,16 @@ function getThemeColors(): RulerColors {
     };
 }
 
+/**
+ * Draws the ruler onto the canvas.
+ * Re-sizes the canvas to match the element's current layout size (DPR-aware),
+ * then draws background fills, tick marks, time labels, and the playhead triangle.
+ *
+ * @param canvasRef       - Ref to the canvas element.
+ * @param pixelsPerSecond - Current zoom-scaled pixels-per-second value.
+ * @param duration        - Record duration in seconds (determines the record region boundary).
+ * @param playbackTime    - Current playback position in seconds (playhead position).
+ */
 function drawRuler(canvasRef: React.RefObject<HTMLCanvasElement>, pixelsPerSecond: number, duration: number, playbackTime: number) {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -129,6 +166,14 @@ function drawRuler(canvasRef: React.RefObject<HTMLCanvasElement>, pixelsPerSecon
     }
 }
 
+/**
+ * Canvas-based timeline ruler with seek-by-click/drag support.
+ *
+ * @param props.duration          - Total record duration in seconds.
+ * @param props.playbackState     - Anchor-based state for computing the playhead position.
+ * @param props.pixelsPerSecond   - Zoom-scaled spatial resolution.
+ * @param props.onSeek            - Callback invoked when the user clicks or drags the ruler.
+ */
 export function TimelineRuler({
     duration,
     playbackState,

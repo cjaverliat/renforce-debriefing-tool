@@ -1,3 +1,19 @@
+/**
+ * Annotation create/edit dialog component.
+ *
+ * A modal overlay for creating a new annotation at the current playback time
+ * or editing an existing annotation. When `annotationToEdit` is provided,
+ * the dialog pre-fills from that annotation's data (edit mode); otherwise it
+ * starts blank at `currentTime` (create mode).
+ *
+ * Form fields:
+ *   - Time display (read-only — set at creation time, locked when editing)
+ *   - Label (required)
+ *   - Color picker (7 preset colors)
+ *   - Description (optional, multiline)
+ *
+ * Keyboard shortcuts: Ctrl+Enter saves, Escape closes.
+ */
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
@@ -30,6 +46,15 @@ const ANNOTATION_COLORS = [
   { name: 'Pink', value: '#ec4899' },
 ];
 
+/**
+ * Modal dialog for creating or editing a manual annotation.
+ *
+ * @param props.isOpen           - Whether the dialog is visible.
+ * @param props.currentTime      - Current playback time used as the default annotation time.
+ * @param props.annotationToEdit - If set, the dialog is in edit mode for this annotation.
+ * @param props.onClose          - Called when the dialog is dismissed without saving.
+ * @param props.onSave           - Called with the new/updated annotation data on save.
+ */
 export function AnnotationDialog({
   isOpen,
   currentTime,

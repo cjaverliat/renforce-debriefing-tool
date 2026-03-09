@@ -1,3 +1,15 @@
+/**
+ * Timeline control bar component.
+ *
+ * Renders the strip above the timeline tracks containing:
+ *   - Skip backward / Play-Pause / Skip forward buttons (±5 seconds)
+ *   - Current time / total duration display (MM:SS / MM:SS)
+ *   - Zoom-out / range-slider / zoom-in controls with a percentage label
+ *
+ * The current time is derived from `playbackState` via `usePlaybackTime`
+ * so the display updates at ~60fps during playback without this component
+ * receiving continuous prop updates.
+ */
 import { Play, Pause, SkipBack, SkipForward, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
 import {PlaybackState} from "@/shared/types/playback.ts";
@@ -19,6 +31,23 @@ interface TimelineControlsProps {
   onZoomChange: (index: number) => void;
 }
 
+/**
+ * Playback and zoom control bar for the timeline.
+ *
+ * @param props.isPlaying        - Whether playback is currently active.
+ * @param props.playbackState    - Anchor-based state used to derive the displayed current time.
+ * @param props.duration         - Total record duration in seconds.
+ * @param props.zoom             - Current zoom multiplier (e.g. 1 = 100%).
+ * @param props.zoomIndex        - Index into the discrete ZOOM_LEVELS array.
+ * @param props.zoomLevelsCount  - Total number of zoom levels (slider max).
+ * @param props.onPlayPause      - Callback to toggle play/pause.
+ * @param props.onSkipBackward   - Callback to seek −5 s.
+ * @param props.onSkipForward    - Callback to seek +5 s.
+ * @param props.onZoomIn         - Callback to increase zoom level by one step.
+ * @param props.onZoomOut        - Callback to decrease zoom level by one step.
+ * @param props.onZoomReset      - Callback to reset zoom to 100%.
+ * @param props.onZoomChange     - Callback when the slider is dragged to a specific index.
+ */
 export function TimelineControls({
   isPlaying,
   playbackState,

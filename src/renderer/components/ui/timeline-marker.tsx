@@ -1,3 +1,16 @@
+/**
+ * Timeline marker pin primitive (UI component).
+ *
+ * Renders a thin vertical bar at an absolute `position` (pixels from left edge).
+ * When `isSelected`, the bar widens to 4 px and gains a glow shadow for emphasis.
+ *
+ * If a `tooltip` is provided, the bar is wrapped in a Radix UI `Tooltip`.
+ * If no tooltip is provided, the bare `<div>` is returned without the tooltip
+ * wrapper to avoid unnecessary DOM nodes.
+ *
+ * Used by every track content component (annotations, system markers,
+ * incidents, and procedure action markers).
+ */
 import * as React from "react";
 import {Tooltip, TooltipContent, TooltipTrigger} from "./tooltip";
 
@@ -13,6 +26,15 @@ interface TimelineMarkerProps extends React.HTMLAttributes<HTMLDivElement> {
     isSelected?: boolean;
 }
 
+/**
+ * Renders a colored vertical marker pin at an absolute pixel position.
+ *
+ * @param props.position   - Left offset in pixels (= time × pixelsPerSecond).
+ * @param props.tooltip    - Optional content shown in a hover tooltip.
+ * @param props.color      - Pin color (CSS color string, default amber).
+ * @param props.onClick    - Click handler (seeks + selects the marker).
+ * @param props.isSelected - When true, renders wider with a glow effect.
+ */
 export function TimelineMarker({position, tooltip, color = "#f8ba33", onClick, isSelected}: TimelineMarkerProps) {
     const markerContent = (
         <div

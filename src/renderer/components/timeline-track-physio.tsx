@@ -1,6 +1,20 @@
+/**
+ * Physiological signal track content component.
+ *
+ * Renders a canvas waveform for a single physiological signal (e.g. heart rate).
+ *
+ * Drawing strategy:
+ *   - Min/max of the data are computed once via `useMemo` and used to normalize
+ *     values to the canvas height (Y inverted: high values near top).
+ *   - A 10% padding is added above and below the value range to prevent clipping.
+ *   - Samples outside the visible time window are skipped for performance.
+ *   - The canvas is redrawn whenever data, zoom, color, container size, or theme changes.
+ *   - DPR scaling ensures crisp rendering on high-density displays.
+ */
 import {useEffect, useMemo, useRef, useState} from "react";
 import {useTheme} from "@/renderer/hooks/use-theme.tsx";
 
+/** Reads the --card CSS variable to match the track's background color for canvas fill. */
 function getTrackBackgroundColor(): string {
     // Use the --card CSS variable to match the timeline-track bg-card background
     return getComputedStyle(document.documentElement).getPropertyValue('--card').trim();
@@ -14,6 +28,14 @@ interface SignalContentProps {
     color: string;
 }
 
+/**
+ * Canvas waveform renderer for a single physiological signal.
+ *
+ * @param props.data            - Time-series data points `{ time, value }`.
+ * @param props.duration        - Record duration (unused directly but triggers redraws on change).
+ * @param props.pixelsPerSecond - Spatial resolution mapping time to x-coordinate.
+ * @param props.color           - Stroke color for the waveform line.
+ */
 export function SignalContent({data, duration, pixelsPerSecond, color}: SignalContentProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);

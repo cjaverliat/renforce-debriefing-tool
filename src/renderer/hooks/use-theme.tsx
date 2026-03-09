@@ -1,3 +1,18 @@
+/**
+ * Theme context and hooks for light/dark/system theme management.
+ *
+ * The theme preference is persisted in `localStorage` under the key `'theme'`
+ * and applied by toggling the `'dark'` class on `document.documentElement`,
+ * which Tailwind CSS uses for its `dark:` variant.
+ *
+ * When set to `'system'`, the resolved theme follows the OS preference
+ * (`prefers-color-scheme: dark`) and updates automatically via a
+ * `MediaQueryList` change event listener.
+ *
+ * Usage:
+ *   Wrap the app in `<ThemeProvider>`, then call `useTheme()` in any child
+ *   component to read `theme`, `resolvedTheme`, and `setTheme`.
+ */
 import {createContext, useContext, useEffect, useState, type ReactNode} from 'react';
 
 export type Theme = 'light' | 'dark' | 'system';
@@ -16,6 +31,10 @@ function getStoredTheme(): Theme {
     return 'system';
 }
 
+/**
+ * Applies the given theme to the DOM by toggling the `dark` class on `<html>`.
+ * Called on mount, on theme change, and when the system preference changes.
+ */
 function applyTheme(theme: Theme) {
     const resolved = theme === 'system' ? getSystemTheme() : theme;
     if (resolved === 'dark') {
@@ -33,6 +52,12 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+/**
+ * Provides theme state to the component tree.
+ * Must wrap the root `<App>` component (see `src/renderer/main.tsx`).
+ *
+ * @param props.children - The application subtree that needs theme access.
+ */
 export function ThemeProvider({children}: {children: ReactNode}) {
     const [theme, setThemeState] = useState<Theme>(getStoredTheme);
     const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
@@ -78,6 +103,15 @@ export function ThemeProvider({children}: {children: ReactNode}) {
     );
 }
 
+/**
+ * Returns the current theme context value.
+ *
+ * @returns `{ theme, setTheme, resolvedTheme }` where:
+ *   - `theme`         — the stored preference (`'light' | 'dark' | 'system'`)
+ *   - `setTheme`      — updates the preference and persists it to localStorage
+ *   - `resolvedTheme` — the actually applied theme (`'light' | 'dark'`), never `'system'`
+ * @throws If called outside a `ThemeProvider`.
+ */
 export function useTheme() {
     const context = useContext(ThemeContext);
     if (!context) {

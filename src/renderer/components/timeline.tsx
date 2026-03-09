@@ -1,3 +1,32 @@
+/**
+ * Timeline component — the main bottom panel of the debriefing workspace.
+ *
+ * Renders a multi-track timeline with:
+ *   - A resizable label column on the left (track names and live signal values)
+ *   - A scrollable track area on the right containing:
+ *       • Procedures track  (collapsible bars + action-marker pins)
+ *       • Incidents track   (severity-colored marker pins)
+ *       • System markers track
+ *       • Annotations track (user-created markers)
+ *       • Physiological signal tracks (canvas waveforms, one per signal)
+ *   - A sticky ruler at the top of the track area with a draggable playhead
+ *   - A controls bar at the very top (play/pause, skip, zoom)
+ *
+ * Scroll synchronization:
+ *   The ruler, label column, and track area are separate scrollable containers
+ *   whose scroll positions are kept in sync via DOM event listeners so that only
+ *   the track area shows scrollbars and the ruler/labels follow silently.
+ *
+ * Zoom:
+ *   Eight discrete zoom levels (0.5×–10×) mapped to `pixelsPerSecond = 2 * zoom`.
+ *   Content width = max(pixelsPerSecond * duration, visibleWidth) so the track
+ *   area never renders narrower than its container.
+ *
+ * Filtering:
+ *   Items are filtered via `useMemo` from the `visibility` prop before being passed
+ *   to track content components, so individual track components receive only what
+ *   they need to render.
+ */
 import {ReactNode, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Activity, AlertTriangle, Flag, ListChecks, MessageSquare} from 'lucide-react';
@@ -52,6 +81,14 @@ interface TimelineProps {
     onSelectItem?: (item: SelectedItem) => void;
 }
 
+/**
+ * Deterministically maps a physiological signal ID to an HSL color.
+ * Uses a simple string hash to spread colors evenly across the hue wheel
+ * so sibling tracks are visually distinct without needing an explicit palette.
+ *
+ * @param id - The signal's unique identifier string.
+ * @returns An HSL CSS color string (full saturation, 50% lightness).
+ */
 function getPhysioTrackColor(id: string) {
     let hash = 0;
     const saturation = 100;
@@ -67,6 +104,22 @@ function getPhysioTrackColor(id: string) {
 
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.5, 2, 3, 5, 10];
 
+/**
+ * Multi-track timeline component.
+ *
+ * @param props.playbackState     - Anchor-based playback state.
+ * @param props.duration          - Total record duration in seconds.
+ * @param props.annotations       - User-created manual annotations.
+ * @param props.tracks            - Physiological signal tracks.
+ * @param props.systemMarkers     - System-generated event markers.
+ * @param props.incidentMarkers   - Classified incident markers.
+ * @param props.procedures        - Procedure phases with action markers.
+ * @param props.visibility        - Two-level visibility filter state.
+ * @param props.onPlayPause       - Callback to toggle playback.
+ * @param props.onSeek            - Callback to seek to a specific time.
+ * @param props.selectedItem      - Currently selected item for cross-panel sync.
+ * @param props.onSelectItem      - Callback when a timeline item is clicked.
+ */
 export function Timeline({
                              playbackState,
                              duration,

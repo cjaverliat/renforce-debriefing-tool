@@ -1,3 +1,10 @@
+/**
+ * Vite configuration for the Electron main process bundle.
+ *
+ * Path aliases:
+ *   @/     → src/                            (shared types, parsers, utils)
+ *   @proto/ → generated/typescript/          (protobuf-generated TypeScript bindings)
+ */
 import {defineConfig} from 'vite';
 import path from 'path';
 

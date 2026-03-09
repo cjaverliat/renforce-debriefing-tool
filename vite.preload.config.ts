@@ -1,3 +1,14 @@
+/**
+ * Vite configuration for the Electron preload script bundle.
+ *
+ * The preload script runs in a sandboxed renderer context with access to
+ * Node.js and Electron APIs. It uses the same path aliases as the main
+ * process so that shared types can be imported consistently.
+ *
+ * Path aliases:
+ *   @/     → src/
+ *   @proto/ → generated/typescript/
+ */
 import { defineConfig } from 'vite';
 import path from 'path';
 

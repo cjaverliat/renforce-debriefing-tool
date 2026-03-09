@@ -1,3 +1,15 @@
+/**
+ * Procedures track content component.
+ *
+ * Renders one horizontal row per procedure, each containing:
+ *   - A `ProcedureBar` spanning from `startTime` to `endTime` (or full duration if endTime < 0)
+ *   - `TimelineMarker` pins for each action marker inside the procedure,
+ *     colored by category (green = correct, red = incorrect, orange = timeout)
+ *
+ * The track height is computed by the parent `Timeline` as:
+ *   `max(64, procedures.length * PROCEDURE_ROW_HEIGHT + 16)`
+ * so the track expands dynamically with the number of visible procedures.
+ */
 import {Procedure, ProcedureActionMarker} from "@/shared/types/record.ts";
 import {TimelineMarker} from "@/renderer/components/ui/timeline-marker.tsx";
 import {ProcedureBar} from "@/renderer/components/ui/procedure-bar.tsx";
@@ -67,6 +79,18 @@ function ProcedureRow({procedure, duration, pixelsPerSecond, onSeek, selectedPro
     );
 }
 
+/**
+ * Renders all procedure rows for the procedures timeline track.
+ *
+ * @param props.procedures            - Filtered list of procedures to display.
+ * @param props.duration              - Record duration (for open-ended procedure bars).
+ * @param props.pixelsPerSecond       - Spatial resolution.
+ * @param props.onSeek                - Called when a marker is clicked.
+ * @param props.selectedProcedureId   - ID of the currently selected procedure bar.
+ * @param props.selectedActionMarker  - Currently selected action marker object.
+ * @param props.onSelectProcedure     - Called when a procedure bar is clicked.
+ * @param props.onSelectActionMarker  - Called when an action marker pin is clicked.
+ */
 export function ProceduresContent({procedures, duration, pixelsPerSecond, onSeek, selectedProcedureId, selectedActionMarker, onSelectProcedure, onSelectActionMarker}: ProceduresContentProps) {
     return (
         <div className="flex flex-col w-full h-full py-2">

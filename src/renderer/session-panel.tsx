@@ -1,3 +1,25 @@
+/**
+ * Main debriefing workspace — the primary view once a session is loaded.
+ *
+ * Layout (resizable panels via react-resizable-panels):
+ *   ┌──────────────────────────────────────────────────────────┐
+ *   │  Header: title · theme · language · export · add annotation │
+ *   ├──────────────┬──────────────────────────┬────────────────┤
+ *   │ SessionInfo  │      VideoPlayer          │AnnotationsPanel│
+ *   │ (left panel) │   (center, resizable)     │ (right panel)  │
+ *   ├──────────────┴──────────────────────────┴────────────────┤
+ *   │                    Timeline (bottom)                      │
+ *   └──────────────────────────────────────────────────────────┘
+ *
+ * State managed here:
+ *   - `playbackState`   — anchor-based playback (see PlaybackState in shared/types/playback)
+ *   - `annotations`     — manually created annotation list (mutable, user-editable)
+ *   - `visibility`      — two-level visibility filter (category + individual item)
+ *   - `selectedItem`    — cross-panel selection (clicking a timeline marker scrolls the sidebar)
+ *   - `activeLeftPanelTab` — which tab is active in SessionInfoPanel
+ *
+ * Keyboard shortcuts: Space (play/pause), M (add annotation at current time).
+ */
 import {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Annotation, SelectedItem, Session} from "@/shared/types/session.ts";
@@ -16,6 +38,17 @@ import {ThemeSwitcher} from "@/renderer/components/theme-switcher.tsx";
 import {computeCurrentTime, createInitialPlaybackState, PlaybackState} from "@/shared/types/playback.ts";
 import {usePlaybackTime} from "@/renderer/hooks/use-playback-time.ts";
 
+/**
+ * Builds the initial `VisibilityState` from a loaded session.
+ * All categories and individual items start as visible.
+ *
+ * Item IDs use composite keys to avoid collisions:
+ *   - System/incident markers: `${time}:${label}:${index}`
+ *   - Action markers: `${procedureId}:${index}`
+ *
+ * @param session - The loaded session containing all record data.
+ * @returns A `VisibilityState` with all items initially visible.
+ */
 function createInitialVisibilityState(session: Session): VisibilityState {
     const {tracks, systemMarkers, incidentMarkers, procedures} = session.recordData;
 
@@ -54,9 +87,19 @@ function toVideoSrc(videoPath: string): string {
 }
 
 interface SessionPanelProps {
+    /** The fully-loaded session to display and annotate. */
     session: Session;
 }
 
+/**
+ * Main debriefing workspace component.
+ *
+ * Orchestrates state and event flow between the video player, timeline,
+ * annotation panel, and session info panel. All inter-component communication
+ * is done via callbacks — child components are fully controlled.
+ *
+ * @param props.session - The active session (record data + session metadata).
+ */
 export function SessionPanel({session}: SessionPanelProps) {
     const {t} = useTranslation();
 

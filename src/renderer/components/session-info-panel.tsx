@@ -1,3 +1,22 @@
+/**
+ * Session info sidebar panel (left column) component.
+ *
+ * A tabbed panel that provides visibility control and detailed item lists for
+ * all data categories in the current session:
+ *
+ *   Tab "physio"      — physiological signal tracks (eye/ear icon toggles + unit/Hz metadata)
+ *   Tab "procedures"  — procedure cards with expandable action marker lists
+ *   Tab "incidents"   — incident markers with severity badges
+ *   Tab "markers"     — system-generated markers (save points, instructor notes)
+ *
+ * Each item has an inline visibility toggle (eye icon) so the user can show/hide
+ * individual items in the timeline independently of the category-level toggle.
+ *
+ * Cross-panel selection:
+ *   When `selectedItem` changes, the panel uses a `useEffect` + `scrollIntoView`
+ *   to bring the matching list item into view. Item DOM refs are stored in a
+ *   plain mutable object (not state) to avoid extra renders.
+ */
 import React, {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {ChevronDown, ChevronUp, Activity, Flag, ListChecks, Eye, EyeOff, AlertTriangle} from 'lucide-react';
@@ -70,6 +89,27 @@ interface SessionInfoPanelProps {
     onTabChange?: (tab: string) => void;
 }
 
+/**
+ * Tabbed left sidebar panel showing all session data categories with visibility controls.
+ *
+ * @param props.tracks                  - All physiological signal tracks.
+ * @param props.systemMarkers           - All system markers.
+ * @param props.incidentMarkers         - All incident markers.
+ * @param props.procedures              - All procedures with action markers.
+ * @param props.visibility              - Current visibility state for all items.
+ * @param props.onToggle*               - Category-level visibility callbacks.
+ * @param props.onToggleTrack           - Per-track visibility callback.
+ * @param props.onToggleSystemMarker    - Per-system-marker visibility callback.
+ * @param props.onToggleIncidentMarker  - Per-incident-marker visibility callback.
+ * @param props.onToggleProcedure       - Per-procedure visibility callback.
+ * @param props.onToggleActionMarker    - Per-action-marker visibility callback.
+ * @param props.onSeek                  - Called to seek the video when an item is clicked.
+ * @param props.onSelectItem            - Called when an item is selected.
+ * @param props.selectedItem            - Currently selected item for scroll-to behavior.
+ * @param props.selectionVersion        - Counter to re-trigger scroll animations.
+ * @param props.activeTab               - Controlled active tab key.
+ * @param props.onTabChange             - Called when the active tab changes.
+ */
 export function SessionInfoPanel({
     tracks,
     systemMarkers,

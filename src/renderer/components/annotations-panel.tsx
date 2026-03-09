@@ -1,3 +1,15 @@
+/**
+ * Annotations sidebar panel component.
+ *
+ * Lists all manual annotations sorted chronologically.  Features:
+ *   - Collapsible panel (chevron toggle)
+ *   - Each item shows a color swatch, timestamp, label, and optional description
+ *   - Hover reveals edit (pencil) and delete (trash) action buttons
+ *   - Clicking an item seeks to its time and selects it in the timeline
+ *   - When `selectedAnnotationId` changes, the panel smooth-scrolls the item into view.
+ *     A `selectionVersion` counter is used as a key trick to re-trigger the scroll
+ *     animation even when the same item is re-selected.
+ */
 import {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Trash2, Pencil, ChevronDown, ChevronUp, MessageSquare} from 'lucide-react';
@@ -14,6 +26,17 @@ interface ManualAnnotationsPanelProps {
     selectionVersion?: number;
 }
 
+/**
+ * Sidebar panel displaying all manual annotations.
+ *
+ * @param props.annotations          - Full list of annotations to display.
+ * @param props.onDeleteAnnotation   - Called with the annotation ID to delete.
+ * @param props.onEditAnnotation     - Called with the annotation ID to open in the edit dialog.
+ * @param props.onSeekToAnnotation   - Called with the annotation time to seek the video.
+ * @param props.onSelectAnnotation   - Called with the annotation ID when clicked.
+ * @param props.selectedAnnotationId - ID of the currently selected annotation.
+ * @param props.selectionVersion     - Incremented counter to re-trigger scroll animations.
+ */
 export function AnnotationsPanel({
                                      annotations,
                                      onDeleteAnnotation,

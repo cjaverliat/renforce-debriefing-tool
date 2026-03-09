@@ -62,6 +62,27 @@ function getValueAtTime(
     return null;
 }
 
+/**
+ * Label component for a physiological signal track row.
+ *
+ * Displays the signal name, sampling rate, and the current live value
+ * at the playback cursor position.
+ *
+ * Live value lookup:
+ *   Uses a binary search (`getValueAtTime`) to find the closest data sample
+ *   within `valueThreshold` seconds of the current playback time. The value
+ *   is memoized on `playbackTime` changes to avoid redundant scans.
+ *
+ * @param props.name                 - Signal display name.
+ * @param props.unit                 - Measurement unit string.
+ * @param props.samplingRate         - Sampling rate in Hz.
+ * @param props.data                 - Time-series data points.
+ * @param props.playbackState        - Anchor-based state for computing the cursor time.
+ * @param props.duration             - Record duration in seconds (clamps the cursor time).
+ * @param props.valueThreshold       - Max seconds difference for nearest-sample lookup (default 0.5).
+ * @param props.valueDecimals        - Decimal places for the live value display (default 2).
+ * @param props.samplingRateDecimals - Decimal places for the Hz/kHz label (default 1).
+ */
 export function PhysiologicalSignalLabel({
     name,
     unit,

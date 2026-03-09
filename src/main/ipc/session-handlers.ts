@@ -1,4 +1,28 @@
-// IPC handlers for session management operations
+/**
+ * IPC handlers for session management operations.
+ *
+ * A "session" in this application consists of two artefacts:
+ *   1. A `.plmd` file (JSON) — stores metadata, video/record paths, and manual annotations.
+ *   2. A `.plm` file (protobuf, possibly LZ4-compressed) — the raw physiological record data.
+ *
+ * Channels exposed:
+ *   session:open-dialog     ()                           → string | null  — pick an existing .plmd file
+ *   session:load-plmd       (plmdPath)                   → Session        — load + parse a .plmd + .plm pair
+ *   session:save-plmd       (plmdPath, data)             → void           — auto-save annotation changes
+ *   session:save-plmd-as    (data)                       → string | null  — create a new .plmd via save dialog
+ *   session:select-plm      ()                           → string | null  — pick a .plm record file
+ *   session:select-video    ()                           → string | null  — pick a video file
+ *   path:make-relative      (basePath, targetPath)       → string         — compute relative path
+ *   path:resolve            (basePath, relativePath)     → string         — resolve to absolute path
+ *
+ * Path normalization note:
+ *   Paths stored in .plmd files always use forward slashes for cross-platform
+ *   portability, even on Windows where Node.js returns backslashes from `path.relative`.
+ *
+ * LZ4 caching note:
+ *   If the .plm file is LZ4-compressed, it is decompressed on first load and cached
+ *   alongside the original as `<file>.plm.uncompressed` to avoid repeated decompression.
+ */
 import {dialog, ipcMain} from 'electron';
 import {readFile, writeFile, access} from 'fs/promises';
 import path from 'path';
@@ -9,6 +33,10 @@ import lz4js from "lz4js";
 
 import {parsePLMFile} from "@/main/parsers/plm-parser.ts";
 
+/**
+ * Registers all session management IPC handlers.
+ * Called once from `ipc/index.ts` during handler registration.
+ */
 export function registerSessionHandlers() {
     // Open .plmd file dialog
     ipcMain.handle('session:open-dialog', async (): Promise<string | null> => {

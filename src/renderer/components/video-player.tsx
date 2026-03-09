@@ -1,13 +1,40 @@
+/**
+ * Controlled video player component.
+ *
+ * Synchronizes an HTML `<video>` element to the anchor-based `PlaybackState`
+ * without storing its own currentTime in React state (which would cause
+ * excessive re-renders at 60fps).
+ *
+ * Sync strategy:
+ *   - Play/pause changes → `video.play()` / `video.pause()` via effect on `isPlaying`
+ *   - Seek events        → `video.currentTime = anchorTime` when `anchorTimestamp` changes
+ *   - Speed changes      → `video.playbackRate = speed` via effect on `speed`
+ *   - Drift correction   → every 1 s during playback, compare `video.currentTime`
+ *                          to the anchor-computed expected time and re-seek if drift > 200 ms
+ *
+ * The video is served via the `media://` custom protocol so local files can be
+ * streamed with HTTP Range request support.
+ */
 import {useRef, useEffect} from 'react';
 import type {PlaybackState} from '@/shared/types/playback';
 import {computeCurrentTime} from '@/shared/types/playback';
 
 interface VideoPlayerProps {
+    /** media:// URL or HTTP(S) URL for the video source. Undefined renders a blank player. */
     videoSrc?: string;
+    /** Current anchor-based playback state. */
     playbackState: PlaybackState;
+    /** Duration of the record in seconds, used to clamp the drift-correction target. */
     duration: number;
 }
 
+/**
+ * Renders a controlled `<video>` element that stays in sync with `playbackState`.
+ *
+ * @param props.videoSrc      - Source URL for the video element.
+ * @param props.playbackState - Anchor-based playback state shared with the timeline.
+ * @param props.duration      - Record duration for drift-correction clamping.
+ */
 export function VideoPlayer({
                                 videoSrc,
                                 playbackState,

@@ -1,3 +1,20 @@
+/**
+ * Electron Forge build and packaging configuration.
+ *
+ * Controls how the application is bundled, packaged, and distributed.
+ * Uses Vite for bundling (main + preload + renderer) and applies Electron
+ * Fuses for production security hardening before code-signing.
+ *
+ * Makers:   ZIP archive for Windows, macOS, and Linux.
+ *
+ * Fuses applied at package time:
+ *   - RunAsNode: false                       — prevents binary from acting as a Node.js runtime
+ *   - EnableCookieEncryption: true           — encrypts Electron session cookies at rest
+ *   - EnableNodeOptionsEnvironmentVariable: false — blocks NODE_OPTIONS injection
+ *   - EnableNodeCliInspectArguments: false   — disables --inspect in production
+ *   - EnableEmbeddedAsarIntegrityValidation  — validates ASAR archive integrity on load
+ *   - OnlyLoadAppFromAsar                    — prevents loading code from outside the ASAR
+ */
 import type {ForgeConfig} from '@electron-forge/shared-types';
 import {MakerZIP} from '@electron-forge/maker-zip';
 import {VitePlugin} from '@electron-forge/plugin-vite';

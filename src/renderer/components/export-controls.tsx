@@ -1,3 +1,18 @@
+/**
+ * Export controls component.
+ *
+ * Provides buttons to export session data in various formats.
+ * Currently supports text report export only.
+ *
+ * The text report includes:
+ *   - Session date, video path, duration, annotation count
+ *   - All annotations sorted chronologically (time, label, optional description)
+ *   - A summary statistics section
+ *
+ * The file is exported by creating a Blob URL, programmatically clicking a
+ * temporary anchor element, and revoking the URL — all within the renderer
+ * (no IPC required, uses the browser download API).
+ */
 import {useTranslation} from 'react-i18next';
 import {FileText} from 'lucide-react';
 import {Button} from '@/renderer/components/ui/button';
@@ -8,6 +23,12 @@ interface ExportControlsProps {
     annotations: Annotation[];
 }
 
+/**
+ * Toolbar component with export action buttons.
+ *
+ * @param props.session     - Active session (provides date, video path, duration).
+ * @param props.annotations - Current annotations list to include in the export.
+ */
 export function ExportControls({session, annotations}: ExportControlsProps) {
     const {t} = useTranslation();
 

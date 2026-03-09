@@ -1,3 +1,16 @@
+/**
+ * Welcome / session-selection screen shown before a session is loaded.
+ *
+ * Presents two actions:
+ *   - **Create new** — guides the user through picking a .plm record file and a
+ *     video file, then saves a new .plmd descriptor and loads the resulting session.
+ *   - **Load existing** — opens an existing .plmd file, resolves its paths, and
+ *     parses the associated .plm file.
+ *
+ * Error messages are normalized for common failure modes (missing files, version
+ * mismatch, corruption) so the user sees actionable feedback rather than raw
+ * exception strings.
+ */
 import {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FileVideo, FolderOpen, AlertCircle} from 'lucide-react';
@@ -6,9 +19,15 @@ import {LanguageSwitcher} from "@/renderer/components/language-switcher.tsx";
 import {ThemeSwitcher} from "@/renderer/components/theme-switcher.tsx";
 
 interface LoadingPanelProps {
+    /** Called with the fully-loaded Session once the user completes session setup. */
     onSessionLoaded: (session: Session) => void;
 }
 
+/**
+ * Full-screen panel for session creation or loading.
+ *
+ * @param props.onSessionLoaded - Callback invoked when a Session is ready to display.
+ */
 export function LoadingPanel({onSessionLoaded}: LoadingPanelProps) {
     const {t} = useTranslation();
     const [error, setError] = useState<string | null>(null);
