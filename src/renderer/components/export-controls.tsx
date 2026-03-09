@@ -80,7 +80,6 @@ export function ExportControls({session, annotations}: ExportControlsProps) {
                 size="sm"
                 onClick={handleExportText}
                 className="text-muted-foreground hover:bg-accent hover:text-foreground"
-                disabled={annotations.length === 0}
             >
                 <FileText className="size-4 mr-2"/>
                 {t('export.exportReport')}
