@@ -263,7 +263,7 @@ export function Timeline({
             <Group orientation="horizontal">
 
                 {/* Labels */}
-                <Panel minSize={50} maxSize={200} defaultSize={100}>
+                <Panel minSize={80} maxSize={250} defaultSize={180}>
                     <div className="relative h-full w-full flex flex-col bg-card">
                         {/* Ruler label placeholder */}
                         <div className="absolute top-0 left-0 right-0 h-8 shrink-0 grow-0 border-b bg-card"/>
