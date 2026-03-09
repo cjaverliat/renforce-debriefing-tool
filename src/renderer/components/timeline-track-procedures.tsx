@@ -2,7 +2,7 @@ import {Procedure, ProcedureActionMarker} from "@/shared/types/record.ts";
 import {TimelineMarker} from "@/renderer/components/ui/timeline-marker.tsx";
 import {ProcedureBar} from "@/renderer/components/ui/procedure-bar.tsx";
 
-export const PROCEDURE_ROW_HEIGHT = 24; // px, fixed height per procedure row
+export const PROCEDURE_ROW_HEIGHT = 16; // px, fixed height per procedure row
 
 const ACTION_MARKER_COLORS: Record<ProcedureActionMarker['category'], string> = {
     correct_action: '#22c55e',     // Green
