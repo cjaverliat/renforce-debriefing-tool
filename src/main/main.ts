@@ -72,8 +72,22 @@ app.whenReady().then(() => {
 
     protocol.handle(MediaFileProtocolName, function (request) {
             try {
-                const url = request.url.slice(MediaFileProtocol.length)
-                const filePath = path.normalize(decodeURIComponent(url))
+                const urlObj = new URL(request.url)
+                const hostname = urlObj.hostname
+                const pathname = decodeURIComponent(urlObj.pathname)
+
+                let filePath: string
+                if (process.platform === 'win32' && /^[a-z]$/i.test(hostname)) {
+                    // Chromium normalizes 'media://C:/path' → hostname='c', pathname='/path'
+                    // Reconstruct the Windows path: 'c:/path'
+                    filePath = path.normalize(`${hostname}:${pathname}`)
+                } else if (process.platform === 'win32' && /^\/[A-Za-z]:\//.test(pathname)) {
+                    // Three-slash form 'media:///C:/path' → hostname='', pathname='/C:/path'
+                    filePath = path.normalize(pathname.slice(1))
+                } else {
+                    // Unix absolute path: 'media:///home/user/file' → pathname='/home/user/file'
+                    filePath = path.normalize(pathname)
+                }
 
                 if (!fs.existsSync(filePath)) {
                     return new Response('File not found', {status: 404})

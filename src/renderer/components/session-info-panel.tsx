@@ -33,9 +33,9 @@ function VisibilityToggle({visible, onVisibilityChange, size = 'md', onClick}: V
             className={`${sizeClasses} p-0 ml-auto bg-transparent hover:bg-transparent data-[state=on]:bg-transparent data-[state=off]:bg-transparent`}
         >
             {visible ? (
-                <Eye className={`${iconClasses} text-zinc-300`}/>
+                <Eye className={`${iconClasses} text-muted-foreground`}/>
             ) : (
-                <EyeOff className={`${iconClasses} text-zinc-500`}/>
+                <EyeOff className={`${iconClasses} text-muted-foreground/50`}/>
             )}
         </Toggle>
     );
@@ -85,31 +85,31 @@ export function SessionInfoPanel({
     const {t} = useTranslation();
 
     return (
-        <div className="flex flex-col h-full bg-zinc-900 border-r border-zinc-800">
+        <div className="flex flex-col h-full bg-card border-r border-border">
             <Tabs defaultValue="physio" className="flex flex-col h-full">
-                <TabsList className="w-full shrink-0 bg-zinc-800 rounded-none border-b border-zinc-700">
-                    <TabsTrigger value="physio" className="flex-1 gap-1 data-[state=active]:bg-zinc-900!">
+                <TabsList className="w-full shrink-0 bg-accent rounded-none border-b border-border">
+                    <TabsTrigger value="physio" className="flex-1 gap-1 data-[state=active]:bg-card!">
                         <Activity className="size-4 text-emerald-500"/>
-                        <span className="text-xs text-zinc-400">({tracks.length})</span>
+                        <span className="text-xs text-muted-foreground">({tracks.length})</span>
                     </TabsTrigger>
-                    <TabsTrigger value="procedures" className="flex-1 gap-1 data-[state=active]:bg-zinc-900!">
+                    <TabsTrigger value="procedures" className="flex-1 gap-1 data-[state=active]:bg-card!">
                         <ListChecks className="size-4 text-blue-500"/>
-                        <span className="text-xs text-zinc-400">({procedures.length})</span>
+                        <span className="text-xs text-muted-foreground">({procedures.length})</span>
                     </TabsTrigger>
-                    <TabsTrigger value="incidents" className="flex-1 gap-1 data-[state=active]:bg-zinc-900!">
+                    <TabsTrigger value="incidents" className="flex-1 gap-1 data-[state=active]:bg-card!">
                         <AlertTriangle className="size-4 text-red-500"/>
-                        <span className="text-xs text-zinc-400">({incidentMarkers.length})</span>
+                        <span className="text-xs text-muted-foreground">({incidentMarkers.length})</span>
                     </TabsTrigger>
-                    <TabsTrigger value="markers" className="flex-1 gap-1 data-[state=active]:bg-zinc-900!">
+                    <TabsTrigger value="markers" className="flex-1 gap-1 data-[state=active]:bg-card!">
                         <Flag className="size-4 text-amber-500"/>
-                        <span className="text-xs text-zinc-400">({systemMarkers.length})</span>
+                        <span className="text-xs text-muted-foreground">({systemMarkers.length})</span>
                     </TabsTrigger>
                 </TabsList>
 
                 {/* Physio Tracks Tab */}
                 <TabsContent value="physio" className="flex-1 overflow-y-auto custom-scrollbar m-0">
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
-                        <span className="text-sm text-zinc-100">{t('sessionInfo.physioSignals')}</span>
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                        <span className="text-sm text-foreground">{t('sessionInfo.physioSignals')}</span>
                         <VisibilityToggle
                             visible={visibility.physioTracksVisible}
                             onVisibilityChange={onTogglePhysioTracks}
@@ -119,14 +119,14 @@ export function SessionInfoPanel({
                         {tracks.map((track) => (
                             <div
                                 key={track.id}
-                                className="bg-zinc-800 rounded p-2 hover:bg-zinc-750 transition-colors"
+                                className="bg-accent rounded p-2 hover:bg-accent/80 transition-colors"
                             >
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-sm text-zinc-100 truncate">
+                                        <div className="text-sm text-foreground truncate">
                                             {track.name}
                                         </div>
-                                        <div className="flex items-center gap-2 text-xs text-zinc-500">
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                             <span className="font-mono">{track.unit}</span>
                                             <span>|</span>
                                             <span>{track.sampleRate} Hz</span>
@@ -145,8 +145,8 @@ export function SessionInfoPanel({
 
                 {/* Procedures Tab */}
                 <TabsContent value="procedures" className="flex-1 overflow-y-auto custom-scrollbar m-0">
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
-                        <span className="text-sm text-zinc-100">{t('sessionInfo.procedures')}</span>
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                        <span className="text-sm text-foreground">{t('sessionInfo.procedures')}</span>
                         <VisibilityToggle
                             visible={visibility.proceduresVisible}
                             onVisibilityChange={onToggleProcedures}
@@ -168,8 +168,8 @@ export function SessionInfoPanel({
 
                 {/* Incident Markers Tab */}
                 <TabsContent value="incidents" className="flex-1 overflow-y-auto custom-scrollbar m-0">
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
-                        <span className="text-sm text-zinc-100">{t('sessionInfo.incidentMarkers')}</span>
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                        <span className="text-sm text-foreground">{t('sessionInfo.incidentMarkers')}</span>
                         <VisibilityToggle
                             visible={visibility.incidentMarkersVisible}
                             onVisibilityChange={onToggleIncidentMarkers}
@@ -182,25 +182,25 @@ export function SessionInfoPanel({
                             return (
                                 <div
                                     key={markerId}
-                                    className="bg-zinc-800 rounded p-2 hover:bg-zinc-750 transition-colors cursor-pointer"
+                                    className="bg-accent rounded p-2 hover:bg-accent/80 transition-colors cursor-pointer"
                                     onClick={() => onSeek(marker.time)}
                                 >
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <div className={`size-2 rounded-full ${severityColor} shrink-0`}/>
-                                                <span className="text-xs font-mono text-zinc-400">
+                                                <span className="text-xs font-mono text-muted-foreground">
                                                     {formatTime(marker.time)}
                                                 </span>
                                                 <span className={`text-xs px-1.5 py-0.5 rounded ${marker.severity === 'critical' ? 'bg-red-500/20 text-red-400' : 'bg-orange-500/20 text-orange-400'}`}>
                                                     {t(`severity.${marker.severity}`)}
                                                 </span>
                                             </div>
-                                            <div className="text-sm text-zinc-100">
+                                            <div className="text-sm text-foreground">
                                                 {marker.label}
                                             </div>
                                             {marker.description && (
-                                                <div className="text-xs text-zinc-400 line-clamp-2 mt-1">
+                                                <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
                                                     {marker.description}
                                                 </div>
                                             )}
@@ -220,8 +220,8 @@ export function SessionInfoPanel({
 
                 {/* System Markers Tab */}
                 <TabsContent value="markers" className="flex-1 overflow-y-auto custom-scrollbar m-0">
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
-                        <span className="text-sm text-zinc-100">{t('sessionInfo.systemMarkers')}</span>
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                        <span className="text-sm text-foreground">{t('sessionInfo.systemMarkers')}</span>
                         <VisibilityToggle
                             visible={visibility.systemMarkersVisible}
                             onVisibilityChange={onToggleSystemMarkers}
@@ -233,22 +233,22 @@ export function SessionInfoPanel({
                             return (
                                 <div
                                     key={markerId}
-                                    className="bg-zinc-800 rounded p-2 hover:bg-zinc-750 transition-colors cursor-pointer"
+                                    className="bg-accent rounded p-2 hover:bg-accent/80 transition-colors cursor-pointer"
                                     onClick={() => onSeek(marker.time)}
                                 >
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <div className="size-2 rounded-full bg-amber-500 shrink-0"/>
-                                                <span className="text-xs font-mono text-zinc-400">
+                                                <span className="text-xs font-mono text-muted-foreground">
                                                     {formatTime(marker.time)}
                                                 </span>
                                             </div>
-                                            <div className="text-sm text-zinc-100">
+                                            <div className="text-sm text-foreground">
                                                 {marker.label}
                                             </div>
                                             {marker.description && (
-                                                <div className="text-xs text-zinc-400 line-clamp-2 mt-1">
+                                                <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
                                                     {marker.description}
                                                 </div>
                                             )}
@@ -290,19 +290,19 @@ function ProcedureCard({
     const procedureVisible = visibility.visibleProcedureIds.has(procedure.id) && visibility.proceduresVisible;
 
     return (
-        <div className="flex flex-col bg-zinc-800 rounded">
+        <div className="flex flex-col bg-accent rounded">
             {/* Procedure Header - Accordion style matching annotations */}
-            <div className="flex items-center justify-between p-2 border-b border-zinc-700">
+            <div className="flex items-center justify-between p-2 border-b border-border">
                 <div className="flex items-center gap-2">
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className="size-6 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700"
+                        className="size-6 text-muted-foreground hover:text-foreground hover:bg-accent/80"
                     >
                         {isExpanded ? <ChevronUp className="size-4"/> : <ChevronDown className="size-4"/>}
                     </Button>
-                    <span className="text-sm text-zinc-100">
+                    <span className="text-sm text-foreground">
                         {procedure.name} ({procedure.actionMarkers.length})
                     </span>
                 </div>
@@ -317,7 +317,7 @@ function ProcedureCard({
             {isExpanded && (
                 <div className="p-2 space-y-2">
                     {procedure.actionMarkers.length === 0 ? (
-                        <div className="p-2 text-center text-xs text-zinc-500">
+                        <div className="p-2 text-center text-xs text-muted-foreground">
                             {t('sessionInfo.noActionMarkers')}
                         </div>
                     ) : (
@@ -326,7 +326,7 @@ function ProcedureCard({
                             return (
                                 <div
                                     key={actionMarkerId}
-                                    className="bg-zinc-750 rounded p-2 hover:bg-zinc-700 transition-colors group"
+                                    className="bg-card rounded p-2 hover:bg-card/80 transition-colors group"
                                 >
                                     <div className="flex items-start justify-between gap-2">
                                         <button
@@ -338,15 +338,15 @@ function ProcedureCard({
                                                     className="size-2 rounded-full flex-shrink-0"
                                                     style={{backgroundColor: ACTION_MARKER_COLORS[marker.category]}}
                                                 />
-                                                <span className="text-xs font-mono text-zinc-400">
+                                                <span className="text-xs font-mono text-muted-foreground">
                                                     {formatTime(marker.time)}
                                                 </span>
                                             </div>
-                                            <div className="text-sm text-zinc-100 mb-1">
+                                            <div className="text-sm text-foreground mb-1">
                                                 {marker.label}
                                             </div>
                                             {marker.description && (
-                                                <div className="text-xs text-zinc-400 line-clamp-2">
+                                                <div className="text-xs text-muted-foreground line-clamp-2">
                                                     {marker.description}
                                                 </div>
                                             )}

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8"/>
     <title>RENFORCE - Debriefing tool</title>
@@ -7,12 +7,21 @@
             http-equiv="Content-Security-Policy"
             content="
                 default-src 'self';
-                script-src 'self';
+                script-src 'self' 'unsafe-inline';
                 style-src 'self' 'unsafe-inline';
                 img-src 'self' data: res:;
                 media-src 'self' media:;
               "
     />
+    <script>
+        (function() {
+            var theme = localStorage.getItem('theme');
+            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (theme === 'dark' || (!theme && prefersDark) || (theme === 'system' && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
 </head>
 
 <body>

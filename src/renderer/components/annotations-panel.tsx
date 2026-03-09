@@ -27,18 +27,18 @@ export function AnnotationsPanel({
     const sortedAnnotations = annotations.sort((a, b) => a.time - b.time);
 
     return (
-        <div className="flex flex-col h-full bg-zinc-900 border-l border-zinc-800">
-            <div className="flex items-center justify-between p-3 border-b border-zinc-800">
+        <div className="flex flex-col h-full bg-card border-l border-border">
+            <div className="flex items-center justify-between p-3 border-b border-border">
                 <div className="flex items-center gap-2">
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className="size-6 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+                        className="size-6 text-muted-foreground hover:text-foreground hover:bg-accent"
                     >
                         {isExpanded ? <ChevronUp className="size-4"/> : <ChevronDown className="size-4"/>}
                     </Button>
-                    <h3 className="text-sm text-zinc-100">
+                    <h3 className="text-sm text-foreground">
                         {t('annotations.count', {count: sortedAnnotations.length})}
                     </h3>
                 </div>
@@ -48,7 +48,7 @@ export function AnnotationsPanel({
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {sortedAnnotations.length === 0 ? (
-                        <div className="p-4 text-center text-sm text-zinc-500">
+                        <div className="p-4 text-center text-sm text-muted-foreground">
                             {t('annotations.noAnnotations')}
                         </div>
                     ) : (
@@ -56,7 +56,7 @@ export function AnnotationsPanel({
                             {sortedAnnotations.map((annotation) => (
                                 <div
                                     key={annotation.id}
-                                    className="bg-zinc-800 rounded p-2 hover:bg-zinc-750 transition-colors group"
+                                    className="bg-accent rounded p-2 hover:bg-accent/80 transition-colors group"
                                 >
                                     <div className="flex items-start justify-between gap-2">
                                         <button
@@ -68,15 +68,15 @@ export function AnnotationsPanel({
                                                     className="size-2 rounded-full flex-shrink-0"
                                                     style={{backgroundColor: annotation.color}}
                                                 />
-                                                <span className="text-xs font-mono text-zinc-400">
+                                                <span className="text-xs font-mono text-muted-foreground">
                             {formatTime(annotation.time)}
                           </span>
                                             </div>
-                                            <div className="text-sm text-zinc-100 mb-1">
+                                            <div className="text-sm text-foreground mb-1">
                                                 {annotation.label}
                                             </div>
                                             {annotation.description && (
-                                                <div className="text-xs text-zinc-400 line-clamp-2">
+                                                <div className="text-xs text-muted-foreground line-clamp-2">
                                                     {annotation.description}
                                                 </div>
                                             )}
@@ -86,7 +86,7 @@ export function AnnotationsPanel({
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => onDeleteAnnotation(annotation.id)}
-                                            className="size-6 opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-400 hover:bg-zinc-700"
+                                            className="size-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 hover:bg-accent"
                                         >
                                             <Trash2 className="size-3"/>
                                         </Button>

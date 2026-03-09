@@ -43,37 +43,37 @@ export function TimelineControls({
   const playbackTime = usePlaybackTime(playbackState, { maxTime: duration });
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border-b border-zinc-800">
+    <div className="flex items-center gap-2 px-4 py-2 bg-card border-b border-border">
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon"
           onClick={onSkipBackward}
-          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          className="size-8 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
           <SkipBack className="size-4" />
         </Button>
-        
+
         <Button
           variant="ghost"
           size="icon"
           onClick={onPlayPause}
-          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          className="size-8 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
           {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
         </Button>
-        
+
         <Button
           variant="ghost"
           size="icon"
           onClick={onSkipForward}
-          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          className="size-8 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
           <SkipForward className="size-4" />
         </Button>
       </div>
 
-      <div className="text-sm text-zinc-400 font-mono">
+      <div className="text-sm text-muted-foreground font-mono">
         {formatTime(playbackTime)} / {formatTime(duration)}
       </div>
 
@@ -85,7 +85,7 @@ export function TimelineControls({
           size="icon"
           onClick={onZoomOut}
           disabled={zoomIndex === 0}
-          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          className="size-8 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
           <ZoomOut className="size-4" />
         </Button>
@@ -100,11 +100,11 @@ export function TimelineControls({
           className="w-24 cursor-pointer appearance-none
             [&::-webkit-slider-runnable-track]:h-[2px]
             [&::-webkit-slider-runnable-track]:rounded-full
-            [&::-webkit-slider-runnable-track]:bg-zinc-600
+            [&::-webkit-slider-runnable-track]:bg-border
             [&::-webkit-slider-thumb]:appearance-none
             [&::-webkit-slider-thumb]:size-2.5
             [&::-webkit-slider-thumb]:rounded-full
-            [&::-webkit-slider-thumb]:bg-white
+            [&::-webkit-slider-thumb]:bg-foreground
             [&::-webkit-slider-thumb]:mt-[-4px]"
         />
 
@@ -113,14 +113,14 @@ export function TimelineControls({
           size="icon"
           onClick={onZoomIn}
           disabled={zoomIndex === zoomLevelsCount - 1}
-          className="size-8 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          className="size-8 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
           <ZoomIn className="size-4" />
         </Button>
 
         <button
           onClick={onZoomReset}
-          className="text-xs text-zinc-400 hover:text-white font-mono w-12 text-center"
+          className="text-xs text-muted-foreground hover:text-foreground font-mono w-12 text-center"
         >
           {Math.round(zoom * 100)}%
         </button>
