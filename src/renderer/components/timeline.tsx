@@ -13,7 +13,7 @@ import {Annotation, SelectedItem} from "@/shared/types/session.ts";
 import {IncidentMarker, PhysiologicalSignal, Procedure, SystemMarker} from "@/shared/types/record.ts";
 import {SignalContent} from "@/renderer/components/timeline-track-physio.tsx";
 import {SystemContent} from "@/renderer/components/timeline-track-system.tsx";
-import {ProceduresContent} from "@/renderer/components/timeline-track-procedures.tsx";
+import {ProceduresContent, PROCEDURE_ROW_HEIGHT} from "@/renderer/components/timeline-track-procedures.tsx";
 import {IncidentsContent} from "@/renderer/components/timeline-track-incidents.tsx";
 import {AnnotationsContent} from "@/renderer/components/timeline-track-annotations.tsx";
 import {VisibilityState} from "@/shared/types/visibility.ts";
@@ -241,6 +241,8 @@ export function Timeline({
         );
     }, [incidentMarkers, visibility.incidentMarkersVisible, visibility.visibleIncidentMarkerIds]);
 
+    const proceduresTrackHeight = Math.max(64, filteredProcedures.length * PROCEDURE_ROW_HEIGHT + 16);
+
     return (
         <div className="flex flex-col h-full bg-card">
             <TimelineControls
@@ -274,7 +276,7 @@ export function Timeline({
                             style={{paddingBottom: scrollbarHeight > 0 ? `${scrollbarHeight}px` : undefined}}
                         >
                             {visibility.proceduresVisible && (
-                                <TimelineLabel>
+                                <TimelineLabel height={proceduresTrackHeight}>
                                     <DefaultTextLabelContent icon={<ListChecks className="size-3.5 text-blue-500 shrink-0"/>}>{t('timeline.procedures')}</DefaultTextLabelContent>
                                 </TimelineLabel>
                             )}
@@ -345,6 +347,7 @@ export function Timeline({
                                     duration={duration}
                                     playbackState={playbackState}
                                     pixelsPerSecond={pixelsPerSecond}
+                                    height={proceduresTrackHeight}
                                 >
                                     <ProceduresContent
                                         procedures={filteredProcedures}

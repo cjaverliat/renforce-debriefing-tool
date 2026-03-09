@@ -2,6 +2,8 @@ import {Procedure, ProcedureActionMarker} from "@/shared/types/record.ts";
 import {TimelineMarker} from "@/renderer/components/ui/timeline-marker.tsx";
 import {ProcedureBar} from "@/renderer/components/ui/procedure-bar.tsx";
 
+export const PROCEDURE_ROW_HEIGHT = 24; // px, fixed height per procedure row
+
 const ACTION_MARKER_COLORS: Record<ProcedureActionMarker['category'], string> = {
     correct_action: '#22c55e',     // Green
     incorrect_action: '#ef4444',   // Red
@@ -34,7 +36,8 @@ interface ProcedureRowProps {
 function ProcedureRow({procedure, duration, pixelsPerSecond, onSeek, selectedProcedureId, selectedActionMarker, onSelectProcedure, onSelectActionMarker}: ProcedureRowProps) {
     return (
         <div
-            className="relative flex-1 w-full"
+            className="relative w-full"
+            style={{height: `${PROCEDURE_ROW_HEIGHT}px`}}
         >
             {/* Procedure bar */}
             <ProcedureBar
@@ -47,9 +50,9 @@ function ProcedureRow({procedure, duration, pixelsPerSecond, onSeek, selectedPro
             />
 
             {/* Action markers */}
-            {procedure.actionMarkers.map((marker, index) => (
+            {procedure.actionMarkers.map((marker) => (
                 <TimelineMarker
-                    key={index}
+                    key={marker.time}
                     position={marker.time * pixelsPerSecond}
                     tooltip={marker.label}
                     color={ACTION_MARKER_COLORS[marker.category]}
