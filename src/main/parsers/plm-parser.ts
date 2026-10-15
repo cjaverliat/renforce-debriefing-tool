@@ -12,15 +12,14 @@
  * The parser is streaming: it processes chunks as they arrive from a Node.js
  * Readable stream, carrying over any incomplete frame in a `leftover` buffer.
  *
- * Current status: physiological signal extraction is not yet implemented.
- * `processPackedSamples` returns an empty `RecordData` (duration only) while
- * tracking sample parsing is work-in-progress.
+ * TrackingSamples are converted into procedures, markers and signals following
+ * PLM-TRACKING-CSV-FORMAT.md (see `parseTrackingSamples`).
  */
 import {Readable} from 'stream';
 import {fromBinary} from '@bufbuild/protobuf';
 import {PackedSampleSchema, type PackedSample} from '@proto/plume/sample/packed_sample_pb';
-import {RecordData} from "@/shared/types/record.ts";
-import {TrackingSampleSchema, type TrackingSample} from "@proto/plume/sample/tracking/tracking_sample_pb";
+import {PhysiologicalSignal, Procedure, ProcedureActionMarker, RecordData} from "@/shared/types/record.ts";
+import {TrackingSampleSchema} from "@proto/plume/sample/tracking/tracking_sample_pb";
 
 /**
  * Attempts to decode a protobuf base-128 varint from `buffer` at `offset`.
@@ -86,70 +85,215 @@ function* parsePackedSamplesFromBuffer(buffer: Uint8Array): Generator<PackedSamp
     }
 }
 
+const TRACKING_SAMPLE_TYPE_URL = "type.googleapis.com/plume.sample.tracking.TrackingSample";
+
+type ActionCategory = ProcedureActionMarker['category'];
+
+const ACTION_CATEGORIES: Record<string, ActionCategory> = {
+    correct: 'correct_action',
+    incorrect: 'incorrect_action',
+    timeout: 'timeout_exceeded',
+};
+
 /**
- * Extracts and parses `TrackingSample` payloads from the full set of `PackedSample` messages.
- *
- * TrackingSamples encode instructor/application events as CSV strings with the format:
- *   timestamp, ticksSince1970(100ns), ActionName, ActionType, NbParam,
- *   Param1…Param10, Description
- *
- * @param _samples - All parsed PackedSample messages from the PLM file.
- * @returns Parsed TrackingSample objects (currently returns empty array — WIP).
+ * Joins the remaining CSV fields (descriptions may contain commas).
+ * Returns `undefined` when empty.
  */
-function parseTrackingSamples(_samples: PackedSample[]): TrackingSample[] {
+function rest(fields: string[], from: number): string | undefined {
+    const value = fields.slice(from).join(',').trim();
+    return value.length > 0 ? value : undefined;
+}
 
-    const packedTrackingSamples = _samples.filter(s => s.payload.typeUrl === "type.googleapis.com/plume.sample.tracking.TrackingSample");
+/**
+ * Converts the `TrackingSample` payloads into procedures, markers and signals,
+ * following PLM-TRACKING-CSV-FORMAT.md:
+ *
+ *   SIGNAL_DECLARE,id,name,unit,sampleRateHz
+ *   SIGNAL_DATA,id,value
+ *   PROCEDURE_START,id,name
+ *   PROCEDURE_END,id
+ *   PROCEDURE_ACTION,procedureId,correct|incorrect|timeout,label[,description]
+ *   SYSTEM_MARKER,auto|manual,label[,description]
+ *   INCIDENT_MARKER,critical|moderate,label[,description]
+ *
+ * Fields are trimmed. There is no quoting: only the trailing description may
+ * contain commas, so a comma in a label starts the description.
+ *
+ * The event time is `PackedSample.timestamp` (ns) converted to seconds. Rows are
+ * applied in timestamp order (file order for equal timestamps), so signal data
+ * stays sorted for the renderer's binary searches.
+ * Malformed or unknown rows are skipped (and logged) instead of failing the whole file.
+ *
+ * @param samples - All parsed PackedSample messages from the PLM file.
+ */
+function parseTrackingSamples(samples: PackedSample[]): Omit<RecordData, 'duration'> {
+    const result: Omit<RecordData, 'duration'> = {
+        procedures: [],
+        systemMarkers: [],
+        tracks: [],
+        incidentMarkers: [],
+    };
+    // Running procedure per id (removed on PROCEDURE_END).
+    const openProcedures = new Map<string, Procedure>();
+    // Procedures opened by a PROCEDURE_ACTION before their PROCEDURE_START.
+    const implicitProcedures = new Set<Procedure>();
+    const seenProcedureIds = new Set<string>();
+    const signals = new Map<string, PhysiologicalSignal>();
 
-    for (const packedTrackingSample of packedTrackingSamples) {
-        const payloadBytes = packedTrackingSample.payload.value;
-        const trackingSample = fromBinary(TrackingSampleSchema, payloadBytes);
-        const csvData = trackingSample.csvData.split(",");
+    const openProcedure = (id: string, name: string, time: number): Procedure => {
+        const procedure: Procedure = {
+            id: seenProcedureIds.has(id) ? `${id}#${result.procedures.length}` : id,
+            name,
+            startTime: time,
+            endTime: -1,
+            actionMarkers: [],
+        };
+        seenProcedureIds.add(id);
+        openProcedures.set(id, procedure);
+        result.procedures.push(procedure);
+        return procedure;
+    };
 
-        // timestamp,ticksSince1970(100ns),ActionName,ActionType,NbParam,Param1,Param2,Param3,Param4,Param5,Param6,Param7,Param8,Param9,Param10,Description
-        const timestamp = Number(csvData[0]);
-        const ticks = BigInt(csvData[1]);
-        const actionName = csvData[2];
-        const actionType = csvData[3];
-        const nbParams = Number(csvData[4]);
-        const params = csvData.slice(5, 5 + nbParams);
-        const description = csvData[5 + nbParams];
+    // Array.prototype.sort is stable: rows with equal timestamps keep file order.
+    const trackingSamples = samples
+        .filter(sample => sample.payload?.typeUrl === TRACKING_SAMPLE_TYPE_URL)
+        .sort((a, b) => {
+            const ta = a.timestamp ?? 0n;
+            const tb = b.timestamp ?? 0n;
+            return ta < tb ? -1 : ta > tb ? 1 : 0;
+        });
+    let skipped = 0;
 
-        // console.log(actionName, actionType);
+    for (const sample of trackingSamples) {
+        let csv = '';
+        try {
+            csv = fromBinary(TrackingSampleSchema, sample.payload!.value).csvData ?? '';
+            if (sample.timestamp === undefined) throw new Error('missing timestamp');
+
+            const fields = csv.split(',');
+            const field = (index: number): string => (fields[index] ?? '').trim();
+            const required = (index: number, name: string): string => {
+                const value = field(index);
+                if (!value) throw new Error(`missing ${name}`);
+                return value;
+            };
+            const eventType = field(0);
+            const time = Number(sample.timestamp) / 1e9;
+
+            switch (eventType) {
+                case 'SIGNAL_DECLARE': {
+                    const id = required(1, 'signal id');
+                    // A re-declaration (e.g. sensor reconnect) keeps feeding the existing track.
+                    if (signals.has(id)) break;
+                    const signal: PhysiologicalSignal = {
+                        id,
+                        name: field(2) || id,
+                        unit: field(3),
+                        sampleRate: Number(field(4)) || 0,
+                        data: [],
+                    };
+                    signals.set(id, signal);
+                    result.tracks.push(signal);
+                    break;
+                }
+                case 'SIGNAL_DATA': {
+                    const signal = signals.get(required(1, 'signal id'));
+                    if (!signal) throw new Error('SIGNAL_DATA before SIGNAL_DECLARE');
+                    const raw = required(2, 'value');
+                    const value = Number(raw);
+                    if (!Number.isFinite(value)) throw new Error(`invalid value "${raw}"`);
+                    signal.data.push({time, value});
+                    break;
+                }
+                case 'PROCEDURE_START': {
+                    const id = required(1, 'procedure id');
+                    const name = rest(fields, 2) ?? id;
+                    const running = openProcedures.get(id);
+                    if (running && implicitProcedures.has(running)) {
+                        // Opened implicitly by an earlier action: just name it.
+                        running.name = name;
+                        implicitProcedures.delete(running);
+                    } else {
+                        // A previous run that was never ended keeps endTime -1 (lasts until
+                        // the end of the record, per the format); this start opens a new run.
+                        openProcedure(id, name, time);
+                    }
+                    break;
+                }
+                case 'PROCEDURE_END': {
+                    const id = required(1, 'procedure id');
+                    const procedure = openProcedures.get(id);
+                    if (!procedure) throw new Error('PROCEDURE_END without PROCEDURE_START');
+                    procedure.endTime = time;
+                    openProcedures.delete(id);
+                    implicitProcedures.delete(procedure);
+                    break;
+                }
+                case 'PROCEDURE_ACTION': {
+                    const id = required(1, 'procedure id');
+                    const category = ACTION_CATEGORIES[field(2)];
+                    if (!category) throw new Error(`unknown action category "${field(2)}"`);
+                    let procedure = openProcedures.get(id);
+                    if (!procedure) {
+                        procedure = openProcedure(id, id, time);
+                        implicitProcedures.add(procedure);
+                    }
+                    procedure.actionMarkers.push({
+                        time,
+                        label: field(3),
+                        category,
+                        description: rest(fields, 4),
+                    });
+                    break;
+                }
+                case 'SYSTEM_MARKER':
+                    result.systemMarkers.push({
+                        time,
+                        label: field(2),
+                        category: field(1) === 'manual' ? 'manual' : 'automatic',
+                        description: rest(fields, 3),
+                    });
+                    break;
+                case 'INCIDENT_MARKER':
+                    result.incidentMarkers.push({
+                        time,
+                        label: field(2),
+                        severity: field(1) === 'critical' ? 'critical' : 'moderate',
+                        description: rest(fields, 3),
+                    });
+                    break;
+                default:
+                    throw new Error(`unknown event type "${eventType}"`);
+            }
+        } catch (error) {
+            skipped++;
+            if (skipped <= 20) {
+                console.warn(`[PLM] TrackingSample ignored (${(error as Error).message}): ${csv}`);
+            }
+        }
     }
 
-    return [];
+    const total = trackingSamples.length;
+    console.log(`[PLM] TrackingSamples: ${total} read, ${total - skipped} parsed, ${skipped} skipped`);
+    return result;
 }
 
 /**
  * Converts the full array of parsed `PackedSample` messages into a `RecordData` object.
  *
- * Currently computes the session duration from the maximum sample timestamp and
- * returns empty arrays for all track/marker types while full extraction is pending.
- *
- * @param _samples - All ParsedSample messages from the PLM stream.
- * @returns A `RecordData` with `duration` set and empty tracks/markers.
+ * @param samples - All ParsedSample messages from the PLM stream.
+ * @returns A `RecordData` with the record duration and the procedures, markers and signals.
  */
-function processPackedSamples(_samples: PackedSample[]): RecordData {
-
-    const maxTimestampNs = _samples.reduce<bigint>(
+function processPackedSamples(samples: PackedSample[]): RecordData {
+    const maxTimestampNs = samples.reduce<bigint>(
         (max, s) => (s.timestamp > max ? s.timestamp : max),
         0n
     );
 
-    const seconds = maxTimestampNs / 1_000_000_000n;
-    const remainderNs = maxTimestampNs % 1_000_000_000n;
+    // Number() keeps the fractional part (bigint division would truncate it).
+    const duration = Number(maxTimestampNs) / 1e9;
 
-    const duration = Number(seconds) + Number(remainderNs / 1_000_000_000n);
-
-    const trackingSamples = parseTrackingSamples(_samples);
-
-    return {
-        procedures: [],
-        systemMarkers: [],
-        tracks: [],
-        incidentMarkers: [],
-        duration: duration
-    };
+    return {...parseTrackingSamples(samples), duration};
 }
 
 /**

@@ -14,7 +14,7 @@ import {JSX, useState} from 'react';
 import {LoadingPanel} from '@/renderer/loading-panel.tsx';
 import {Session} from "@/shared/types/session.ts";
 import {SessionPanel} from "@/renderer/session-panel.tsx";
-import {createMockRecordData, createMockSession} from "@/shared/data/mock-session.ts";
+import {createMockSession} from "@/shared/data/mock-session.ts";
 
 interface AppProps {
     /** When true, the app skips file loading and uses mock session data. */
@@ -32,8 +32,6 @@ export function App({mockSession}: AppProps): JSX.Element {
     );
 
     const handleSessionLoaded = (session: Session) => {
-        // TODO: remove - Replace record data with mock data
-        session.recordData = createMockRecordData(2 * 60 + 30);
         setSession(session);
     };
 
